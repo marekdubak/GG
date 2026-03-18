@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GoldenGate Barbershop — Finanční dashboard">
+  <meta name="theme-color" content="#C9A84C">
+  <title>GoldenGate — Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+
+  <!-- App Styles & Scripts -->
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LOADING OVERLAY                                 -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="gg-loading" role="status" aria-label="Načítání aplikace">
+  <img class="gg-load-logo-img" src="assets/logo.png" alt="GoldenGate Barbershop logo" width="220" height="220">
+  <div class="gg-load-bar" aria-hidden="true"></div>
+  <p class="gg-load-text">Načítání dashboardu…</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LOGIN SCREEN                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="login-screen" role="dialog" aria-label="Přihlášení">
+  <div class="login-box">
+    <div class="login-gold-line" aria-hidden="true"></div>
+    <div class="login-logo">
+      <div class="login-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#080808" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18"/><path d="M18 3v18"/><path d="M6 9h12"/><path d="M6 15h12"/></svg>
+      </div>
+      <div>
+        <div class="login-brand">GOLDENGATE</div>
+        <div class="login-brand-sub">Barbershop · Finance</div>
+      </div>
+    </div>
+    <h1 class="login-title">Přihlášení</h1>
+    <p class="login-sub">Zadejte přihlašovací údaje pro přístup k dashboardu</p>
+    <form id="login-form" autocomplete="on">
+      <div class="login-field">
+        <label for="login-email" class="login-label">E-mail</label>
+        <input type="email" id="login-email" class="login-input" placeholder="vas@email.cz" required autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label for="login-pass" class="login-label">Heslo</label>
+        <input type="password" id="login-pass" class="login-input" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn">Přihlásit se</button>
+    </form>
+    <div id="login-err" class="login-err" role="alert" aria-live="polite"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- MAIN APPLICATION                                -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- ── HEADER ── -->
+  <header id="app-header" role="banner">
+    <div class="header-inner">
+      <div class="brand" aria-label="GoldenGate Barbershop">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#080808" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18"/><path d="M18 3v18"/><path d="M6 9h12"/><path d="M6 15h12"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">GOLDENGATE</div>
+          <div class="brand-sub">Financial Dashboard</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav id="main-nav" aria-label="Hlavní navigace">
+        <button class="tab active" id="tab-prehled" onclick="show('prehled')" role="tab" aria-selected="true" aria-controls="view-prehled">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+          <span class="tab-text">Přehled</span>
+          <span class="tab-pip" aria-hidden="true"></span>
+        </button>
+        <button class="tab" id="tab-mesic" onclick="show('mesic')" role="tab" aria-selected="false" aria-controls="view-mesic">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+          <span class="tab-text">Měsíc</span>
+        </button>
+        <button class="tab" id="tab-zalohy" onclick="show('zalohy')" role="tab" aria-selected="false" aria-controls="view-zalohy">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          <span class="tab-text">Zálohy</span>
+        </button>
+        <button class="tab" id="tab-vyplaty" onclick="show('vyplaty')" role="tab" aria-selected="false" aria-controls="view-vyplaty">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+          <span class="tab-text">Výplaty</span>
+        </button>
+        <button class="tab" id="tab-finplan" onclick="show('finplan')" role="tab" aria-selected="false" aria-controls="view-finplan">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+          <span class="tab-text">Fin. plán</span>
+        </button>
+        <button class="tab" id="tab-report" onclick="show('report')" role="tab" aria-selected="false" aria-controls="view-report">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span>
+          <span class="tab-text">Report</span>
+        </button>
+        <button class="tab" id="tab-cf" onclick="show('cf')" role="tab" aria-selected="false" aria-controls="view-cf">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+          <span class="tab-text">Cash Flow</span>
+        </button>
+        <button class="tab" id="tab-mara" onclick="show('mara')" role="tab" aria-selected="false" aria-controls="view-mara">
+          <span class="tab-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+          <span class="tab-text">Mára</span>
+        </button>
+      </nav>
+
+      <!-- Right side: period + user menu -->
+      <div class="header-right">
+        <div class="period-tag" id="period-tag" aria-label="Aktuální období">
+          <span class="period-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </span>
+          <span id="period-text">Srp 2025 – Úno 2026</span>
+        </div>
+
+        <!-- User Menu -->
+        <div class="user-menu-wrap">
+          <button class="user-menu-trigger" aria-label="Uživatelské menu" aria-expanded="false" aria-haspopup="true">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </button>
+          <div class="user-menu-dropdown" role="menu">
+            <div class="umd-header">
+              <div class="umd-email-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,7 12,13 2,7"/></svg>
+              </div>
+              <div class="umd-header-text">
+                <div class="umd-header-email" id="umd-email">—</div>
+                <div class="umd-header-role" id="umd-role">—</div>
+              </div>
+            </div>
+            <div class="umd-divider"></div>
+            <button class="umd-item" onclick="toggleTheme()" role="menuitem">
+              <span class="umd-icon-badge umd-icon-theme" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              </span>
+              <span class="umd-text" id="umd-theme-label">Tmavý režim</span>
+            </button>
+            <button class="umd-item" onclick="exportCSV()" role="menuitem">
+              <span class="umd-icon-badge umd-icon-export" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </span>
+              <span class="umd-text">Export CSV</span>
+            </button>
+            <div class="umd-divider"></div>
+            <button class="umd-item umd-danger" onclick="doLogout()" role="menuitem">
+              <span class="umd-icon-badge umd-icon-logout" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              </span>
+              <span class="umd-text">Odhlásit se</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Otevřít menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- ── TOAST NOTIFICATIONS ── -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main role="main">
+
+    <!-- ═══ VIEW: PŘEHLED ═══ -->
+    <section class="view active" id="view-prehled" role="tabpanel" aria-labelledby="tab-prehled">
+      <div class="sec" aria-label="Klíčové ukazatele"><span>Klíčové ukazatele — Firma</span></div>
+      <div class="kpi-row kpi-row-4" id="kpi-main">
+        <!-- Skeleton loading -->
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+      </div>
+
+      <div class="sec"><span>Vývoj — Celá firma</span></div>
+      <div class="chart-grid chart-grid-21">
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">Tržby · Výdaje · Zisk</div><div class="card-sub">Měsíční vývoj</div></div>
+            <div class="legend">
+              <span class="leg"><span class="leg-dot" style="background:rgba(201,168,76,0.6)"></span>Tržby</span>
+              <span class="leg"><span class="leg-dot" style="background:rgba(217,107,90,0.5)"></span>Výdaje</span>
+              <span class="leg"><span class="leg-dot" style="background:#5DB87A"></span>Zisk</span>
+            </div>
+          </div>
+          <div class="chart-wrap h280"><canvas id="chart-main" aria-label="Graf tržeb, výdajů a zisku"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Podíl poboček</div><div class="card-sub">Celkové tržby</div></div></div>
+          <div class="chart-wrap h280"><canvas id="chart-pie" aria-label="Koláčový graf podílu poboček"></canvas></div>
+        </div>
+      </div>
+
+      <div class="sec"><span>Sparklines — Pobočky</span></div>
+      <div class="spark-strip" id="spark-strip">
+        <div class="spark-card skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w60 h-lg"></div><div class="skeleton-line w80" style="height:48px"></div></div>
+        <div class="spark-card skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w60 h-lg"></div><div class="skeleton-line w80" style="height:48px"></div></div>
+        <div class="spark-card skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w60 h-lg"></div><div class="skeleton-line w80" style="height:48px"></div></div>
+      </div>
+
+      <div class="sec"><span>Detailní přehled</span></div>
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Měsíční data</div><div class="card-sub">Všechny pobočky + firma</div></div>
+          <button class="btn-icon" onclick="exportTableCSV('main-table')" aria-label="Exportovat tabulku do CSV" title="Export CSV">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+        <div class="tbl-wrap"><table id="main-table" aria-label="Přehledová tabulka"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ═══ VIEW: MĚSÍC ═══ -->
+    <section class="view" id="view-mesic" role="tabpanel" aria-labelledby="tab-mesic">
+      <div class="sec"><span>Výběr měsíce</span></div>
+      <div class="month-bar">
+        <span class="month-bar-label">Měsíc</span>
+        <div class="month-pills" id="month-pills" role="radiogroup" aria-label="Výběr měsíce"></div>
+        <span class="month-meta" id="month-meta"></span>
+      </div>
+
+      <div class="sec" id="m-sec-kpi"><span>Celková firma</span></div>
+      <div class="kpi-row kpi-row-4" id="m-kpi">
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+        <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div><div class="skeleton-line w60"></div></div>
+      </div>
+
+      <div class="sec"><span>Srovnání poboček</span></div>
+      <div class="pobocky-row" id="m-pobocky">
+        <div class="pobocka skeleton"><div class="skeleton-line w60 h-lg"></div><div class="skeleton-line w80"></div><div class="skeleton-line w80"></div><div class="skeleton-line w80"></div></div>
+        <div class="pobocka skeleton"><div class="skeleton-line w60 h-lg"></div><div class="skeleton-line w80"></div><div class="skeleton-line w80"></div><div class="skeleton-line w80"></div></div>
+        <div class="pobocka skeleton"><div class="skeleton-line w60 h-lg"></div><div class="skeleton-line w80"></div><div class="skeleton-line w80"></div><div class="skeleton-line w80"></div></div>
+      </div>
+
+      <div class="sec"><span>Graf</span></div>
+      <div class="chart-grid chart-grid-1">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title" id="m-chart-title">Firma</div><div class="card-sub" id="m-chart-sub">Tržby, Výdaje, Zisk</div></div></div>
+          <div class="chart-wrap h280"><canvas id="m-bar" aria-label="Měsíční srovnávací graf"></canvas></div>
+        </div>
+      </div>
+
+      <div class="sec"><span>Tabulka</span></div>
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Detailní data</div></div>
+          <button class="btn-icon" onclick="exportTableCSV('m-table')" aria-label="Export CSV" title="Export CSV">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+        <div class="tbl-wrap"><table id="m-table" aria-label="Měsíční data"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ═══ VIEW: ZÁLOHY ═══ -->
+    <section class="view" id="view-zalohy" role="tabpanel" aria-labelledby="tab-zalohy">
+      <div class="sec"><span>Zálohy — Filtr</span></div>
+      <div class="zalohy-filter" id="zalohy-filter-bar">
+        <div class="zf-field">
+          <label for="z-name" class="zf-label">Jméno</label>
+          <select id="z-name" class="zf-select" onchange="zApply()"><option value="">Všichni</option></select>
+        </div>
+        <div class="zf-field">
+          <label for="z-month" class="zf-label">Měsíc</label>
+          <select id="z-month" class="zf-select" onchange="zApply()"><option value="">Všechny</option></select>
+        </div>
+        <button class="zf-reset" onclick="zReset()" aria-label="Resetovat filtry">Reset</button>
+      </div>
+      <div class="z-info" id="z-info"></div>
+      <div class="z-grid" id="z-grid">
+        <div class="z-empty">Vyberte filtr nebo se načtou data…</div>
+      </div>
+    </section>
+
+    <!-- ═══ VIEW: VÝPLATY ═══ -->
+    <section class="view" id="view-vyplaty" role="tabpanel" aria-labelledby="tab-vyplaty">
+      <div id="vp-print-header" style="display:none">
+        <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#C9A84C;margin-bottom:4px">GOLDENGATE — VÝPLATNÍ LÍSTEK</div>
+        <div id="vp-print-period" style="text-align:center;font-size:11px;color:#888;margin-bottom:16px"></div>
+      </div>
+      <div class="sec"><span>Výplaty — Filtr</span></div>
+      <div class="zalohy-filter" id="vyplaty-filter-bar">
+        <div class="zf-field">
+          <label for="vp-name" class="zf-label">Jméno</label>
+          <select id="vp-name" class="zf-select" onchange="vpApply()"><option value="">Všichni</option></select>
+        </div>
+        <div class="zf-field">
+          <label for="vp-month" class="zf-label">Měsíc</label>
+          <select id="vp-month" class="zf-select" onchange="vpApply()"><option value="">Všechny</option></select>
+        </div>
+        <div class="zf-field">
+          <label for="vp-rok" class="zf-label">Rok</label>
+          <select id="vp-rok" class="zf-select" onchange="vpApply()"><option value="">Všechny</option></select>
+        </div>
+        <button class="zf-reset" onclick="vpReset()" aria-label="Resetovat filtry">Reset</button>
+        <button class="zf-export" onclick="vpExportPDF()" aria-label="Export PDF">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF
+        </button>
+      </div>
+      <div id="vp-listek-wrap"></div>
+      <div class="sec"><span>Přehled za 3 období</span></div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table aria-label="Přehled výplat za 3 období">
+            <thead><tr><th style="text-align:left">Ukazatel</th><th id="vp-col1"></th><th id="vp-col2"></th><th id="vp-col3"></th></tr></thead>
+            <tbody id="vp-tbody3m"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ VIEW: FINANČNÍ PLÁN ═══ -->
+    <section class="view" id="view-finplan" role="tabpanel" aria-labelledby="tab-finplan">
+      <div class="sec"><span>Finanční plán — KPI</span></div>
+      <div class="kpi-row kpi-row-4">
+        <div class="kpi" style="--kpi-accent:var(--gold)"><div class="kpi-label">Tržby celkem</div><div class="kpi-val sm" id="fp-kpi-trzby">—</div><div class="kpi-footer"><span class="kpi-sub">Kč</span></div></div>
+        <div class="kpi" style="--kpi-accent:var(--neg)"><div class="kpi-label">Výdaje celkem</div><div class="kpi-val sm" id="fp-kpi-vydaje">—</div><div class="kpi-footer"><span class="kpi-sub">Kč</span></div></div>
+        <div class="kpi" style="--kpi-accent:var(--pos)"><div class="kpi-label">Zisk celkem</div><div class="kpi-val sm" id="fp-kpi-zisk">—</div><div class="kpi-footer"><span class="kpi-sub">Kč</span></div></div>
+        <div class="kpi" style="--kpi-accent:var(--blue)"><div class="kpi-label">Kumulativní zisk</div><div class="kpi-val sm" id="fp-kpi-kumul">—</div><div class="kpi-footer"><span class="kpi-sub" id="fp-kpi-kumul-sub"></span></div></div>
+      </div>
+      <div class="sec"><span>Finanční plán — Tabulka</span></div>
+      <div class="card">
+        <div class="fp-wrap">
+          <table class="fp-table" id="fp-table" aria-label="Finanční plán">
+            <thead id="fp-thead"></thead>
+            <tbody id="fp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ VIEW: REPORT ═══ -->
+    <section class="view" id="view-report" role="tabpanel" aria-labelledby="tab-report">
+      <div id="rpt-print-header" style="display:none">
+        <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#C9A84C;margin-bottom:4px">GOLDENGATE — MĚSÍČNÍ REPORT</div>
+        <div id="rpt-print-period" style="text-align:center;font-size:11px;color:#888;margin-bottom:16px"></div>
+      </div>
+      <div class="sec"><span>Report — Období</span></div>
+      <div class="zalohy-filter" id="report-filter-bar">
+        <div class="zf-field">
+          <label for="rpt-from" class="zf-label">Od</label>
+          <select id="rpt-from" class="zf-select" onchange="reportApplyFilter()"></select>
+        </div>
+        <div class="zf-field">
+          <label for="rpt-to" class="zf-label">Do</label>
+          <select id="rpt-to" class="zf-select" onchange="reportApplyFilter()"></select>
+        </div>
+        <div class="filter-period-label" id="rpt-period-label"></div>
+        <button class="zf-export" onclick="reportExportPDF()" aria-label="Export PDF">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF
+        </button>
+      </div>
+      <div id="report-content">
+        <div class="report-kpi-strip" id="report-kpi-strip">
+          <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div></div>
+          <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div></div>
+          <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div></div>
+          <div class="kpi skeleton"><div class="skeleton-line w40"></div><div class="skeleton-line w80 h-lg"></div></div>
+        </div>
+        <div class="card"><div class="report-wrap"><table class="report-tbl" id="report-table" aria-label="Report"><thead id="report-thead"></thead><tbody id="report-tbody"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <!-- ═══ VIEW: CASH FLOW ═══ -->
+    <section class="view" id="view-cf" role="tabpanel" aria-labelledby="tab-cf">
+      <div id="cf-print-header" style="display:none">
+        <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#C9A84C;margin-bottom:4px">GOLDENGATE — CASH FLOW</div>
+        <div id="cf-print-period" style="text-align:center;font-size:11px;color:#888;margin-bottom:16px"></div>
+      </div>
+      <div class="sec"><span>Cash Flow — Období</span></div>
+      <div class="zalohy-filter" id="cf-filter-bar">
+        <div class="zf-field">
+          <label for="cf-from" class="zf-label">Od</label>
+          <select id="cf-from" class="zf-select" onchange="cfApplyFilter()"></select>
+        </div>
+        <div class="zf-field">
+          <label for="cf-to" class="zf-label">Do</label>
+          <select id="cf-to" class="zf-select" onchange="cfApplyFilter()"></select>
+        </div>
+        <div class="filter-period-label" id="cf-period-label"></div>
+        <button class="zf-export" onclick="cfExportPDF()" aria-label="Export PDF">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF
+        </button>
+      </div>
+      <div class="sec"><span>Cash Flow — KPI</span></div>
+      <div class="kpi-row kpi-row-3">
+        <div class="kpi" style="--kpi-accent:var(--gold)"><div class="kpi-label">Tržby</div><div class="kpi-val sm" id="cf-kpi-trzby">—</div><div class="kpi-footer"><span class="kpi-sub">Kč</span></div></div>
+        <div class="kpi" style="--kpi-accent:var(--neg)"><div class="kpi-label">Výdaje</div><div class="kpi-val sm" id="cf-kpi-vydaje">—</div><div class="kpi-footer"><span class="kpi-sub">Kč</span></div></div>
+        <div class="kpi" style="--kpi-accent:var(--pos)"><div class="kpi-label">Zisk</div><div class="kpi-val sm" id="cf-kpi-zisk">—</div><div class="kpi-footer"><span class="kpi-sub">Kč</span></div></div>
+      </div>
+      <div class="sec"><span>Cash Flow — Tabulka</span></div>
+      <div class="card">
+        <div class="fp-wrap" id="cf-table-wrap">
+          <table class="fp-table" id="cf-table" aria-label="Cash Flow tabulka">
+            <thead id="cf-thead"></thead>
+            <tbody id="cf-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ VIEW: MÁRA ═══ -->
+    <section class="view" id="view-mara" role="tabpanel" aria-labelledby="tab-mara">
+      <div class="sec"><span>Mára — Filtr období</span></div>
+      <div class="zalohy-filter" id="mara-filter-bar">
+        <div class="zf-field">
+          <label for="mara-rok-od" class="zf-label">Rok od</label>
+          <select id="mara-rok-od" class="zf-select" onchange="renderMara()"><option value="">vše</option></select>
+        </div>
+        <div class="zf-field">
+          <label for="mara-mes-od" class="zf-label">Měsíc od</label>
+          <select id="mara-mes-od" class="zf-select" onchange="renderMara()"><option value="">vše</option></select>
+        </div>
+        <div class="zf-field">
+          <label for="mara-rok-do" class="zf-label">Rok do</label>
+          <select id="mara-rok-do" class="zf-select" onchange="renderMara()"><option value="">vše</option></select>
+        </div>
+        <div class="zf-field">
+          <label for="mara-mes-do" class="zf-label">Měsíc do</label>
+          <select id="mara-mes-do" class="zf-select" onchange="renderMara()"><option value="">vše</option></select>
+        </div>
+        <button class="zf-reset" onclick="maraReset()" aria-label="Resetovat filtry">Reset</button>
+      </div>
+
+      <div class="sec"><span>Mára — KPI</span></div>
+      <div class="kpi-row kpi-row-3">
+        <div class="kpi" style="--kpi-accent:var(--gold)"><div class="kpi-label">Celkem splátky</div><div class="kpi-val sm" id="mara-celkem">—</div></div>
+        <div class="kpi" style="--kpi-accent:var(--pos)"><div class="kpi-label">Zaplaceno</div><div class="kpi-val sm" id="mara-zaplaceno">—</div></div>
+        <div class="kpi" style="--kpi-accent:var(--neg)"><div class="kpi-label">Zbývající dluh</div><div class="kpi-val sm" id="mara-dluh">—</div></div>
+      </div>
+
+      <div class="sec"><span>Progress</span></div>
+      <div class="card">
+        <div class="mara-progress">
+          <div class="mara-progress-track">
+            <div class="mara-progress-bar" id="mara-progress-bar"></div>
+          </div>
+          <div class="mara-progress-info">
+            <span id="mara-pct-label">0 %</span>
+            <span id="mara-progress-text"></span>
+          </div>
+          <div class="mara-progress-detail">
+            <span id="mara-prog-zaplaceno"></span>
+            <span id="mara-prog-zbyva"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec"><span>Splátky</span></div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table aria-label="Splátky Mára">
+            <thead><tr><th>Rok</th><th style="text-align:left">Období</th><th>Částka</th><th>Zaplaceno</th><th>Zbývá</th></tr></thead>
+            <tbody id="mara-splatky-tbody"></tbody>
+            <tfoot id="mara-splatky-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec"><span>Výplaty Mára</span></div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table aria-label="Výplaty Mára">
+            <thead><tr><th style="text-align:left">Datum</th><th>Částka</th></tr></thead>
+            <tbody id="mara-vyplaty-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec"><span>Kontrola</span></div>
+      <div class="card" id="mara-kontrola"></div>
+    </section>
+
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer role="contentinfo">
+    <span>GoldenGate Barbershop · Finanční dashboard</span>
+    <span id="footer-version">v2.0 · 2026</span>
+  </footer>
+
+</div><!-- /#app -->
+
+</body>
+</html>
