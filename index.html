@@ -1008,10 +1008,20 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   #cf-table th:nth-child(n+4),#cf-table td:nth-child(n+4){
     min-width:65px !important;font-size:9px !important;padding:3px 5px !important;
   }
-  /* Section headers — span all visible cols, keep Entita text */
-  #cf-table .cf-page-break td{display:table-cell !important;font-size:11px !important;padding:6px 8px !important;}
-  /* Section totals — fix colspan */
-  #cf-table tr td[colspan="2"]{display:table-cell !important;left:0 !important;font-size:10px !important;padding:5px 8px !important;}
+  /* Section headers — stay fixed during horizontal scroll */
+  #cf-table .cf-page-break td{
+    display:table-cell !important;font-size:11px !important;padding:6px 8px !important;
+    position:sticky !important;left:0 !important;z-index:4 !important;
+  }
+  /* Section totals — fix colspan, sticky */
+  #cf-table tr td[colspan="2"]{
+    display:table-cell !important;left:0 !important;font-size:10px !important;padding:5px 8px !important;
+    position:sticky !important;z-index:4 !important;
+  }
+  /* Grand total row sticky */
+  #cf-table tr:last-child td[colspan="2"]{
+    position:sticky !important;left:0 !important;z-index:4 !important;
+  }
 
   /* CF filter compact */
   #view-cf > div:first-child{padding:10px 12px !important;gap:8px !important;}
