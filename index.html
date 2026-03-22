@@ -215,7 +215,7 @@ body.dark-mode .fp-total-row td { background:rgba(255,255,255,0.04) !important; 
 }
 .theme-toggle:hover { border-color:var(--gold); color:var(--gold); }
 *{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
 body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
 
 /* ── GRAIN */
@@ -966,6 +966,15 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
   #vp-filter-bar .zf-field{min-width:calc(50% - 4px) !important;max-width:100% !important;}
 
+  /* Charts in report — horizontal scroll on mobile */
+  .rpt-charts-row{
+    display:flex !important;overflow-x:auto !important;-webkit-overflow-scrolling:touch;
+    scroll-snap-type:x mandatory;gap:8px !important;padding-bottom:6px;
+  }
+  .rpt-charts-row > div{
+    min-width:75vw !important;flex-shrink:0 !important;scroll-snap-align:start;
+  }
+
   /* Tables: scroll */
   .tbl-wrap,.report-wrap,.fp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .report-tbl,.fp-table,#vp-tbl,#vp-tbl3m,#bb-table,#cf-table{min-width:550px;}
@@ -975,6 +984,42 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   /* Zálohy cards */
   .z-grid{grid-template-columns:1fr !important;gap:8px !important;}
   .z-card{padding:10px !important;}
+
+  /* CF table on mobile — hide Entita col (shown in section headers), compact Dodavatel+Popis */
+  #cf-table-wrap{border-radius:10px !important;overflow:hidden !important;}
+  #cf-table-wrap > div{max-height:70vh !important;}
+  #cf-table{min-width:auto !important;}
+  /* Hide Entita column (col 1) — info is in section header rows */
+  #cf-table th:nth-child(1),#cf-table td:nth-child(1){display:none !important;}
+  /* Dodavatel (col 2) — sticky left:0 */
+  #cf-table th:nth-child(2),#cf-table td:nth-child(2){
+    left:0 !important;min-width:70px !important;max-width:80px !important;
+    font-size:8px !important;padding:3px 5px !important;
+    position:sticky !important;z-index:3 !important;background:var(--bg2) !important;
+  }
+  /* Popis (col 3) — sticky left:70px with shadow */
+  #cf-table th:nth-child(3),#cf-table td:nth-child(3){
+    left:70px !important;min-width:90px !important;max-width:110px !important;
+    font-size:8px !important;padding:3px 5px !important;
+    position:sticky !important;z-index:3 !important;background:var(--bg2) !important;
+    box-shadow:3px 0 6px rgba(0,0,0,0.08) !important;
+  }
+  /* Data columns — scrollable */
+  #cf-table th:nth-child(n+4),#cf-table td:nth-child(n+4){
+    min-width:65px !important;font-size:9px !important;padding:3px 5px !important;
+  }
+  /* Section headers — span all visible cols, keep Entita text */
+  #cf-table .cf-page-break td{display:table-cell !important;font-size:11px !important;padding:6px 8px !important;}
+  /* Section totals — fix colspan */
+  #cf-table tr td[colspan="2"]{display:table-cell !important;left:0 !important;font-size:10px !important;padding:5px 8px !important;}
+
+  /* CF filter compact */
+  #view-cf > div:first-child{padding:10px 12px !important;gap:8px !important;}
+  #view-cf > div:first-child > span:first-child{display:none !important;}
+  #view-cf > div:first-child > div:first-of-type{flex-direction:row !important;gap:6px !important;align-items:flex-end !important;}
+  #view-cf > div:first-child > div:first-of-type > span{display:none !important;}
+  #view-cf > div:first-child > div:first-of-type > div{flex:1 !important;}
+  #cf-period-label{display:none !important;}
 
   /* User menu */
   .user-menu-dropdown{right:-8px !important;min-width:240px !important;}
@@ -3031,7 +3076,7 @@ async function renderReport() {
     const id1 = `rc-t-${pob.replace(/\s/g,'')}-${_seq}`;
     const id2 = `rc-z-${pob.replace(/\s/g,'')}-${_seq}`;
     return {
-      html: `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px">
+      html: `<div class="rpt-charts-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px">
         <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px 18px 14px">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:12px">TRŽBY — ${pob.toUpperCase()}</div>
           <div style="height:160px;position:relative"><canvas id="${id1}"></canvas></div>
@@ -3093,7 +3138,7 @@ async function renderReport() {
   const idSumTrzby = `rc-sum-trzby-${_seq}`;
   const idSumZisk  = `rc-sum-zisk-${_seq}`;
   const grafySouhrnHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+    <div class="rpt-charts-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
       <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px 18px 14px">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:12px">TRŽBY — VŠECHNY POBOČKY</div>
         <div style="height:180px;position:relative"><canvas id="${idSumTrzby}"></canvas></div>
@@ -3529,8 +3574,14 @@ function cfInitSelects(availableRM) {
       lastAvail = key;
     }
   }
-  const defFrom = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Prosinec_2025') ? 'Prosinec_2025' : firstAvail;
-  const defTo   = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Únor_2026')     ? 'Únor_2026'    : lastAvail;
+  const isMobile = window.innerWidth <= 680;
+  const unor2026 = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Únor_2026') ? 'Únor_2026' : null;
+  const defFrom = isMobile
+    ? (unor2026 || lastAvail || firstAvail)
+    : (RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Prosinec_2025') ? 'Prosinec_2025' : firstAvail);
+  const defTo = isMobile
+    ? (unor2026 || lastAvail || firstAvail)
+    : (lastAvail || defFrom);
   if (defFrom) selFrom.value = defFrom;
   if (defTo)   selTo.value   = defTo;
   cfUpdateLabel();
