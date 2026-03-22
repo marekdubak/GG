@@ -978,6 +978,10 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   /* Tables: scroll */
   .tbl-wrap,.report-wrap,.fp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .report-tbl,.fp-table,#vp-tbl,#vp-tbl3m,#bb-table,#cf-table{min-width:550px;}
+
+  /* Mara tables — fully scrollable, no sticky columns */
+  #view-mara .tbl-wrap{overflow-x:auto !important;-webkit-overflow-scrolling:touch;}
+  #view-mara .tbl-wrap table{min-width:400px !important;}
   .report-tbl th,.report-tbl td{padding:4px 8px !important;font-size:10px !important;}
   .report-sec-head td{font-size:11px !important;padding:7px 10px !important;}
 
@@ -3043,7 +3047,8 @@ async function renderReport() {
   // ── Tabulka řádek ──
   const tableRow = (lbl, vals, fmtFn, opts = {}) => {
     const {sub=false, bold=false, topLine=false, bg='', pct=false} = opts;
-    const lStyle = `padding:7px 10px 7px ${sub?'22px':'10px'};font-family:'Syne',sans-serif;font-size:${sub?'10px':'11px'};color:${bold?'var(--text)':'var(--muted2)'};font-weight:${bold?600:400};border-bottom:1px solid var(--row-border);${topLine?'border-top:1px solid var(--border2);':''}${bg?'background:'+bg+';':''}`;
+    const bgColor = bg || 'var(--bg2)';
+    const lStyle = `position:sticky;left:0;z-index:2;background:${bgColor};padding:7px 10px 7px ${sub?'22px':'10px'};font-family:'Syne',sans-serif;font-size:${sub?'10px':'11px'};color:${bold?'var(--text)':'var(--muted2)'};font-weight:${bold?600:400};border-bottom:1px solid var(--row-border);${topLine?'border-top:1px solid var(--border2);':''}white-space:nowrap`;
     const vStyle = `padding:7px 14px 7px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right;border-bottom:1px solid var(--row-border);white-space:nowrap;${topLine?'border-top:1px solid var(--border2);':''}${bg?'background:'+bg+';':''}`;
     return `<tr>
       <td style="${lStyle}">${lbl}</td>
@@ -3052,7 +3057,7 @@ async function renderReport() {
   };
 
   const thead = (color='var(--muted)') => `<thead><tr>
-    <th style="text-align:left;padding:7px 10px;font-family:'Syne',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${color};border-bottom:1px solid var(--border2);min-width:160px"></th>
+    <th style="text-align:left;padding:7px 10px;font-family:'Syne',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${color};border-bottom:1px solid var(--border2);min-width:160px;position:sticky;left:0;z-index:4;background:var(--bg2)"></th>
     ${labels.map(l => `<th style="text-align:right;padding:7px 14px 7px 8px;font-family:'Syne',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${color};border-bottom:1px solid var(--border2);min-width:${N>5?'90px':'110px'}">${l}</th>`).join('')}
   </tr></thead>`;
 
@@ -3929,7 +3934,7 @@ function renderBarberi() {
   const tbody = document.getElementById('bb-tbody');
 
   // Header: Barber | Pobočka | month1 | Δ | month2 | Δ | ... | ∑
-  let thHTML = '<tr><th style="text-align:left;min-width:140px">Barber</th><th style="text-align:left;min-width:100px">Pobočka</th>';
+  let thHTML = '<tr><th class="bb-sticky-name" style="text-align:left;min-width:140px;position:sticky;left:0;z-index:4;background:var(--bg2)">Barber</th><th style="text-align:left;min-width:100px">Pobočka</th>';
   selectedMonths.forEach((m, mi) => {
     thHTML += `<th style="min-width:85px">${m.mesic}<br><span style="font-weight:400;font-size:9px">${m.rok}</span></th>`;
     if (mi > 0 && mi < selectedMonths.length) {
@@ -3949,14 +3954,16 @@ function renderBarberi() {
     // Sekce separator when pobočka changes
     if (mainPob !== lastPob && mainPob) {
       const secColor = mainPob === 'Záběhlice' ? 'var(--zabeh)' : mainPob === 'Vršovice' ? 'var(--vrsov)' : mainPob === 'Veleslavín' ? 'var(--velesv)' : 'var(--gold)';
-      tbHTML += `<tr><td colspan="${selectedMonths.length + 3}" style="background:var(--sec-head);padding:8px 14px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${secColor};border-top:1px solid var(--row-border)">${mainPob.toUpperCase()}</td></tr>`;
+      tbHTML += `<tr class="bb-sec-row"><td style="position:sticky;left:0;z-index:5;background:var(--sec-head);padding:8px 14px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${secColor};border-top:1px solid var(--row-border);white-space:nowrap">${mainPob.toUpperCase()}</td><td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>`;
+      selectedMonths.forEach(() => { tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>'; });
+      tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td></tr>';
       lastPob = mainPob;
     }
 
     const bg = idx % 2 === 0 ? '' : ' style="background:var(--stripe)"';
     // Tržby row
     tbHTML += `<tr${bg}>`;
-    tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px">${name}</td>`;
+    tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px;position:sticky;left:0;z-index:2;background:var(--bg2);white-space:nowrap">${name}</td>`;
     tbHTML += `<td style="text-align:left;font-size:11px;color:var(--muted2);padding:8px 14px">${pobLabel}</td>`;
     d.months.forEach((md, mi) => {
       const c = md.trzba > 0 ? 'color:var(--text)' : 'color:var(--muted)';
@@ -3968,7 +3975,7 @@ function renderBarberi() {
     // Delta row (meziměsíční změny v %)
     if (selectedMonths.length >= 2) {
       tbHTML += `<tr style="background:var(--stripe2)">`;
-      tbHTML += `<td style="padding:2px 14px;font-size:10px;color:var(--muted)">Δ %</td><td></td>`;
+      tbHTML += `<td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:var(--stripe2)">Δ %</td><td></td>`;
       d.months.forEach((md, mi) => {
         if (mi === 0) {
           tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
@@ -3991,7 +3998,8 @@ function renderBarberi() {
 
   // Grand total
   tbHTML += `<tr style="border-top:2px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06)">`;
-  tbHTML += `<td style="text-align:left;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--gold);padding:10px 14px" colspan="2">CELKEM</td>`;
+  tbHTML += `<td style="text-align:left;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--gold);padding:10px 14px;position:sticky;left:0;z-index:5;background:rgba(201,168,76,0.06);white-space:nowrap">CELKEM</td>`;
+  tbHTML += `<td style="background:rgba(201,168,76,0.06)"></td>`;
   selectedMonths.forEach((m, mi) => {
     const mT = sorted.reduce((s, n) => s + barberData[n].months[mi].trzba, 0);
     tbHTML += `<td style="font-weight:700;color:var(--gold2)">${Math.round(mT).toLocaleString('cs-CZ')}</td>`;
@@ -4001,7 +4009,7 @@ function renderBarberi() {
 
   // Grand total delta row
   if (selectedMonths.length >= 2) {
-    tbHTML += `<tr style="background:rgba(201,168,76,0.04)"><td style="padding:2px 14px;font-size:10px;color:var(--muted)">Δ %</td><td></td>`;
+    tbHTML += `<tr style="background:rgba(201,168,76,0.04)"><td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:rgba(201,168,76,0.04)">Δ %</td><td></td>`;
     selectedMonths.forEach((m, mi) => {
       if (mi === 0) {
         tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
