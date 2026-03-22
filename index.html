@@ -165,7 +165,7 @@ window.addEventListener('scroll', () => {
 </script>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GoldenGate — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -903,72 +903,102 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   .mob-toggle{display:flex;}
   nav{
     display:none;flex-direction:column;
-    position:absolute;top:64px;left:0;right:0;z-index:199;
+    position:absolute;top:56px;left:0;right:0;z-index:199;
     background:var(--bg2);border-bottom:1px solid var(--border);
-    padding:8px 16px 12px;gap:4px;
+    padding:8px 12px 12px;gap:4px;
     box-shadow:0 12px 40px rgba(0,0,0,0.15);
   }
   nav.mob-open{display:flex;}
-  .tab{width:100%;justify-content:flex-start;padding:12px 16px;border-radius:10px;font-size:14px;}
+  .tab{width:100%;justify-content:flex-start;padding:11px 16px;border-radius:10px;font-size:14px;}
   .tab.active{background:rgba(201,168,76,0.12) !important;}
   .tab.active::after{display:none;}
 
-  /* Header layout */
+  /* Header */
   .header-inner{height:56px;gap:8px;}
-  .brand img{height:32px !important;}
+  .brand img{height:30px !important;}
   header{position:sticky;top:0;z-index:200;}
 
-  /* Main content */
-  main{padding:16px 12px 70px;}
-  .sec{font-size:11px !important;}
+  /* Main — tight padding */
+  main{padding:10px 10px 50px !important;}
+  .sec{font-size:11px !important;margin-bottom:8px !important;}
 
-  /* KPI cards */
-  .kpi-row,.kpi-row-4{grid-template-columns:1fr 1fr !important;gap:10px !important;}
-  .kpi-row-3,.kpi-row-2{grid-template-columns:1fr !important;gap:10px !important;}
-  .kpi{padding:14px 16px !important;}
-  .kpi-val{font-size:22px !important;}
+  /* KPI — compact 2-col */
+  .kpi-row,.kpi-row-4,.kpi-row-3,.kpi-row-2{grid-template-columns:1fr 1fr !important;gap:8px !important;}
+  .kpi{padding:10px 12px !important;border-radius:10px !important;}
+  .kpi-val{font-size:18px !important;}
+  .kpi-label{font-size:8px !important;letter-spacing:1.5px !important;}
 
-  /* Charts */
-  .chart-grid,.chart-grid-21,.chart-grid-1,.chart-grid-3{grid-template-columns:1fr !important;gap:14px !important;}
-  .card{padding:16px !important;border-radius:12px !important;}
-  .pobocky-row{grid-template-columns:1fr !important;gap:12px !important;}
+  /* Charts — single col, compact */
+  .chart-grid,.chart-grid-21,.chart-grid-1,.chart-grid-3{grid-template-columns:1fr !important;gap:10px !important;}
+  .card{padding:12px !important;border-radius:10px !important;margin-bottom:10px !important;}
+  .card-title{font-size:12px !important;}
+  .card-sub{font-size:10px !important;}
+  .pobocky-row{grid-template-columns:1fr !important;gap:10px !important;}
+  .spark-strip{grid-template-columns:1fr !important;gap:8px !important;}
+  .spark-card{padding:10px !important;}
 
-  /* Zálohy */
-  .z-grid{grid-template-columns:1fr !important;}
-  .zalohy-filter{flex-direction:column !important;gap:10px !important;}
-  .zf-field{min-width:100% !important;max-width:100% !important;}
+  /* ═══ FILTER BARS — inline compact ═══ */
 
-  /* Výplaty filter */
-  #vp-filter-bar{flex-direction:column !important;gap:8px !important;}
-  #vp-filter-bar .zf-field{min-width:100% !important;max-width:100% !important;}
+  /* Report filter: Od [select] Do [select] [PDF] */
+  #report-filter-bar{
+    padding:10px 12px !important;gap:8px !important;
+    flex-direction:row !important;flex-wrap:wrap !important;align-items:flex-end !important;
+  }
+  #report-filter-bar > span:first-child{display:none !important;}
+  #report-filter-bar > div:first-of-type{
+    flex-direction:row !important;gap:6px !important;align-items:flex-end !important;flex:1 !important;
+  }
+  #report-filter-bar > div:first-of-type > span{display:none !important;}
+  #report-filter-bar > div:first-of-type > div{flex:1 !important;}
+  #report-filter-bar > div:first-of-type > div > label{font-size:8px !important;}
+  #report-filter-bar select{padding:7px 22px 7px 8px !important;font-size:11px !important;min-width:0 !important;width:100% !important;}
+  #rpt-period-label{display:none !important;}
+  button[onclick*="ExportPDF"]{padding:6px 10px !important;font-size:10px !important;}
 
-  /* Report filter */
-  #report-filter-bar{flex-direction:column !important;gap:8px !important;align-items:stretch !important;}
-  #report-filter-bar > div{flex-direction:column !important;gap:8px !important;}
+  /* Generic zálohy/barbeři/výplaty filters — wrap into 2-col grid */
+  .zalohy-filter{padding:10px 12px !important;gap:6px !important;flex-wrap:wrap !important;}
+  .zalohy-filter > span:first-child{display:none !important;}
+  .zalohy-filter > span[style*="padding-top"]{display:none !important;}
+  .zf-field{min-width:calc(50% - 4px) !important;max-width:100% !important;flex:1 !important;}
+  .zf-select{padding:7px 22px 7px 8px !important;font-size:11px !important;width:100% !important;}
+  .zf-label{font-size:8px !important;}
+  .zf-reset{padding:7px 12px !important;font-size:10px !important;width:100% !important;}
 
-  /* Tables: horizontal scroll */
+  #vp-filter-bar .zf-field{min-width:calc(50% - 4px) !important;max-width:100% !important;}
+
+  /* Tables: scroll */
   .tbl-wrap,.report-wrap,.fp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .report-tbl,.fp-table,#vp-tbl,#vp-tbl3m,#bb-table,#cf-table{min-width:600px;}
+  .report-tbl,.fp-table,#vp-tbl,#vp-tbl3m,#bb-table,#cf-table{min-width:550px;}
+  .report-tbl th,.report-tbl td{padding:4px 8px !important;font-size:10px !important;}
+  .report-sec-head td{font-size:11px !important;padding:7px 10px !important;}
 
-  /* Barbeři */
-  #bb-filter-bar{flex-direction:column !important;gap:8px !important;}
+  /* Zálohy cards */
+  .z-grid{grid-template-columns:1fr !important;gap:8px !important;}
+  .z-card{padding:10px !important;}
 
   /* User menu */
-  .user-menu-dropdown{right:-8px !important;min-width:260px !important;}
+  .user-menu-dropdown{right:-8px !important;min-width:240px !important;}
 
   /* Login */
-  .login-box{padding:32px 24px 28px !important;margin:0 12px;}
+  .login-box{padding:24px 18px 20px !important;margin:0 10px;border-radius:14px !important;}
+  .login-title{font-size:22px !important;}
+  .login-input{padding:11px 12px !important;font-size:13px !important;}
+  .login-btn{padding:11px !important;font-size:14px !important;}
 
-  /* Loading screen logo */
-  .gg-load-logo-img{height:140px !important;}
+  /* Loading */
+  .gg-load-logo-img{height:100px !important;}
+
+  /* Hide non-essential */
+  .period-tag{display:none !important;}
 }
 
 @media(max-width:400px){
   .kpi-row,.kpi-row-4{grid-template-columns:1fr !important;}
-  .header-inner{height:50px;}
-  .brand img{height:28px !important;}
-  main{padding:12px 8px 60px;}
-  .tab{font-size:13px;padding:10px 14px;}
+  .header-inner{height:48px;}
+  .brand img{height:24px !important;}
+  main{padding:8px 6px 50px !important;}
+  .zf-field{min-width:100% !important;}
+  .kpi-val{font-size:16px !important;}
 }
 
 /* ── LOGIN ── */
@@ -1942,6 +1972,8 @@ async function loadAllData() {
   reportInitSelects(null);
   cfInitSelects(null);
   bbInitSelects();
+  renderBarberi();
+  window._rendered.barberi = true;
   renderReport();
   renderMara();
   window._rendered.mara = true;
@@ -3725,8 +3757,8 @@ function bbInitSelects() {
   const filtered = VYPLA_RAW.slice(startIdx);
 
   const opts = filtered.map(m => `<option value="${m.key}">${m.mesic} ${m.rok}</option>`).join('');
-  fromSel.innerHTML = '<option value="" disabled>— datum —</option>' + opts;
-  toSel.innerHTML = '<option value="" disabled>— datum —</option>' + opts;
+  fromSel.innerHTML = opts;
+  toSel.innerHTML = opts;
 
   fromSel.value = filtered[0].key;
   toSel.value = filtered[filtered.length - 1].key;
