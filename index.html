@@ -981,7 +981,9 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
   /* Mara tables — fully scrollable, no sticky columns */
   #view-mara .tbl-wrap{overflow-x:auto !important;-webkit-overflow-scrolling:touch;}
-  #view-mara .tbl-wrap table{min-width:400px !important;}
+  #view-mara .tbl-wrap table{min-width:420px !important;}
+  #view-mara .card{overflow:visible !important;}
+  #view-mara .chart-grid{overflow:visible !important;}
   .report-tbl th,.report-tbl td{padding:4px 8px !important;font-size:10px !important;}
   .report-sec-head td{font-size:11px !important;padding:7px 10px !important;}
 
@@ -3964,7 +3966,7 @@ function renderBarberi() {
     // Tržby row
     tbHTML += `<tr${bg}>`;
     tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px;position:sticky;left:0;z-index:2;background:var(--bg2);white-space:nowrap">${name}</td>`;
-    tbHTML += `<td style="text-align:left;font-size:11px;color:var(--muted2);padding:8px 14px">${pobLabel}</td>`;
+    tbHTML += `<td style="text-align:left;font-size:11px;color:var(--muted2);padding:8px 14px;background:var(--bg2)">${pobLabel}</td>`;
     d.months.forEach((md, mi) => {
       const c = md.trzba > 0 ? 'color:var(--text)' : 'color:var(--muted)';
       tbHTML += `<td style="${c}">${md.trzba ? Math.round(md.trzba).toLocaleString('cs-CZ') : '—'}</td>`;
@@ -3975,7 +3977,7 @@ function renderBarberi() {
     // Delta row (meziměsíční změny v %)
     if (selectedMonths.length >= 2) {
       tbHTML += `<tr style="background:var(--stripe2)">`;
-      tbHTML += `<td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:var(--stripe2)">Δ %</td><td></td>`;
+      tbHTML += `<td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:var(--stripe2)">Δ %</td><td style="background:var(--stripe2)"></td>`;
       d.months.forEach((md, mi) => {
         if (mi === 0) {
           tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
@@ -4009,7 +4011,7 @@ function renderBarberi() {
 
   // Grand total delta row
   if (selectedMonths.length >= 2) {
-    tbHTML += `<tr style="background:rgba(201,168,76,0.04)"><td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:rgba(201,168,76,0.04)">Δ %</td><td></td>`;
+    tbHTML += `<tr style="background:rgba(201,168,76,0.04)"><td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:rgba(201,168,76,0.04)">Δ %</td><td style="background:rgba(201,168,76,0.04)"></td>`;
     selectedMonths.forEach((m, mi) => {
       if (mi === 0) {
         tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
