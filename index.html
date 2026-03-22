@@ -1008,20 +1008,19 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   #cf-table th:nth-child(n+4),#cf-table td:nth-child(n+4){
     min-width:65px !important;font-size:9px !important;padding:3px 5px !important;
   }
-  /* Section headers — stay fixed during horizontal scroll */
-  #cf-table .cf-page-break td{
+  /* Section headers + totals — sticky left on mobile */
+  #cf-table .cf-sec-name{
+    position:sticky !important;left:0 !important;z-index:5 !important;
     display:table-cell !important;font-size:11px !important;padding:6px 8px !important;
-    position:sticky !important;left:0 !important;z-index:4 !important;
   }
-  /* Section totals — fix colspan, sticky */
-  #cf-table tr td[colspan="2"]{
-    display:table-cell !important;left:0 !important;font-size:10px !important;padding:5px 8px !important;
-    position:sticky !important;z-index:4 !important;
-  }
-  /* Grand total row sticky */
-  #cf-table tr:last-child td[colspan="2"]{
-    position:sticky !important;left:0 !important;z-index:4 !important;
-  }
+  /* On mobile, hide the Entita col in sec headers too */
+  #cf-table .cf-sec-row td:nth-child(1){display:table-cell !important;} /* override the general hide */
+  #cf-table .cf-sec-total-row td:nth-child(1){display:table-cell !important;}
+  #cf-table .cf-grand-row td:nth-child(1){display:table-cell !important;}
+  /* Hide the empty 2nd cell in header/total rows */
+  #cf-table .cf-sec-row td:nth-child(2),
+  #cf-table .cf-sec-total-row td:nth-child(2),
+  #cf-table .cf-grand-row td:nth-child(2){display:none !important;}
 
   /* CF filter compact */
   #view-cf > div:first-child{padding:10px 12px !important;gap:8px !important;}
@@ -3733,8 +3732,13 @@ async function renderCF() {
     if (!pivot[ent]) continue;
     const col = sColor[ent]||'#C9A84C';
 
-    // Sekce hlavička — class cf-page-break pro tisk
-    html += `<tr class="cf-page-break"><td colspan="${3+N}" style="background:var(--sec-head);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:${col};border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)">${ent.toUpperCase()}</td></tr>`;
+    // Sekce hlavička — separate cells so sticky works on mobile
+    html += `<tr class="cf-page-break cf-sec-row">
+      <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-head);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:${col};border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border);white-space:nowrap">${ent.toUpperCase()}</td>
+      <td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>
+      <td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>
+      ${mesice.map(()=>'<td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>').join('')}
+    </tr>`;
 
     let prevDod = null;
     const secTot = {};
@@ -3763,8 +3767,9 @@ async function renderCF() {
     // Sekce součet
     secSum = Object.values(secTot).reduce((a,b)=>a+b,0);
     const secCells = mesice.map(m=>`<td style="text-align:right;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--sec-total);white-space:nowrap">${secTot[m]!==0?fmtB(secTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
-    html += `<tr>
-      <td colspan="2" style="position:sticky;left:0;z-index:2;background:var(--sec-total);padding:7px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${col};border-top:1px solid var(--row-border)">∑ ${ent.toUpperCase()}</td>
+    html += `<tr class="cf-sec-total-row">
+      <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-total);padding:7px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${col};border-top:1px solid var(--row-border);white-space:nowrap">∑ ${ent.toUpperCase()}</td>
+      <td style="background:var(--sec-total);border-top:1px solid var(--row-border)"></td>
       <td style="position:sticky;left:260px;z-index:2;background:var(--sec-total);box-shadow:var(--shadow-sticky);border-top:1px solid var(--row-border)"></td>
       ${secCells}
     </tr>
@@ -3783,8 +3788,9 @@ async function renderCF() {
   const grandTot = {};
   mesice.forEach(m=>{ grandTot[m]=0; for(const ent of sekce){ if(!pivot[ent])continue; for(const {dod,pop} of ordRows[ent]){ grandTot[m]+=(pivot[ent][dod]&&pivot[ent][dod][pop]&&pivot[ent][dod][pop][m])||0; } } });
   const grandCells = mesice.map(m=>`<td style="text-align:right;padding:8px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:rgba(201,168,76,0.08);white-space:nowrap;border-top:2px solid rgba(201,168,76,0.3)">${grandTot[m]!==0?fmtB(grandTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
-  html += `<tr>
-    <td colspan="2" style="position:sticky;left:0;z-index:2;background:rgba(201,168,76,0.08);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:var(--gold);border-top:2px solid rgba(201,168,76,0.3)">GRAND TOTAL</td>
+  html += `<tr class="cf-grand-row">
+    <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:rgba(201,168,76,0.08);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:var(--gold);border-top:2px solid rgba(201,168,76,0.3);white-space:nowrap">GRAND TOTAL</td>
+    <td style="background:rgba(201,168,76,0.08);border-top:2px solid rgba(201,168,76,0.3)"></td>
     <td style="position:sticky;left:260px;z-index:2;background:rgba(201,168,76,0.08);box-shadow:var(--shadow-sticky);border-top:2px solid rgba(201,168,76,0.3)"></td>
     ${grandCells}
   </tr>`;
