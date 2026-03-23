@@ -1025,18 +1025,28 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 
 @media(max-width:680px){
-  /* Hide hamburger — tabs are now inline horizontal scroll */
+  /* Hide hamburger — tabs are now horizontal scroll strip below header */
   .mob-toggle{display:none !important;}
+
+  /* Header becomes flex-wrap so nav drops to its own row */
+  .header-inner{height:auto !important;flex-wrap:wrap;padding:8px 0 0 !important;gap:0 !important;}
+  .brand{padding:0 0 8px;flex-shrink:0;}
+  .user-menu-wrap{padding:0 0 8px;margin-left:auto;flex-shrink:0;}
+
+  /* Nav takes full width on second row */
   nav{
     display:flex !important;flex-direction:row !important;
     position:relative !important;top:auto !important;left:auto !important;right:auto !important;
+    order:99 !important;
+    width:100% !important;flex-basis:100% !important;
     z-index:199;
-    background:var(--bg2);border-bottom:1px solid var(--border);
-    padding:6px 10px !important;gap:2px !important;
+    background:var(--bg2);border-top:1px solid var(--border2);
+    padding:6px 10px !important;gap:3px !important;
     box-shadow:none !important;
-    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    overflow-x:auto !important;-webkit-overflow-scrolling:touch;
     white-space:nowrap;
     scrollbar-width:none;
+    -ms-overflow-style:none;
   }
   nav::-webkit-scrollbar{display:none;}
   .tab{width:auto !important;justify-content:center !important;padding:7px 12px !important;border-radius:8px !important;font-size:12px !important;flex-shrink:0 !important;}
@@ -1046,9 +1056,8 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   .tab-icon{width:14px !important;height:14px !important;}
 
   /* Header */
-  .header-inner{height:56px;gap:8px;}
   .brand img{height:30px !important;}
-  header{position:sticky;top:0;z-index:200;}
+  header{position:sticky;top:0;z-index:200;padding:0 12px !important;}
 
   /* Main — tight padding */
   main{padding:10px 10px 50px !important;}
