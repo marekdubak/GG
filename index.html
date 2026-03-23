@@ -256,21 +256,25 @@ function positionTabSlider() {
   const slider = document.getElementById('tab-slider');
   const activeTab = document.querySelector('nav .tab.active');
   if (!nav || !slider || !activeTab) return;
-  // Skip if mobile menu is open (vertical layout)
-  if (nav.classList.contains('mob-open') || window.innerWidth <= 680) {
-    slider.style.opacity = '0';
-    return;
-  }
   slider.style.opacity = '1';
   const navRect = nav.getBoundingClientRect();
   const tabRect = activeTab.getBoundingClientRect();
-  slider.style.left = (tabRect.left - navRect.left) + 'px';
+  // For mobile horizontal scroll, offset by nav scroll position
+  const scrollOffset = nav.scrollLeft || 0;
+  slider.style.left = (tabRect.left - navRect.left + scrollOffset) + 'px';
   slider.style.width = tabRect.width + 'px';
+  // On mobile, scroll active tab into view
+  if (window.innerWidth <= 680) {
+    activeTab.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
 }
 // Position on load and resize
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(positionTabSlider, 300);
   setTimeout(positionTabSlider, 1000);
+  // Reposition slider when nav is scrolled horizontally (mobile)
+  const navEl = document.querySelector('nav');
+  if (navEl) navEl.addEventListener('scroll', () => { positionTabSlider(); }, {passive:true});
 });
 window.addEventListener('resize', () => { setTimeout(positionTabSlider, 50); });
 
@@ -1021,20 +1025,25 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 
 @media(max-width:680px){
-  /* Show hamburger, hide nav */
-  .mob-toggle{display:flex;}
+  /* Hide hamburger — tabs are now inline horizontal scroll */
+  .mob-toggle{display:none !important;}
   nav{
-    display:none;flex-direction:column;
-    position:absolute;top:56px;left:0;right:0;z-index:199;
+    display:flex !important;flex-direction:row !important;
+    position:relative !important;top:auto !important;left:auto !important;right:auto !important;
+    z-index:199;
     background:var(--bg2);border-bottom:1px solid var(--border);
-    padding:8px 12px 12px;gap:4px;
-    box-shadow:0 12px 40px rgba(0,0,0,0.15);
+    padding:6px 10px !important;gap:2px !important;
+    box-shadow:none !important;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    white-space:nowrap;
+    scrollbar-width:none;
   }
-  nav.mob-open{display:flex;}
-  .tab{width:100%;justify-content:flex-start;padding:11px 16px;border-radius:10px;font-size:14px;}
-  .tab.active{background:rgba(201,168,76,0.12) !important;}
+  nav::-webkit-scrollbar{display:none;}
+  .tab{width:auto !important;justify-content:center !important;padding:7px 12px !important;border-radius:8px !important;font-size:12px !important;flex-shrink:0 !important;}
+  .tab.active{background:rgba(201,168,76,0.15) !important;}
   .tab.active::after{display:none;}
-  .tab-slider{display:none !important;}
+  .tab-slider{display:block !important;bottom:0;height:2px;}
+  .tab-icon{width:14px !important;height:14px !important;}
 
   /* Header */
   .header-inner{height:56px;gap:8px;}
