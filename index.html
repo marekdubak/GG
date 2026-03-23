@@ -275,6 +275,31 @@ window.addEventListener('DOMContentLoaded', () => {
   // Reposition slider when nav is scrolled horizontally (mobile)
   const navEl = document.querySelector('nav');
   if (navEl) navEl.addEventListener('scroll', () => { positionTabSlider(); }, {passive:true});
+
+  // Mobile: distinguish swipe from tap on nav tabs
+  if ('ontouchstart' in window) {
+    let _navTouchStartX = 0;
+    let _navTouchMoved = false;
+    const navTabs = document.querySelectorAll('nav .tab');
+    navTabs.forEach(tab => {
+      tab.addEventListener('touchstart', (e) => {
+        _navTouchStartX = e.touches[0].clientX;
+        _navTouchMoved = false;
+      }, {passive:true});
+      tab.addEventListener('touchmove', (e) => {
+        if (Math.abs(e.touches[0].clientX - _navTouchStartX) > 8) {
+          _navTouchMoved = true;
+        }
+      }, {passive:true});
+      tab.addEventListener('click', (e) => {
+        if (_navTouchMoved) {
+          e.preventDefault();
+          e.stopPropagation();
+          _navTouchMoved = false;
+        }
+      }, {capture:true});
+    });
+  }
 });
 window.addEventListener('resize', () => { setTimeout(positionTabSlider, 50); });
 
@@ -1043,13 +1068,14 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     background:var(--bg2);border-top:1px solid var(--border2);
     padding:6px 10px !important;gap:3px !important;
     box-shadow:none !important;
-    overflow-x:auto !important;-webkit-overflow-scrolling:touch;
+    overflow-x:scroll !important;-webkit-overflow-scrolling:touch;
     white-space:nowrap;
     scrollbar-width:none;
     -ms-overflow-style:none;
+    touch-action:pan-x !important;
   }
   nav::-webkit-scrollbar{display:none;}
-  .tab{width:auto !important;justify-content:center !important;padding:7px 12px !important;border-radius:8px !important;font-size:12px !important;flex-shrink:0 !important;}
+  .tab{width:auto !important;justify-content:center !important;padding:7px 12px !important;border-radius:8px !important;font-size:12px !important;flex-shrink:0 !important;touch-action:pan-x !important;-webkit-user-drag:none;}
   .tab.active{background:rgba(201,168,76,0.15) !important;}
   .tab.active::after{display:none;}
   .tab-slider{display:block !important;bottom:0;height:2px;}
