@@ -110,6 +110,8 @@ function show(id) {
 
   // Position the sliding underline
   if (typeof positionTabSlider === 'function') setTimeout(positionTabSlider, 20);
+  // On mobile, scroll clicked tab into view
+  if (typeof scrollActiveTabIntoView === 'function') setTimeout(scrollActiveTabIntoView, 50);
 
   if (oldView && oldView !== view) {
     // Animate out
@@ -259,14 +261,15 @@ function positionTabSlider() {
   slider.style.opacity = '1';
   const navRect = nav.getBoundingClientRect();
   const tabRect = activeTab.getBoundingClientRect();
-  // For mobile horizontal scroll, offset by nav scroll position
   const scrollOffset = nav.scrollLeft || 0;
   slider.style.left = (tabRect.left - navRect.left + scrollOffset) + 'px';
   slider.style.width = tabRect.width + 'px';
-  // On mobile, scroll active tab into view
-  if (window.innerWidth <= 680) {
-    activeTab.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
-  }
+}
+function scrollActiveTabIntoView() {
+  const nav = document.querySelector('nav');
+  const activeTab = document.querySelector('nav .tab.active');
+  if (!nav || !activeTab || window.innerWidth > 680) return;
+  activeTab.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
 }
 // Position on load and resize
 window.addEventListener('DOMContentLoaded', () => {
