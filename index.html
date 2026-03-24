@@ -95,10 +95,23 @@ window.addEventListener('DOMContentLoaded', () => {
 /* ═══ TAB SWITCH WITH ANIMATION ═══ */
 function show(id) {
   const oldView = document.querySelector('.view.active');
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const view = document.getElementById('view-' + id);
   const tab  = document.getElementById('tab-' + id);
+
+  // Block access to tabs the user doesn't have rights to
+  if (view && USER_TAB_RIGHTS && !USER_TAB_RIGHTS['tab_' + id]) return;
+
+  // Close mobile menu
+  const navEl = document.querySelector('nav');
+  if (navEl) navEl.classList.remove('mob-open');
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   if (tab) tab.classList.add('active');
+
+  // Position the sliding underline
+  if (typeof positionTabSlider === 'function') setTimeout(positionTabSlider, 20);
+  // On mobile, scroll clicked tab into view
+  if (typeof scrollActiveTabIntoView === 'function') setTimeout(scrollActiveTabIntoView, 50);
 
   if (oldView && oldView !== view) {
     // Animate out
@@ -111,7 +124,10 @@ function show(id) {
         view.querySelectorAll('.scroll-reveal').forEach(el => {
           el.classList.remove('in-view');
         });
+        // Reset KPI counters for animation on tab switch
+        view.querySelectorAll('.kpi-val').forEach(e => { e._counted = false; });
         setTimeout(setupScrollReveal, 80);
+        setTimeout(() => { if (typeof refreshKpiCounters === 'function') refreshKpiCounters(); }, 200);
       }
     }, 280);
   } else if (view && !view.classList.contains('active')) {
@@ -121,7 +137,7 @@ function show(id) {
 
   // CF vždy znovu fetchuje při kliknutí
   if (id === 'cf' && window._appReady) { setTimeout(renderCF, 350); return; }
-  if (id === 'report' && window._appReady) { setTimeout(() => { renderReport(); setTimeout(setupScrollReveal, 200); }, 350); return; }
+  if (id === 'report' && window._appReady) { setTimeout(() => { renderReport(); setTimeout(setupScrollReveal, 200); setTimeout(() => { if (typeof refreshKpiCounters === 'function') refreshKpiCounters(); }, 400); }, 350); return; }
   if (window._appReady && window.init && window.init[id] && !window._rendered[id]) {
     setTimeout(() => { window.init[id](); window._rendered[id] = true; setTimeout(setupScrollReveal, 200); }, 350);
   }
@@ -149,6 +165,147 @@ if (localStorage.getItem('gg-theme') === 'dark') {
   });
 }
 
+/* ═══ ANIMATED COUNTER ENGINE ═══
+   Counts up from 0 to target value with easing.
+   Usage: animateValue(element, targetNumber, duration, suffix, prefix)
+   Also: animateKpiValues() — auto-animates all .kpi-val with data-target */
+
+function animateValue(el, target, duration, suffix, prefix) {
+  if (!el || target === null || target === undefined || isNaN(target)) return;
+  duration = duration || 1200;
+  suffix = suffix || '';
+  prefix = prefix || '';
+  const start = performance.now();
+  const isNeg = target < 0;
+  const absTarget = Math.abs(target);
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    // Cubic ease-out
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(absTarget * ease);
+    const formatted = current.toLocaleString('cs-CZ');
+    el.textContent = prefix + (isNeg ? '-' : '') + formatted + suffix;
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  // Start from 0
+  el.textContent = prefix + '0' + suffix;
+  requestAnimationFrame(tick);
+}
+
+// Animate a .kpi-val element when it becomes visible via IntersectionObserver
+function setupKpiCounters() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && !e.target._counted) {
+        e.target._counted = true;
+        const raw = e.target.textContent.replace(/\s/g, '').replace(/[^\d,.\-−]/g, function(ch) {
+          return (ch === '−' || ch === '–') ? '-' : '';
+        }).replace(',', '.');
+        const num = parseFloat(raw);
+        if (!isNaN(num) && Math.abs(num) > 0) {
+          const text = e.target.textContent.trim();
+          // Detect suffix (Kč, %, etc.)
+          const match = text.match(/[\d\s,.−–-]+(.*)$/);
+          const suffix = match ? match[1].trim() : '';
+          const prefix = text.match(/^([^\d−–-]*)/);
+          const pre = prefix ? prefix[1] : '';
+          animateValue(e.target, num, 1200, suffix ? ' ' + suffix : '', pre);
+        }
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  // Observe all KPI values that exist right now
+  document.querySelectorAll('.kpi-val').forEach(el => {
+    if (!el._counted && el.textContent.trim() !== '—' && el.textContent.trim() !== '0') {
+      observer.observe(el);
+    }
+  });
+
+  return observer;
+}
+
+// Global observer reference
+let _kpiObserver = null;
+
+// Re-scan for new KPI vals (called after dynamic renders)
+function refreshKpiCounters() {
+  if (!_kpiObserver) _kpiObserver = setupKpiCounters();
+  document.querySelectorAll('.kpi-val').forEach(el => {
+    if (!el._counted && el.textContent.trim() !== '—' && el.textContent.trim() !== '0') {
+      _kpiObserver.observe(el);
+    }
+  });
+}
+
+// Auto-init after DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => { _kpiObserver = setupKpiCounters(); }, 1500);
+  // Periodic refresh for dynamically loaded content
+  let kpiRuns = 0;
+  const kpiIv = setInterval(() => {
+    refreshKpiCounters();
+    if (++kpiRuns > 15) clearInterval(kpiIv);
+  }, 2000);
+});
+
+/* ═══ TAB SLIDER POSITION ENGINE ═══ */
+function positionTabSlider() {
+  const nav = document.querySelector('nav');
+  const slider = document.getElementById('tab-slider');
+  const activeTab = document.querySelector('nav .tab.active');
+  if (!nav || !slider || !activeTab) return;
+  slider.style.opacity = '1';
+  const navRect = nav.getBoundingClientRect();
+  const tabRect = activeTab.getBoundingClientRect();
+  const scrollOffset = nav.scrollLeft || 0;
+  slider.style.left = (tabRect.left - navRect.left + scrollOffset) + 'px';
+  slider.style.width = tabRect.width + 'px';
+}
+function scrollActiveTabIntoView() {
+  const nav = document.querySelector('nav');
+  const activeTab = document.querySelector('nav .tab.active');
+  if (!nav || !activeTab || window.innerWidth > 680) return;
+  activeTab.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+}
+// Position on load and resize
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(positionTabSlider, 300);
+  setTimeout(positionTabSlider, 1000);
+  // Reposition slider when nav is scrolled horizontally (mobile)
+  const navEl = document.querySelector('nav');
+  if (navEl) navEl.addEventListener('scroll', () => { positionTabSlider(); }, {passive:true});
+
+  // Mobile: distinguish swipe from tap on nav tabs
+  if ('ontouchstart' in window) {
+    let _navTouchStartX = 0;
+    let _navTouchMoved = false;
+    const navTabs = document.querySelectorAll('nav .tab');
+    navTabs.forEach(tab => {
+      tab.addEventListener('touchstart', (e) => {
+        _navTouchStartX = e.touches[0].clientX;
+        _navTouchMoved = false;
+      }, {passive:true});
+      tab.addEventListener('touchmove', (e) => {
+        if (Math.abs(e.touches[0].clientX - _navTouchStartX) > 8) {
+          _navTouchMoved = true;
+        }
+      }, {passive:true});
+      tab.addEventListener('click', (e) => {
+        if (_navTouchMoved) {
+          e.preventDefault();
+          e.stopPropagation();
+          _navTouchMoved = false;
+        }
+      }, {capture:true});
+    });
+  }
+});
+window.addEventListener('resize', () => { setTimeout(positionTabSlider, 50); });
+
 /* ═══ HEADER SCROLL GLOW ═══ */
 window.addEventListener('scroll', () => {
   const h = document.querySelector('#app > header');
@@ -157,7 +314,7 @@ window.addEventListener('scroll', () => {
 </script>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GoldenGate — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -207,7 +364,7 @@ body.dark-mode .fp-total-row td { background:rgba(255,255,255,0.04) !important; 
 }
 .theme-toggle:hover { border-color:var(--gold); color:var(--gold); }
 *{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
 body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
 
 /* ── GRAIN */
@@ -238,7 +395,7 @@ header{
 }
 
 /* ── TABS ── */
-nav{display:flex;gap:2px;align-items:center;}
+nav{display:flex;gap:2px;align-items:center;position:relative;}
 .tab{
   padding:8px 20px;border-radius:8px;border:1px solid transparent;
   background:transparent;color:var(--muted);
@@ -250,6 +407,10 @@ nav{display:flex;gap:2px;align-items:center;}
 .tab.active{color:var(--text);background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.35);}
 .tab-pip{width:7px;height:7px;border-radius:50%;transition:opacity 0.2s;}
 .tab:not(.active) .tab-pip{opacity:0.3;}
+.tab-icon{width:16px;height:16px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;transition:transform 0.3s cubic-bezier(.16,1,.3,1),opacity 0.2s;}
+.tab:not(.active) .tab-icon{opacity:0.4;}
+.tab.active .tab-icon{opacity:1;}
+.tab:hover .tab-icon{opacity:0.8;transform:scale(1.12);}
 
 /* ── VIEWS ── */
 .view{display:none;}
@@ -349,6 +510,7 @@ main.revealed .sec.scroll-reveal.in-view::after{transform:scaleX(1);}
   background-size:250% 100%;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   animation:goldShimmer 5s ease-in-out infinite;
+  font-variant-numeric:tabular-nums;
 }
 @keyframes goldShimmer{0%,100%{background-position:200% center}50%{background-position:0% center}}
 
@@ -358,14 +520,18 @@ main.revealed .sec.scroll-reveal.in-view::after{transform:scaleX(1);}
   animation:accentPulse 3.5s ease-in-out infinite;}
 @keyframes accentPulse{0%,100%{opacity:0.3;transform:scaleX(0.6)}50%{opacity:1;transform:scaleX(1)}}
 
-/* ═══ TAB: underline + pip glow ═══ */
+/* ═══ TAB: sliding underline + shimmer ═══ */
 .tab{position:relative;transition:all 0.3s cubic-bezier(.16,1,.3,1) !important;}
-.tab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;
-  border-radius:2px;background:var(--gold);animation:tabLine 0.4s cubic-bezier(.16,1,.3,1) both;}
-@keyframes tabLine{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
-.tab.active .tab-pip{animation:pipGlow 2.5s ease-in-out infinite;}
-@keyframes pipGlow{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.5)}50%{box-shadow:0 0 8px 4px rgba(201,168,76,0.2)}}
+.tab.active .tab-icon{animation:iconPulse 2.5s ease-in-out infinite;}
+@keyframes iconPulse{0%,100%{filter:drop-shadow(0 0 0 transparent)}50%{filter:drop-shadow(0 0 6px rgba(201,168,76,0.3))}}
 .tab:active{transform:scale(0.95);}
+.tab-slider{position:absolute;bottom:0;height:2.5px;border-radius:2px;pointer-events:none;
+  transition:left 0.4s cubic-bezier(.16,1,.3,1),width 0.4s cubic-bezier(.16,1,.3,1);overflow:hidden;}
+.tab-slider-bg{position:absolute;inset:0;background:var(--gold);opacity:0.35;border-radius:2px;}
+.tab-slider-shimmer{position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  animation:tabShimmer 2s ease-in-out infinite;}
+@keyframes tabShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 
 /* ═══ HEADER scroll glow ═══ */
 header{transition:box-shadow 0.5s,background 0.5s;}
@@ -532,11 +698,7 @@ body.dark-mode .z-card{backdrop-filter:blur(8px);background:rgba(15,15,15,0.85);
 
 /* ═══ TAB ANIMATIONS ═══ */
 .tab{position:relative;transition:all 0.3s cubic-bezier(.16,1,.3,1) !important;}
-.tab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;
-  border-radius:2px;background:var(--gold);animation:tabLine 0.4s cubic-bezier(.16,1,.3,1) both;}
-@keyframes tabLine{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
-.tab.active .tab-pip{animation:pipGlow 2.5s ease-in-out infinite;}
-@keyframes pipGlow{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.5)}50%{box-shadow:0 0 8px 4px rgba(201,168,76,0.2)}}
+.tab.active .tab-icon{animation:iconPulse 2.5s ease-in-out infinite;}
 .tab:active{transform:scale(0.95);}
 
 /* ═══ HEADER SCROLL GLOW ═══ */
@@ -862,13 +1024,211 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 
 footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);letter-spacing:1px;}
 
+/* ═══ MOBILE: hamburger toggle ═══ */
+.mob-toggle{display:none;width:38px;height:38px;border-radius:8px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:20px;
+  align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.mob-toggle:hover{border-color:var(--gold);color:var(--gold);}
+.mob-toggle svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+
+/* ═══ SCROLL HINT on table wrappers — mobile only ═══ */
+.tbl-scroll-hint{position:relative;}
+.tbl-scroll-hint::after{display:none;}
+@media(max-width:680px){
+  .tbl-scroll-hint.has-overflow::after{content:'← scroll →';display:block;position:absolute;bottom:8px;right:12px;
+    font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);
+    background:var(--bg2);padding:3px 10px;border-radius:20px;border:1px solid var(--border2);
+    opacity:0.7;pointer-events:none;transition:opacity .3s;}
+  .tbl-scroll-hint.scrolled::after{opacity:0;}
+}
+
 @media(max-width:960px){
-  main,header{padding-left:20px;padding-right:20px;}
+  main{padding:24px 20px 80px;}
+  header{padding:0 16px;}
   .kpi-row-4{grid-template-columns:repeat(2,1fr);}
   .chart-grid-21,.pobocky-row,.spark-strip,.kpi-row-3{grid-template-columns:1fr;}
   .z-grid{grid-template-columns:1fr;}
   nav{gap:2px;}
   .tab{padding:7px 12px;font-size:12px;}
+}
+
+@media(max-width:680px){
+  /* Hide hamburger — tabs are now horizontal scroll strip below header */
+  .mob-toggle{display:none !important;}
+
+  /* Header becomes flex-wrap so nav drops to its own row */
+  .header-inner{height:auto !important;flex-wrap:wrap;padding:8px 0 0 !important;gap:0 !important;}
+  .brand{padding:0 0 8px;flex-shrink:0;}
+  .user-menu-wrap{padding:0 0 8px;margin-left:auto;flex-shrink:0;}
+
+  /* Nav takes full width on second row */
+  nav{
+    display:flex !important;flex-direction:row !important;
+    position:relative !important;top:auto !important;left:auto !important;right:auto !important;
+    order:99 !important;
+    width:100% !important;flex-basis:100% !important;
+    z-index:199;
+    background:var(--bg2);border-top:1px solid var(--border2);
+    padding:6px 10px !important;gap:3px !important;
+    box-shadow:none !important;
+    overflow-x:scroll !important;-webkit-overflow-scrolling:touch;
+    white-space:nowrap;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+    touch-action:pan-x !important;
+  }
+  nav::-webkit-scrollbar{display:none;}
+  .tab{width:auto !important;justify-content:center !important;padding:7px 12px !important;border-radius:8px !important;font-size:12px !important;flex-shrink:0 !important;touch-action:pan-x !important;-webkit-user-drag:none;}
+  .tab.active{background:rgba(201,168,76,0.15) !important;}
+  .tab.active::after{display:none;}
+  .tab-slider{display:block !important;bottom:0;height:2px;}
+  .tab-icon{width:14px !important;height:14px !important;}
+
+  /* Header */
+  .brand img{height:30px !important;}
+  header{position:sticky;top:0;z-index:200;padding:0 12px !important;}
+
+  /* Main — tight padding */
+  main{padding:10px 10px 50px !important;}
+  .sec{font-size:11px !important;margin-bottom:8px !important;}
+
+  /* KPI — compact 2-col */
+  .kpi-row,.kpi-row-4,.kpi-row-3,.kpi-row-2{grid-template-columns:1fr 1fr !important;gap:8px !important;}
+  .kpi{padding:10px 12px !important;border-radius:10px !important;}
+  .kpi-val{font-size:18px !important;}
+  .kpi-label{font-size:8px !important;letter-spacing:1.5px !important;}
+
+  /* Charts — single col, compact */
+  .chart-grid,.chart-grid-21,.chart-grid-1,.chart-grid-3{grid-template-columns:1fr !important;gap:10px !important;}
+  .card{padding:12px !important;border-radius:10px !important;margin-bottom:10px !important;}
+  .card-title{font-size:12px !important;}
+  .card-sub{font-size:10px !important;}
+  .pobocky-row{grid-template-columns:1fr !important;gap:10px !important;}
+  .spark-strip{grid-template-columns:1fr !important;gap:8px !important;}
+  .spark-card{padding:10px !important;}
+
+  /* ═══ FILTER BARS — inline compact ═══ */
+
+  /* Report filter: Od [select] Do [select] [PDF] */
+  #report-filter-bar{
+    padding:10px 12px !important;gap:8px !important;
+    flex-direction:row !important;flex-wrap:wrap !important;align-items:flex-end !important;
+  }
+  #report-filter-bar > span:first-child{display:none !important;}
+  #report-filter-bar > div:first-of-type{
+    flex-direction:row !important;gap:6px !important;align-items:flex-end !important;flex:1 !important;
+  }
+  #report-filter-bar > div:first-of-type > span{display:none !important;}
+  #report-filter-bar > div:first-of-type > div{flex:1 !important;}
+  #report-filter-bar > div:first-of-type > div > label{font-size:8px !important;}
+  #report-filter-bar select{padding:7px 22px 7px 8px !important;font-size:11px !important;min-width:0 !important;width:100% !important;}
+  #rpt-period-label{display:none !important;}
+  button[onclick*="ExportPDF"]{padding:6px 10px !important;font-size:10px !important;}
+
+  /* Generic zálohy/barbeři/výplaty filters — wrap into 2-col grid */
+  .zalohy-filter{padding:10px 12px !important;gap:6px !important;flex-wrap:wrap !important;}
+  .zalohy-filter > span:first-child{display:none !important;}
+  .zalohy-filter > span[style*="padding-top"]{display:none !important;}
+  .zf-field{min-width:calc(50% - 4px) !important;max-width:100% !important;flex:1 !important;}
+  .zf-select{padding:7px 22px 7px 8px !important;font-size:11px !important;width:100% !important;}
+  .zf-label{font-size:8px !important;}
+  .zf-reset{padding:7px 12px !important;font-size:10px !important;width:100% !important;}
+
+  #vp-filter-bar .zf-field{min-width:calc(50% - 4px) !important;max-width:100% !important;}
+
+  /* Charts in report — horizontal scroll on mobile */
+  .rpt-charts-row{
+    display:flex !important;overflow-x:auto !important;-webkit-overflow-scrolling:touch;
+    scroll-snap-type:x mandatory;gap:8px !important;padding-bottom:6px;
+  }
+  .rpt-charts-row > div{
+    min-width:75vw !important;flex-shrink:0 !important;scroll-snap-align:start;
+  }
+
+  /* Tables: scroll */
+  .tbl-wrap,.report-wrap,.fp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .report-tbl,.fp-table,#vp-tbl,#vp-tbl3m,#bb-table,#cf-table{min-width:550px;}
+
+  /* Mara tables — fully scrollable, no sticky columns */
+  #view-mara .tbl-wrap{overflow-x:auto !important;-webkit-overflow-scrolling:touch;}
+  #view-mara .tbl-wrap table{min-width:420px !important;}
+  #view-mara .card{overflow:visible !important;}
+  #view-mara .chart-grid{overflow:visible !important;}
+  .report-tbl th,.report-tbl td{padding:4px 8px !important;font-size:10px !important;}
+  .report-sec-head td{font-size:11px !important;padding:7px 10px !important;}
+
+  /* Zálohy cards */
+  .z-grid{grid-template-columns:1fr !important;gap:8px !important;}
+  .z-card{padding:10px !important;}
+
+  /* CF table on mobile — hide Entita col (shown in section headers), compact Dodavatel+Popis */
+  #cf-table-wrap{border-radius:10px !important;overflow:hidden !important;}
+  #cf-table-wrap > div{max-height:70vh !important;}
+  #cf-table{min-width:auto !important;}
+  /* Hide Entita column (col 1) — info is in section header rows */
+  #cf-table th:nth-child(1),#cf-table td:nth-child(1){display:none !important;}
+  /* Dodavatel (col 2) — sticky left:0 */
+  #cf-table th:nth-child(2),#cf-table td:nth-child(2){
+    left:0 !important;min-width:70px !important;max-width:80px !important;
+    font-size:8px !important;padding:3px 5px !important;
+    position:sticky !important;z-index:3 !important;background:var(--bg2) !important;
+  }
+  /* Popis (col 3) — sticky left:70px with shadow */
+  #cf-table th:nth-child(3),#cf-table td:nth-child(3){
+    left:70px !important;min-width:90px !important;max-width:110px !important;
+    font-size:8px !important;padding:3px 5px !important;
+    position:sticky !important;z-index:3 !important;background:var(--bg2) !important;
+    box-shadow:3px 0 6px rgba(0,0,0,0.08) !important;
+  }
+  /* Data columns — scrollable */
+  #cf-table th:nth-child(n+4),#cf-table td:nth-child(n+4){
+    min-width:65px !important;font-size:9px !important;padding:3px 5px !important;
+  }
+  /* Section headers + totals — sticky left on mobile */
+  #cf-table .cf-sec-name{
+    position:sticky !important;left:0 !important;z-index:5 !important;
+    display:table-cell !important;font-size:11px !important;padding:6px 8px !important;
+  }
+  /* On mobile, hide the Entita col in sec headers too */
+  #cf-table .cf-sec-row td:nth-child(1){display:table-cell !important;} /* override the general hide */
+  #cf-table .cf-sec-total-row td:nth-child(1){display:table-cell !important;}
+  #cf-table .cf-grand-row td:nth-child(1){display:table-cell !important;}
+  /* Hide the empty 2nd cell in header/total rows */
+  #cf-table .cf-sec-row td:nth-child(2),
+  #cf-table .cf-sec-total-row td:nth-child(2),
+  #cf-table .cf-grand-row td:nth-child(2){display:none !important;}
+
+  /* CF filter compact */
+  #view-cf > div:first-child{padding:10px 12px !important;gap:8px !important;}
+  #view-cf > div:first-child > span:first-child{display:none !important;}
+  #view-cf > div:first-child > div:first-of-type{flex-direction:row !important;gap:6px !important;align-items:flex-end !important;}
+  #view-cf > div:first-child > div:first-of-type > span{display:none !important;}
+  #view-cf > div:first-child > div:first-of-type > div{flex:1 !important;}
+  #cf-period-label{display:none !important;}
+
+  /* User menu */
+  .user-menu-dropdown{right:-8px !important;min-width:240px !important;}
+
+  /* Login */
+  .login-box{padding:24px 18px 20px !important;margin:0 10px;border-radius:14px !important;}
+  .login-title{font-size:22px !important;}
+  .login-input{padding:11px 12px !important;font-size:13px !important;}
+  .login-btn{padding:11px !important;font-size:14px !important;}
+
+  /* Loading */
+  .gg-load-logo-img{height:100px !important;}
+
+  /* Hide non-essential */
+  .period-tag{display:none !important;}
+}
+
+@media(max-width:400px){
+  .kpi-row,.kpi-row-4{grid-template-columns:1fr !important;}
+  .header-inner{height:48px;}
+  .brand img{height:24px !important;}
+  main{padding:8px 6px 50px !important;}
+  .zf-field{min-width:100% !important;}
+  .kpi-val{font-size:16px !important;}
 }
 
 /* ── LOGIN ── */
@@ -1082,7 +1442,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   header, footer, nav,
   #login-screen, #gg-loading,
   #report-filter-bar,
-  #view-zalohy, #view-mara,
+  #view-zalohy, #view-mara, #view-barberi,
   #view-prehled { display:none !important; }
   .view:not(#view-report):not(#view-cf):not(#view-vyplaty) { display:none !important; }
 
@@ -1193,22 +1553,29 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     <div class="brand">
       <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAGkATcDASIAAhEBAxEB/8QAHQABAAEEAwEAAAAAAAAAAAAAAAcDBggJAgQFAf/EAFMQAAEDAgQBBQgPBQUGBgMAAAEAAgMEEQUGBxIhCBMiMUEJFDI3UWFxsRUWGDM2UlZyc3R1gZGU0SNCkqHBFzRUk7IkOENTVaIZNWJlg8IlgvH/xAAbAQEAAgMBAQAAAAAAAAAAAAAAAQUCBAYDB//EADYRAAIBAgQEAwQKAwEBAAAAAAABAgMRBAUSITFBUXEGE2EUFZHwFiIyM4GhscHR4SMk8TRC/9oADAMBAAIRAxEAPwDMtERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAePV5kwumrpKKWVwli8MbeA+9UX5twZsZfz5c0de0XVg5ymq5M41dI0hkTiOJbcHgvGnhqsKp99POyQvd1MbcrkcRn2Ip1JpR2i2r26fiXVPL6coxbe7sSac+ZbHXWEf/quUeecvSvDI6pznHsDCo2p6Kmq54RMzbLI0uka3hYrqzPko27qKMAlxD3Bty3itZ+IMbFapabdnf9T0WXUHsr3JdOasH3be+Bute3aurJnnL0bi2Sqc1w7CwhRp3nMZG1nfEXOOZuttN/wVGN7quHdWsDnCUMa8ixIWU/EOL4KKT7f2Qsto9WSgM+ZbJsKwk/NXZGbMG5trzPta7q3Cyicwx00svMQtfJHxYCLn0r7FBU4lTxyz1EYcHW2vbYqI+IMZfS4pv0X9h5bR43diU6jOmBU5tNUOb59pt+Ko+3zLf+N/7VGRkqHVUlHUBskDGm522AVU4fRNpO+ALje1vHqsU9/4yTehRsuqf8j3dQXG5J8GccEnaXR1Di0dbi2wXKXN2CxR846clvlaLqKY3VU9VLQjbHCLhoczhbyr5OyrwuFkcEzJg88Qxt7+YqfpFidOrSrLnbn2uPdtK9rkne3zLf8Ajf8AtVSDO2ATv2Q1LnnzNKjB9JSyGZ3NgOjjDyB8Y9YVN001M6FlG0MjkaC54be58ix+kGMi7zUbeif8k+7aL4XJaOa8HG7/AGgEt6wOJXVdnvLjTZ1WWnyFpUaSUk9EJamKeJzyL9FpuP0XCmjbXGE1kYEkhcCbWJA6llLxBjL6VFJ+q/shZdR43diTm57y44gNqySeoBpXaGa8H6N6jaXdQPAqJzGylhllpowZ2AW4XI865xUdRiDIaiWoiD78NzbFI+IMZ9lxTfp/0PLqPG7sSdPnXAYH7ZalzD52Gyp+3zLf+N/7VGLJZZ5pYKwB8MfU8ttb0Ko2jpWNp5BGDzhPA+bqUe/8ZLeCjb1T/kn3dQXG5KUeb8FfFzrZyGeVwslRnDBKcAy1BAPaG3CiiHvrEIpYZ3tia02Ac3wfQvtS6so5I6NhbPGRxAZwUvxFidOrSrdbc+1yPdlK9rku4JmbCMZqnU1BUc5I1u4i1uC9h7gxjnnqaLqNdMYIWY1PNE0A22cFJa6PKsVVxWHVSra93wKzF0Y0qmmPAsPJWrGUM25ursq4VVynFqEOM8EkZaW2Nj1qliOsOSKHUaDIEmIPdj00ohbA1hI3kXAJWOmvwqdIOU3heo9K18eFYqC+tc0Wa91iCw/gCu1yRaOTUnWfNWreL4fG5gl20hcOEUhtYt8+1WdjVJtz5r9pxkvMlRl/HcUkhr6e3OMbETa6uHBdTspYvp5VZ7oq4vwWlY58su3i0N6+Cwl5Rpqm8rOsdQ4FT49Uc6zZQVDN7Jzt6iO1ZKYtBLFyPMZkq8tUmXKuXCZXT4fTR7GRO3W4D0WU2BIGm2q+StQaGuqst4oKgUIvPG4bXtFr3sesLuaaai5Z1Dp8Rny1VuqGYfUd71Bc0ja+11rq0Qx/MGmtYzPsVFJPgVSH0FW9nV0h4PpWTnc7pmVOWc7VUbdrJsZbI0HsBYSFFgTnTanZTqNSZ9Po61xx2Bm98O02tYHr+8K9FiRgAH/iAYx9V/8Ao1ZbowdHFMUp6BzI33fLJ4DB2/ouGG4xTVs7qbjFUNFzG7yeY9q87McY78cycPENRA6MShu7YfIujhtI6XGMNjpN7oqGItlnLS258nnVVUxVaNfSuF0rfPxvwNuNKDp3ZeCIitDUCIiAIiICKM7d8vzPWN5+NjRbYL9LqVvUTZBA90FQGWd1Pd1le3nWhLs41dTI+MxXG4F3EcPIvGqKemrYWihDY3A9PnHW/BfNcape0VHbe757vfkdRQa8uK9EcJK/EaeckwR86Ot7W3J+9c6afEJQ8kQwRk9MkWuV6GHdGeCKR0fNRtI3l3hFdLEKOapOznYg9rjYF4s4eW68XCpGOpSb9Pn5Z6KUW7WKZZJ7I274/abb793Cy5Tz4hCA4MhqIwei617FfebowW01hz2w3dfo39K5UVNLSx81zsZe+QOIDuACxUZXsvyf5E3XM69NVYjNLeOFjX/HLbcFzrWyFsRkqA8l3AMdaxXbqI3yGVvPMbE/gwh3UfIurDBTUULW1rWucXcDG6/BHCSWmT26sKS4oqTOromnm5IpxbptJufvXV9ka97XRd7sLDa7dnDzKvHRmKsfUskj5pzSGAO4n0r0jfvEhrohMHMLhuHV2rJU5zvu1+ZDlFcrnQJrpIXGaeNjtngNcAbKnRiZtKx1NUNAv0WvPavoomx1ktVNJGYXXNg659FlxqKWCsYx9FtiYPC3usQsGpcefffuTsU5K7EI3uYaVjXOPSIZ4Sr0r66SMbzFTxE9EdXFdyPe5sw5xgbzYbES7t8q6VZRS1MkT+di3MaA9pePxWThOO6bZGqL2tY407Je+J9lRtcPDLnXBSerxKncHOjik4WbIBewXOSOjqGyQU1mSgAdI2Dj6VWwyB9PzULpIy1u4yHdw4hRGEr6Yv8AFP1JbXFnUpanEJX3ZFGwgcXuFuC5VTHmaEvqNxJ6Ja7gCu1UwyTU0sPORgPaNh3jj5lRgioaVkUNYA6Uk3LDcDyI4SX1ZPbqxqXFCokr4mP2mGpjHhjrXXZXYhLtjbTs6J6ILbWPmVelpJKaeScSRnf4DWvvf0rvODuYp3c5H0Sec6QuLhZKE573a9PxIcorlc6NWKl1K909Qwn/AIjWOXKPvxkUZpqiNztvRa5wvZUYqSOkbJJVOZIwno7XXJSaiZNOyogkZFAOPF3SH3LD6/G2/ffuTtwLo0uqaiXH5YZoWxNEd7Nba5UnuIa0uJsALlR3pyXeysheWknweNyGqRHAOaWkXBFiF3OQJrCK7vuyhzF3rEJ695PwLXbL0WV8DzZh1PiNBUc+7/iOaLWIIBuvS0NwPLGkmWqTIVRmTDajGXSF0gYQx0rz1dHr6lBecXHRblgQY5ExtJgWYAZKk2swMINwD1A3aPxX3k/UNDq5yn8x6j1VNO7DsOm5zD+J2iQcG38vC5t51d2NAuTXXQqpr9UZtQ2amYflaSoe3vYzMIexwFuDrhSlg+n2OVmhGJZMxjOjcarMSpXxjFnNu2zuIPnAUVd0ZAOTcvX/AMce3zFTtpWLaOYQP/bP/qUBB2SNLsj0GjuN6X4nqLgVfU185lhnY9rBBIOA4E+VSPyXNIqjSPLmK0E+O0+MDEqllQySGMta0BtrcTxWHWnOmmCZyyhqVmCslqIcRwJ8s1I9klm3DiekFk3yCM04vmPSuspsWqZqk4bVCCGSV24lpBNr+ZAerhWnWHw8qXEM9Nzjh8lXNBtOEAftmdEC54+b+anZYj4AB/4gOMHj/dfL/wChqy4RgIiKAEREAREQBERARJnKqpYs210YozNM613de3h5F4TKpsVK9tdQl4c6wO3bb717+dHQMzXWTMpJTOwj9oHWb1dq8QVDqqHZXwOqWtN2807q9K+bY1v2iavvd22248/lnUULeXHbkij7GPndGaeUhko3MafIFxjZTUBElU11QSeg29hwXYp8SpaeqbNd+1g2tiI8ELgyehqHOjdTyz3O5obwLVp6aXGDWo9rz58Dn307vznRQnmNvvfNqhJHT1gMtNupjvDXR3vxK7LqyYTiPmzzAbtEW/p/ir+ydlzB6rAIZ30b2ue7c4OdxuCt3CYKeOm6cWub32+B4Vq8aEdTRGrKKOFznVMxLY/CaO1V5ats0MXelCYmA8Ts3XUtvyngjy8upid/X0l9psrYPTs2RQvDb3tu4BWcfDeIjtGSS/M1XmlN7tO5Ec8lJWzGEU7qadreDhwv9ypexU3NmR0/R3Bt/OVLwyjgfPumNM4yO6yXKqcs4QYub73O24PhdoT6NVptubV/gPelNbRTIiiqKWESUkNK58rbgyEbjf0LiayJtG2OvoSST4Ybtspajyjgkc5nZTua8m5Id1rlV5UwaqIM9O51uobuCn6PYvTtKPblb4D3lRvwZD0uHOJcWVBLWtD+PY09SqU7qTD5GCaI1UrwHAdgB8yl72rYN0v9mPSaGnpdipyZPwJ7muNK7cwWaQ7iFj9Gq8Xqg1f8R70pvaVyKI6rm5J31FEXxHwWFlrfeqIpYqvY+je6JshIDCb8R1qYp8sYTNHzckLy21vC61wgylgkIaI6YjYSR0vKspeHMRJ2lJNfmFmdJbpO5D7KOOnY6oqXmSNguWA2uq8lWZXQvpaLm4x1t5u91LL8p4I9jmOpiWu6xuXg5zwqlwTB45MNZsIfazndi8a2RVsNTc7pRSu7cTOGYQqyUbbssKXvWvneyGF1LO0fcfuVNuGPvG5852PJsfQq801JFucIJqeSXrkcd1/QvjsSpeahYC7dEeBt4SpHGk3eo1f4fl2N5OS+yfO+oHUb4aOiIc0++W3EpUVNLIyOGqo3Ryke+AbePoXN00cMDpKKlkgdJ+893D8F9kngeG1FZRyyyNHGRrrtusru1tS+G1vgRz4fyXDpdSugzBK/nTI3Zt49hUpKL9MqyF2NugjcZHP6RcRayk97Q5haeoiy7bw9p9j+r1ZRZlfzt+hCPK40rxXVPJ+H0uXRSnEaOp5wOkeG3YRa116nJa0yqNLdO/YnEzEMTqpjPVbHhw3WsLH0KHKTMGK6Wcr+bCMVxSuly9jm7vdtVOXMhYRfcL8OBBXzTitxXU/lc43iVBmXEG5bwSbnooopTzM4HRDbdViST9yvivJM5XeluZdT8u4TQ5b73MtLVc5Jz0gYNvUpPyRgtXg+n1BgdVs76go+ZftNxutbrUCd0BxnF8HyjgEmEYpWUD31pD3U8pYXC3bZTlpLUzTaYYHVVMr5pTRNc97zdzjbtKcgYlUnJ/1pwigzDhVJieE4dguNVD3Vj3VAu5hdwv5rLJbk4ac0mmunkODU+IwYlNK8y1FTD4D3eb0LFzEsUzvyhteMUyjS5kqMDwei5zZHE47WxsNiSARuJKy50WyNPp5kiny3PjM2LmFxInlFjx7EYI7wrSjM9PyrMR1Ik729hZ4NjLSDffaB4P3KelivgeNYy7l14thLsVrHYe2mu2lMp5odBv7vUsqEYCIigBERAEREAREQEQZ0qKp+daqlZIGMJAAI4HgvHrIqrC6dro6hh5x37oVw5xG7NNaJqqOIC2wBt3HgvApmxd7PdHWbXB1g2VvAr5tjIvz6m+93Z34b9LnUUH/jj2RXpqWlrJoRPFeaRu59ja1l1KuZ9JHekaI2ucQ8gcQR518dW4lTzXaxoeP3w291zp5q+ZzjUPihjJ6Rewda1HOEvqxTUutj2UWt3wKne9Qdtb3xHvcwnweNlKWnUj5cp0r5HFzju4+XiotLKf2Q29+uHQ8Pb0behStkK3tZprPa8cbOaLA8V0Ph5WxUrdHzv0K3Mn/iXc91ERdmUYREQBERAEREAREQBWxqNTvqMHYyNzWuD7jd1K51a2pIYcEZvkdGN/hN6wtHMreyTv0NjC/fRIxp55J55oaoiWFnWSOpdhtLSMFPJHDYykmxN+zgqVU6oi3d7SRVEY8KzeP3hUG12KybY2sFgeiNnUvnWuMNppt9r8zpbN7rY5Uz6uvbNDJM1oBsWub1cf5L7US1lJVR0jJGygC20N4KrOAaJ756tpk/fZE3+q5OBZFG6jq2SPI8F7bOCaXbi79b7/C4urlxadwwDHzNFHtcDsJB4FSeoo02qat+ZBDOzY3be223FSuu28PSjLCbLmyizJNVt+hjTy7sh4pmXK+D4zlvCKmuxijqDGTTMLpBER5uy69nkR6fVuStMparGKKSmxPE5+ekjmj2yRtAsGlT6ivrleY08vTLOYMyZTwKHAMHrMSkirN0jaeMvLRbrNlNmlVHUUmmuCUVbC+CdlG1kkbxYtNuoq6kS4MJ8eyPqJoZrZVZ3yngE+ZsMry+7IWEuDXG5a4DiOKyn0gzXjOcsnQ41jmXZ8Aq5HFppJr7gB28eKvFEuDGDBMr5ij5b+LZhfg1Y3CH01m1hjPNE7Wjg77isn0RQAiIgCIiAIiIAiIgIiztQB2cKupmfEYbi4LrEcF4k1LR1sIFBtjcHdIyu9S9zOctIM21sYikfOSLkC9uHkXhte2Knca+nksXWaQ2y+aY1U/PqKys27/HryOpoOXlxfoj0sPGypghkALImEGQ+C4ro11FNVN2iSNhjceD3eEFSGGTzuYaWc81INzA51uC4NigpCH1r5JXE2Y0HgvCUm46Zx2637HolZ3T3Kxiw8PbT7W89s4nedt/SpW08hMGVKWNxaSL+CbjrUVEk1If3vL3vtvbYLqVtP3xvytTOiYWM6VgfSr3w6o+1S25P9UV+ZX8pdz30RF2pRGLvLW1azzpxjOA0+UsTjo4quF7pg6Bry4gi3Wsd/dTaz/KOn/Js/RSd3ST4QZX+gk9YWIqySBNnuptZ/lHT/k2fonuptZ/lHT/AJNn6KE0WWlAmz3U2s/yjp/ybP0T3U2s/wAo6f8AJs/RQmiaUCbPdTaz/KOn/Js/RPdTaz/KOn/Js/RQmiaUCbDyptZ7fCOD8nH+izYwTGJ8w6JZcxvH5BNVVtHHLO9o2hzyOuw6lq6PUtmuRA88nPKJY0uth0NwBc9Sr8zVsJU7HvhfvonmU1G+lllnY6NzXCzI43XJXdILYKY9RBPOW6xcdq897KaqkdHTc7BUN8ptdcG4ZUAsMtT0Xk8Wu8i+cxk4K0I3Xf1OmavvJnNlDDSMkkrHRSNJ4bH9Ir7Jh8c8zJ6SSKKIC4u/pL5zlPJTOjooZS9v7xbe6TvpNrIquKaOVw8IC1j6Fhpp2tZW+eZN5X+f0Ls0/ucaDntLXF3Rv12ssedfeUnn7JWrGN5awkUnedHLsi3xgm1lPenFJNBmRsjpucZbb13IWDXK+/3hM0fWB6l3Xh1t4XdW3ZQ5kkq23Qu/3X2p3xaD/LCe6+1O+LQf5YWOyK/sV5kT7r7U74tB/lhfW8r7U0G5ZQEeTmwsdUSyBkb7sHUr/kYf/AnuwdSv+Rh/8CxyRLIGWGmXKn1BzFqFgWB1sNEKatrGQy7WcdpKzmWp/Qfxy5T+0ovWtsCwYCIigBERAEREAREQEQ505sZ0qpYo5DLGRu+KeC8arqJaunb32xzmsNw5nqK9fOstY/OtVTxSCNpIAJHA8PKvFq4a7DqcFtVG9r3dTOK+Z42T86ra9ru/DqdVQS0Q62RVpsVpIKhkobLtY3a2MjgAqEk9HUtdFzcznF12Ot4PmXfpaWmq5oWTxAzPbuk7LeZdOtkfTx3o4+baXEPs29j2Lwn5iheTVu3z/R6R0t2XEqmpqOjAIjzTWFobfpelSnp00MynStbut0vC6+tRUaeu6NV33DvLCfPb0KVNOXvkylSOkN3Hdc286vvDzftT1X4P4bFdmVvJVuv8lxIiLtSiMI+6SfCDK/0EnrCxFWXXdJPhBlf6CT1hYirOICIiyAREQBERAfD1LZ1p5JNDyc8pywtDi3DIbg+cLWKepbPtOYZZ+TbliOGRrH+xcJBd1dS0cxTeGqW42Z7Ye3nRv1LdbNTU75ecZMyWT963gqocTpdkLWiX9iTbh4V1xpJZZZZo6wiWJg6TtvBdttNSsbTyMp2gyk8Pu4L5rDW19RpL1Xr/ACdPLSnudSCQQNlmpIntD+rdwDV9qJYzUsqq2CRxtxA6j51wg7+rGzROmZG0HiHi1uK+zOxCmqo6bnWzW4Wa24ssNT03s7dla/Yytv6ly6c1kEuPthi3kkl5LgsGOV9/vCZo+sD1LOvT6GD2wNmjiDHA7CR2+dYKcr7/AHhM0fWB6l3Xh3V7K9XUoMyt523QiVERdCV4REQBERAXtoP45cp/aUXrW2Ban9B/HLlP7Si9a2wLzlxAREUAIiIAiIgCIiAi3OFzmStZNVbAbbGMA3HgrfoOabTSOgqZYX7rASWLSV6edqS+cqqeZzDCSL3PVwXjVUNHVQtGH2Y4Hpbivm+NlL2ibtum+e73OooJeXFeiEtdX005HNN5wfvtHWq1HUVkznSTPZTxX6biOJXbw9pZNBHIW83GwgyEiziuhX0k07bb2tcxx6Jd4Q8q13GpFak2/T5+WeicW7WKzmU/sp7/AFG7bcScLWUq5GN8t05EgkHHpAdfFRKWUA2wEN5/ZxN+F/IpU07jdFlSlY61xu6vSr3w837TJbcHw/Ar8yX+Jdy4URF2ZRmEfdJPhBlf6CT1hYirLruknwgyv9BJ6wsRVnEBERZAK78jaZZ6zxSS1eVcuVeKQQu2yPitZp+8q0FnT3OYn2kY0Lm3fI4KG7Axs9zrrL8iK/8AFv6rm3k46yOF/aZVjzFw/VbPUWGoGsyi5M+sFQXiTK8sG0XHOOHS9CzyyZlnEqHRTAstVrHR19LQxRStYeLXN61IKLzrU1Vg4S4PYyhJwkpLkRdUZVzEH2iayaK3VILH+SpnLGaSzZzMO0G4HkUqoqV+H8O39qXxN5ZlU6Ii+XKGNTUeyoc8vPW1gAC+yZSx2KBraRziBwLZAPWpPRT7gw3V/Ej3jV9Cwsn4FjdFjDJqyGKOBvXt8qxc5Q/J51Fzhq9jmYcHoopKGrm3xOLrG1lnAissFhIYSnog216mtXrSrS1SNb/uU9WP+nQfxro5g5NGpuB4JV4vXUELaakjMkpD+IaFsuVm63+KTM31B627niam3AhxB6wbIuU3v0nzj61xXoAiIgL20H8cuU/tKL1rbAtT+g/jlyn9pRetbYF5y4gIiKAEREAREQBERAQ/niahZm2tZJBLJISLkdQ4LwIp6VkThU0sm4nokC3BXNm6OM5wrJ4IZnTMI3G4DepeRUvnrKUGvgc5kZuDC4fzXzTGwk69R+rtttx5s6mg15cey5nVGEunLHU0xDJOLGuPG3aVwMFLROvVOknJPR2HgfKu3S4jSU9QyXc4sY3a2P4oVFz6GrcYgyWQl12besLVcKVrwtqPVOd7PgUjNS987hSScxt8G3G6l3T10b8q0romFjDewPWOKjIyVglFOIjzTWFu3cN6k7T9jY8r0zGte0Ddwd19a6Hw7FrFS7PlboV2ZO9Jdz30RF2hRGEfdJPhBlf6CT1hYirLruknwgyv9BJ6wsRVnEBERZALOjuc3wJxr6wFgus6O5zfAnGvrAWMgZXIiLABERAEREAREQBERAFZut/ikzN9Qf8A0V5Kzdb/ABSZm+oP/ogNTs3v0nzj61xXKb36T5x9a4r0QCIikF7aD+OXKf2lF61tgWp/Qfxy5T+0ovWtsC85cQERFACIiAIiIAiIgIizpPVHOdVA0BsVwLlpIPDtXjVMdTh0AEMjJC91/wBm0kq4c6tndmWsaatkbDbay9ieCt6gaeae6nqhCN1iHm9yvm2Ni/aJre93Z9NzqKD/AMceyK0VDTV1RDzrSySRhdI1vCxC60zn0cWyji4ucdzttyLL7JWYlTTWETC8H3xrbk/eqlNNiE5c9z4qZl+kSLXPoWreD2impdbHraS3fA+mKUltbzsW8s6thv8AgpS07fJJlSldLcuO7rHnUVujPsht75PO7b85v4WUsZE3e1mm3SNkPHpDqPFdB4eX+zLs/wBivzL7pdz3URF2ZRGEfdJPhBlf6CT1hYirLruknwgyv9BJ6wsRVnEBERZALOjuc3wJxr6wFgus6O5zfAnGvrAWMgZXIiLABERAEREAREQBERAFZut/ikzN9Qf/AEV5Kzdb/FJmb6g/+iA1Oze/SfOPrXFcpvfpPnH1rivRAIiKQXtoP45cp/aUXrW2Ban9B/HLlP7Si9a2wLzlxAREUAIiIAiIgCIiAh/O9GDnOqnlfGYSRuu7iOHkXjVUNHVwt9jw1jg7p73WXtZ2mpY831rDSOklcRd/Xbh5F4LZoo6dwq6IvBdYEDbb718yxujz6i2s27/Hrb+TqqGry4v0R6uHSMjqIYHyx83Ewgu3eEV0K+nfVMO2aLfG48C/wh5VR9iuecw07jskF2A+TtXEQ0lEQ+drqgk2a0cF4SnOUdM47db9j0SSd09zsllB0aew5/Ybu3dG/kUqadRuiynSsdtuN3UbjrUTmVvfHOCjPM7fA2KWtPXxyZVpXRRc003s2/VxV94c0vFS7P8AVFfmd/JXcuBERdsUJhH3ST4QZX+gk9YWIqzA7o5S1NRmDLBgp5ZQIJLljCbcR5FiV7GYl/gKr/Kcs4g6iLttwvE3GzcOqyfNC79Fz9h8W/6ZWf5Lv0WQOis6O5zfAnGvrAWEvsPi3/TKz/Jd+izi7nlQ11HkrGO/KOenD6gFplYW7vRdYyBlMiIsAEREAREQBERAEREAVm63+KTM31B/9FeSs3W/xSZm+oP/AKIDU7N79J84+tcVym9+k+cfWuK9EAiIpBe2g/jlyn9pRetbYFqf0H8cuU/tKL1rbAvOXEBERQAiIgCIiAIiIC0M/YAypZ7MU0V6qBvSANtwUczTvqoQ2vhc8NNxzZ6vSp0c0OaWuAIIsQVE2ecNqcuVDpaN7RS1El2gi5B8i5LP8D5f+xD7L+1/Ni5y7Eav8b48jyaTEKCCaOUyv2sG0RbfBHpVGaXDJyWDnpjclthYt8yrw0dNWzw88y00rC54bw228y6s87qCH/Y2NaHOIc4i5bbzrm5Oaj9e2nt2+fQs0k3txKzqmYObCIncwG227umpU0+axuVaURtc1vHg7r61FpZWb21/PRbzGT1dnoUoadyvnypSySO3OJdc/er7w+/9p36O3bYr8y+6Vuv8lwoiLsyjLWzvX5co5qcY7hsNWXA826SEP2/iFbpx7T0H4P0f5Rv6Lt6pPJrqSBzWuidG4uuOpWccOom0vfG0kb2tHHyrksxzXG0cTOnRasuq9C4w2DoTpKU07suqLGMjuO6LLlKB8bvVoHqXN+NZNYA45epi3ytpmkD+Ss6OqrJK2WiZsbGAWtG3s8q+VUlbhcUUDZI3gm4AF7rS9/4vTqvsudufxNj3dRva35l3HMeQrf8AkdL+Vb+i9Chzxl6CMQYfRPjYP3YotoH4KxJKSkldM8xEPZGJHWPaexU5KqWjMEdI1scbwHbiL3J7FDz3HR3nJW9EFl9B8E/iSQc+YaL2hlcR2AXKp/2i4ILh7J2uHZtVgTNrKJk1U2WMmQAuIF7fouFO1mICA1cY5x+4XaLcApee42+lNJ+q/sLL6Fr8u5II1GwQ8GsnLj2BqrDPmHEC8Mrb9QcLFRzsio4JpqZg56No8LjbzrnTx1uIRw1Bmju0m1xbqSOeY6+ltN+i/sPL6HHl3L/dqFhEZtNFUM9LV8/tHwO/VN/Co8iqZauWeCsDHxN63BtrKqyipGGnkbEbyE2BPkHBQs9x0t4SVvVD3fh1xT+JILc/YY5u8QTBvlc210kz/hkfGSCcN+MG8FHEE9biDJqd742NvYgtttX2pqq2lqY6O8coAttDb8E9/wCL06r7dbf2Pd1G9rfmStl3NuG45WupaMSb2t3HcLcFcCjXTGngZjVRNCzadu08etSUuoynE1cTh9dW17vgVOMpQpVNMOAVm63+KTM31B/9FeSs3W/xSZm+oP8A6KzNU1Oze/SfOPrXFcpvfpPnH1rivRAIiKQXtoP45cp/aUXrW2Ban9B/HLlP7Si9a2wLzlxAREUAIiIAiIgCIiALpY1h0WJUElPI1m4joOc2+0+Vd1FjOEZxcZLZkxk4u6IJxB2L4ZicsEjLTRu27g3r8i408uISSOEhihaTd3ONFlKecMHjn24kwAPiHTFuBHlUX19LJUxkmZjSxx8J3BwXzzMMvqYOo1qbXLsdLhsRGvG9rFMgd/8A98dut17ej/8AxS5kPd7WKbc9jzx4sHDrUUf/AIu7YOabznN8X7ztupT07j5rKdKy7Tbd4JuOtWHh1WxUuz4N+hrZnvSXcuFERdqURHmrb6lk1IactI2u3NtxIViCtxNzHRhl2G3DZw8ykDU+F7sRopWuHRjcNt+JVsvJFC4dETB7CW342C4HN6Up4yo9TX/DosHJKhFWv/084GpfTOdPUxsdbwWNG+y4Uu/vYGmq2OI6hM3jfzLmKWCKvlqKuSJ8TgXbQ+zvQuFRBRVjIu8dlPx6W9/FVLUlvz6Xd+5uXXzwKRqcUjcRzRu82J2+Eq9I+ueLTSRQsB4B7Rf7l3gJNs4edrRGGRlx6yO1dKrpXTugmkljAaA17Hut96ydOcN02yFJPaxTpheol2Vhv2mRvRK+S1GJRSbm7HgCwexvAKtMMLmZNDTsbHIAAC552kqvhlPJTiFjntfG3c57gejxCiMJN6Yv8U/UOSSu18TowVGJPeODGC3Fz28Ledc6oWmi31pvfhzTeiCu1URvnp5YBIxoc0bXE8PQVRpxhVPHDFVxiSS53OY82CODX1W9urY1Lil8DjVOrWNPMyQzM7djRf71QFXibw2PmzZp6PQ6iuzR0roqiaeB8b2nwI2Ov+K7r9wjpiXDcHHnLHiLhZKnOW92v+hyS2tc8+q500hdPVRgnwmxN4/euQNQ2na6lqo3m3U9oD1wip6WkEzqwxzceAa/iV9lpKepqo5KN8cMVr233csLS48+l3cnb8Oxc2lc1W/Hpoqhm1nNbh0bXKlFR5pwHjFJjKLOPgg9dlIa7rIIuODSbvuzn8xd6wVm63+KTM31B/8ARXkvHztgbcy5TxLAXzmBtdAYTIBctv2q6NE1Bze/SfOPrXFZqu5EdA5zne3ap4m/93C+e4ioPlvU/l2rPUDCtFmp7iKg+W9T+XanuIqD5b1P5dqagYw6D+OXKf2lF61tgWK2RuR/R5YzjhWYWZwqKg4fUtn5owAb9vZdZUrFsBERQAiIgCIiAIiIClU1NPSsD6meOFpNgXuDR/Ndf2Xwr/qVJ/nN/VY790Kqaml0mwySlqJoH+yTQTG8tJG0+RYLYZUZmxOp72w+rxWqmtfZHM8m34qUgbeI5qWqjIjmhmY4cdrg4FRVnrBKbAsQNUBJJFO67Gfut8q15ZczznrJWPx1lDjWJ0lZTO96mkcR6C1yz75Pmo1PrhptP7KUop8ToniKq2Do7rcHN9KrM1y9YyhZfaXA2sHiPIqXfB8TrOdeo5wRScyWX282OtStp49smVaVzGbB0uHk4qNMQhq6GtfhskLjFEC0Nv0iPKpL09axmVaVrGvaOPB3X1rnvD8XHFyT6O/e6LLMWnRT9S4ERF2ZRkearxxS1tFG5z2SbHFjm+pWMMLrLGR8pDLht7m9z1KQ9S9QshZKqqSLN+I09JNUNJg5wXJA61YeJco3Rajc2NuJx1IdxvFHcBc1jvD7xdeVVy4lph8x8mmoWOEb6dkslLHHK57QQX7LncuL5WR07G1lPISTYuLLWHmXXbyltFWvL2zODj28yvsvKX0Wl98mc70wrV+jNa3218Nj296Qv9l/Eqz4fOXuMdQ50bWh/SJuAVyAp6N0TZBJPK/jxFwB5lQ90xovx/bv4ix/Y9ikHS/OeR9SKCbEMtxMmip3bHF8diCo+i847xmr9mPeyeziWQX826d8sMrox4DTHa/pVLvUVUbH0UkjN9/2brgXHWpxfhtA8WdSxEfNXxmFYcy22jhFuqzVL8Mzezmrdtws1iuESDo6PmIXz1cj3NYL7G34qtvMohfDDKxt+kBHcW8ymt2FYc5paaOIg9Y2q28/U8dFhMb6Knja7dawFrheFfw/LDUnPXsvTczp5iqs1HTuyNtsFXLLHDvgnb1W4bvSuEWGz7mOnqLNeTYtde9lzMlLSveHRzxSP63EcR6FVOJ0PNwtvNeEm3Dwr+VUFqT3qNXLG8v/AJKTZYZIJY6aJ4LfBdtuXelJpKbdFFUxyMcRxkDbEFcoi2KN09HBI0uPAv4NCVJi50VNZTyl/bbwSp3072/aw5/Ny6NLaWaHMNQ98pkj5vaCTchSeoz0tqoJcYniiL3OLd5LgpMXc+H1FYNaeF2UGZX8/cIiK7NAIiIAiIgCIiAIiIAiIgCIiAIiIDGXuifiiwz7Tb/pKxw5F+NYHgWsTK7MFbS0dGKSRpkqPBvwWR/dE/FFhn2m3/SVg/knKeYM5Y0MHy1QSV1c5heImHjYdZWSBLPLSzbkfNmpVPNktkMjaaAx1lXA0COofcWI9A4Kbe5v4dWU+U8yV80L2U9TVRiFzhYPs3jZYeZvylmLJONMw7M+DTUNS0h3NTCwePT5Fn/yNNScMzvkOTCqTBaTBpsH2Qup6fg14I8MdqPgCStQcCfVQeytC8RVcDeJ7C1d3TuWSbKlM+Z255Lrm3XxVwOaHNLXAEEWIKo0NLFR04ghFmAkgelV0cCoYt4iPNbr123Nh13Kj5b5MroiLfNcwh7pGB7ZMrm3HveX1hYjrLruknwgyv8AQSesLEVZxAREWQCzo7nN8Csa+sBYLrOjuc3wJxr6wFjIGVyIiwAVrakQSVGExMikZG8PuC48FdKtLU8XwaIAvDuc4bOtaGaW9kqX6GxhPvokaxVFRUTTQVjmzxM63bbD8VWbS0zRTyNp2gyEm33LjUTVUcbyGsqYh4bT1j02XXZiNXOWxspmkNN2D4q+d64Rdp7vt6nS2b3RzgfX4hHLDJUsY0HwXC1l9qJsQpJ46QVDJmgW2tbcW9KqVhndSvM0hv8A8RsduC5ROqmRx97v3u28GSWuQp0vhd36/wBXF10RdGmMMLcaqJYo2sIGwkdqklRhpbVyTY/PA6BsIbHcgeVSeu38PuLwa09WUOYpqtuERFdmgEREAREQBERAEREAREQBERAEREBjL3RPxRYZ9pt/0lYx8kfOWA5G1XZjeY6zvSiFK9hktfibWCzP5XGnGPamZBosFy+YhUQ1omdzhsNtrLFj3IWpv/MoP4lKBQ5ZereWtTMfwyDLUT5KfDmOa+qe0DnSTfo9tlePc5cExKbNmOY/HMW4fTwinkjv4T3cQfwXSybyNM3VeLQHMeL0dHhzZBz4iuZXN7dvZf0rMHSfTnLemmWm4Hlync2MndNNIbyTO8ripBeCIixAREQGEfdJPhBlf6CT1hYirLruknwgyv8AQSesLEVZxAREWQCzo7nN8Cca+sBYLrOjuc3wJxr6wFjIGVyIiwAVrakmm9h4++r7C/r86ulWnqa4MweImPnG85xFr8FoZo7YSp2NjCffRI1w+mlZVSSMIduHQjDvCXpGCbmqchrbtLucIIuOC8uRtFWyPbSNlppW9QJ4FU2YZNuYZKnoPJ4gnjZfPYScFaEbr0fr2Okkr7t2PsFPHTb3Vrg5hPAg3Ll9npmTVDZaWRscAIs4uXI1FAaWSKmpZDK3wXv43X2afDZBHFNTSwyEdJ7DYXXnanp03VvnnYzvK9y9dOY5GYpMZWBrnDo8ReyxW5XuquomVtX6rC8v5rr8PoWxgthhIDQfvCyb0spJIMwTvdNzjeb29fUVhjy5/HnWfRNXeZA28Irq27OezFWrFof28av/AC9xb+Jv6J/bxq/8vcW/ib+ijZFe2NEkn+3jV/5e4t/E39E/t41f+XuLfxN/RRsiWBJP9vGr/wAvcW/ib+if28av/L3Fv4m/oo2RLAnXR3WjVPFdUst4biGdcTqKSpr445onuG17SeIPBbIVqf0H8cuU/tKL1rbAsGAiIoAREQBERAEREAVv6gZvwXI+WKnMOO1Aho4BxPa49gHnVwLEzujWPyQZTwTLrXtDaqfvhw7TtuB9yAvAcrjS6w/aVnH/ANCnfBMSpcXwilxSifvp6qJssbvKCLrTu+KRkbZHMcGu8EkcCtkvIszeM0aLUME0pkrMMcaeY+a52/yWTVgSVqTnTB8g5XlzDjjnto4nBri0XNz1KIfdcaXf82s/gXo8uHxCYj9PH/Va9MjYBLmrN+FZcgqGU0mI1LadsrxdrC49ZCJA2I5a5UGk+M1jKR+NOoZJHBrOfjIaSfP2KZqKqpq2ljqqSeOeCQbmSRuDmuHmIWrDW/SbMelGYmYZjXN1FNOC6lrIhZkwHXYdY9CyQ7njnbFawYrlDEK6WopYGCWkY91+b+MB5lFgeR3ST4QZX+gk9YWIqy67pJ8IMr/QSesLEVZRAREWQCzo7nN8Cca+sBYLrOjuc3wJxr6wFjIGVyIiwAVrajyTRYTG+BrXO32IPaFdKtfUemNVhMcYlZGQ+93dS0czv7LPTxsbGFt50bkYyvpKZz7RTwyyeE5/UPQvrsSpOahaA7dCeB7Cvkcs080sFWedgj6nltgPQqzaOmY2nkEQJkJ4HzBfO1rf2LJdvX+TpXZfaODebhgfPQUszHP6nSHoj0L7UGDc2prqWYy24lpuy6pU/fWIRyRVE7YmtNg17TYehfap9XRTMo4pRPHYBzWsO1NX1dVvq9lx7C29ufzzLq0tqopcYniY4ucW7yVhby5/HnWfRNWaumMELcZqJo2hpA2cO1YVcufx51n0TV3Ph7V7GtXV/qUOY287YgdERXxoBERAEREBe2g/jlyn9pRetbYFqf0H8cuU/tKL1rbAvOXEBERQAiIgCIiAIiIAtdHLszdNmHWWTCCB3vgkXe8ZHaXdI/zWwbM2KQ4Ll+vxaoNoqSB0rvuC1KZ3xqpzFm/E8ZrZTJLVVT3lx8m7h/JSgSnqhk3vDk4ZBzNFStYZjKypkA4lxddt/uUsdzjzTSQ1GPZRmee+6girgb2FrRZ3rVuaj6maX47yZsOyHSYnVvxegbHLG3vZzW8429xfycVGHJUzMcr63YDVF4jiqphSyuLrANeeJPmUgzR5cPiFxH6eP+qwB0pxmjy7qRl/HMQLhSUNdHNMWi52g8Vn7y3yHaB4g5pBBnjII7eta+NP8COZs54Tl8Gxr6hsAN7WJREEt8rTWzDtV8ToKPBaCSDD8OLts0vhSk9oHYFInc5sv1b8cxzMT4ZWU0UYhZI5pDXk9dj22WK+ZsMmwHM+IYTURObJQ1T4S14sTtcR/Oy2gcnLFMExjR7Aa3AaGCipTThj4oWgNEjQA4+knij4EkJ90HyHi2NZfw3OGHgS0+FNdHUxjrDXHwvQFgwtxOOYXQ41hFVhWJQNnpKqMxyxu6i0iy1l8pjSmq0tz9LRRh0mEVhMtDLb93tZ6QkWCKkX3a74rvwTa74rvwWVwfFnR3Ob4E419YCwY2u+K78FnV3OqKWPJGMGSN7A6oBaXC1/QokDKtERYAK09Tmh2DxNuWkycCDayuxWpqYKZ2Dxtqi4Rl9rg9q0M0/8lTsbGE++iRtK6tgDzE6KpYPDaeKox12IykMbA3geiC21vQucFHJRPknc9m0joNY+5K7jrCClcZe07+PEXC+eqE5cW16fidK3FcrnVqWSmmkfNUBzh4bWOsubGVLGxmmqWFxbdrHuBNl124c2lbJLXPYY+zZJcn7lyfhYllbPSSRtp+vc6TpfgsbTvfTv337k3j1Lq0vqqmXME0U0LYmtjv0W2uVj1yqtDNR876rVOOZdweOpoZIwGvMwbx9CyM0ydvxSd5cSepoJ7FI67nILrBq7vuygzH741p+5c1k+T0X5hq6eO8m/VjBcHqsWxDAoo6SljMkrhO0kNHbZbOFZut/ikzN9Qery5oGptwIcWnrBsUXKb36T5x9a4rMBERAXtoP45cp/aUXrW2Ban9B/HLlP7Si9a2wLzlxAREUAIiIAiIgCIiAiTlbZtpMqaI40+cuE2IRGjptv/Md1epa59Ncp1meM7Ybliik5uaumEfOltwy/aVtB1V00ytqZhNPheaoaqamp5edjbDOYzu6r3Ct3TXQHTfT7MgzBl3Dqtte2MxtdUVJlDQeuwPUVKdgY4zcifH2RPdHm6je4AlreYI3HydaxZrYKjBcfmpi4tqKGpcwuHDpMda/8luIPEWUI47yWtI8ZxeqxSswzEe+KqQyS83Wua3cTckDsRMFqcorGIse5H1HikUgkEsNOHOHlDbH1LDrQE21pyif/AHSH1rY7Lo9kmXTCLTiSlq34BE7cyM1B5wG5Ph9farWy1yYNJ8vY/Q45huHYk2soZmzQl9c5zQ4dVx2qUwYx8vbIs+AantzTC0d440zd0W8GSNABv6VeHc6c481ieM5Mq6yR3PtFRSQud0W7fCsFlPqlpxlbUrBI8IzTSSz00UgkYYpTG9pH/qCs3JXJv0yyfmSlzBgNLilPX0xvG81ziPQR2hRcEwrysey7gOO82caweixDmb833xCH7fLa69VFAIvkp9KGVMlP7VcNdJG4tcG0DTYj7lxki0njAMmVMOYD2uw9o/ovUz/gkVC9+PUcVnkWkaDYX8qseWrZWRMNewyFnXsPAj0Lkcbm2OwlR0puN+Wztb4lzQwdCtFSV7dy7fY7Sra4+1fCrNYHn/YW9R+5enh2ZMmYFG2kwykjo2PAcI6enDQfuCsEV1COePPvdzrQwN2eCAqYloJeb98lli6njhw8i1peIsS1aLjf59T1WW0uaZJ7s94G0Eu76aB1kwlVabO2BVAYY5pDvJA6HkUXvxF9RzsNQ3dE7g0NdxH6r5T1eHQPj2PkjEV+gW3uT50XiHEavtRt2t+4eW0rcHclGXOuBxROlfLIGt6+grczlmnD8Ww2OHD45ZXbrnfEbWVnurKCQOZI972SCxYB1FVI8RkpBFDTNAjaeO93EheVfPK1eDhKS0vot/1M6eAp05KSTuii9lNWSllO19PO3rB6j93YuAwya7C+oIa8mx8tlV56hjkkeechll/fPSsqjsQoebhaJn3iJ/d8JU2mk95tX72+djdvJfZKHPU5pXR0dK5z29b3N3X/AESolpZGMjqad0MxHB7RtH4KoypgpY5H0LHNMnEbncAvs1TSzyMqa6N7nAcS11xfypdWtdX7bDnw/kubS2lkgx+d7pecbze30FSeo10wqKeTGJ4oZXSOLd5Jbaykpd14fUVg1p4XZQZk26+4Vm63+KTM31B/9FeSs3W/xSZm+oP/AKK7NA1Oze/SfOPrXFcpvfpPnH1rivRAIiKQXtoP45cp/aUXrW2Ban9B/HJlT7Si9a2wLzlxAREUAIiIAiIgCIiAhbleaj5j0z0/osZyzJAyqmrRC4zRh422v1FYqe671b/xGGflGqeu6J+KLDPtNv8ApKxj5JGTMvZ71WZgeZqN1XQupXv5try3pC1jcLJAlLKHLRzBT1EEeZMv01XAXASywu2uA7SAsv8ATfPGXs/5Zgx/LlWJ6aUdJp4Pjd8Vw7CtfnLB0yyzpnnuio8r1LjS1tOZXUrn7nU5Bta/Xx61Nvc2ZpnZczVC5xMTKqItHYDt4qGDzuUpyitQ8h6vYplnApqFtBTMjMYkpw513NBPFRv7rvVv/EYZ+UavH5bf+8Tjv0cP+gKS+SXoTkTUXT2bG8yU1VLVNnMbTHMWAD0BTyBLfI01azZqlS5hkzRJTPdQyRiHmYgywcDe9uvqVl8qrX7PunWprsv5dlomUYp2SftYA83I48VPukek2UtL469mVoJ4hXFpm52Uvvt6uv0rCrl9ePF/1OP1KED7ByvdV2TMdLJhkjAek3vYC4UtaTcsSixXGYMKzrhLcOZMQxtZCdzQ49W4dg86jnkc6Q5N1Py1mP2y0kz6qnkYymnjlLTHcHjYdfFY/wCe8Gbl3OOLYHHLzrKGqfC1/lAPBTsDbmRSYrhgLSyemqI7tcOIc0jgQoezNQVmXq/vNgY6Nzi6Po+ED2L1+ShmGuzLobgVdiDNk0TDTDztZYA/gr4zlg5xXC3cwWsqohujdtufQqbOMu9rpXhtNcH+xu4LE+TOz4MimSko5XSuMJD44w9wB6yexUKiZ9PzDKWNrYngO3Ft7nyLjJW4pC98Togx4O1/Q6yF2aF1ZU2NVPDTx36O5ov9wXBpxk9MU0+1joLNK74HGaCopI5qlpiLnAE2b4P6L5TMjrmQirjAkeXC7RbgFypY4nVU7W1bmEdbnjolUp6nEaWToc3ILdF7G3CPTH6zX1enHmN3suJzdHDS080lPGDKxo8Ljbzr7TU1TXRQzl0IIJtcWuqVNVYnO8MPNsbbpPcwAW86rVjIWTwh1W55J8KMWaCkdMlqS26cOYd1tz+JSgmdUSzw1TGOhb1uDbWVeOio4xBI2Mkyk2BPkXyt76p7up5oaiPt2tF/vC6wxDFX7Y2sFr9EbOpHKEHaabfa/MWb3jwOUDqmuE0MgjYL9rbbUmlqqWqjpWtjlAFi0MvcLsVbD3i59RVsc/8AeZEOI9K+mN7adj6Orjc4tuGPFnBTolwu7/nbtcakXNpjT07cbqJoW7Tt2Hj1qSlGGllTVy49NHOwMaI7gbbXKk9dv4fcXg04rmyhzFNVt+gVm63+KTM31B/9FeSs3W/xSZm+oP8A6K7NA1Oze/SfOPrXFcpvfpPnH1rivRAIiKQXtoP45cp/aUXrW2Ban9B/HLlP7Si9a2wLzlxAREUAIiIAiIgCIiAxl7on4osM+02/6SsI8hZyzDkbHPZnLNaaOu5sx84Gh3RPX1rNzuifiiwz7Tb/AKSseeQ7h2H4nrZFT4lSU1VAKSR2ydoc2/DsKyQIazBjeKZhxeXE8brp6yqmfukkkcSePk8i2K8jLBclYTpTFLlHE/ZCarIkxCR3B7ZbeCR2WWOHLxwLIeDZtw72rMoqfE5GOOIQUxFmm/C4HAFe13ObFsWjzdjeDRxvOFzQc9K63Bsg4D+SPgCOOW1/vE479HD/AKArIyTqlnnJmGvw7LmOTUVK925zGi4ur35bf+8Tjv0cP+gKbeRRlTIONaYz1OYqDDaisFSQTUEbg3705Al3kgZnxvNujVJjGYK11ZWvqJWulcLEgO4LE/l9ePF/1OP1LPnKWH5fwnDBh2XGUkVJESebp3AhpPoWA3L68eL/AKnH6kXEEcaa6s5y07wbEsNyvVspY8RI515ZuIsLcPIeK8zImVcw6l55iwfDGuqsRrpDJNI4+CL3c8q+tNsj02auT7nPFYqQSYrhFRDLDKOtsXW8K1tAs6S5D1TwfH2OtE2UQ1HG37N5Ad/JSDZ5p5l2HKmSsKy/C1jRR0zI3lgsHOA4n7yvfVDDquCvoIK6mfvgnjbJG7ytIuFXWALDz1l8xSVWLU7rtlYGujtwYfKPSrGmo3VZhmMsTebaGvY91urtU41MMdRA+GZocx4s4FeK3KGANduFCCfO4rm8xyN4irqp2s+PctMNmCpwtIih8WHVHOwUwYyUC13vO0nzeVVqCB1LJBC+RsjW7nOc03aLjqUquytgTgQaCPiqYyhgAFhR2Hk3FaK8O11LVeN/xX7Hv7yptW3IumjM8MlM17Gb2ja4nh96osiw2lbFDWAPlJ4mN5IUre0/ALW7y4fOKrNytgTQAKCPgn0exDd243/F/sPeVPhuRJDSOpJZahkkb2u8CON1z967TiBBTG4uCd9usXUmHKOAl+7vIA+ZxC+e0/AP8H/3FI+H8RBWi18X/AeZU3u0yJ20VPRxyyVj4pmk3Gx/SP3L6+ghqJY56SWGGEC9i/pKWo8p4Cxu0UDCPObpLlLAZDd1AwHzGyx+jVa1vq2/H9bE+9IXvuWrpmb4pO57S1x6geuykZeZheA4ZhtQZ6ODZIRYncTwXprpMsws8LQVOfErMVWjVqaohWbrf4pMzfUH/wBFeSs3W/xSZm+oP/orA1jU7N79J84+tcVym9+k+cfWuK9EAiIpBe2g/jlyn9pRetbYFqf0H8cuU/tKL1rbAvOXEBERQAiIgCIiAIiIDGbuiLXv0jwxrGOcfZNvggn90rA6gmxSgn5+hkrKWW1t8Jcx1vSFuDraKjroxFW0kFSwG4bNGHgH0FdE4DlwGxwbCQfPSx/op1WBqgy1lfN2d8cFFhGG4hi1fJxcbOc63lLitg/JK0eqtK8o1JxeZkmL4m5slQ1nFsQA4NB9amKhw7DKN2+hoKSnJFt0MLW+oLtpe4Na3LXilfyiMdLIpHDm4eIafiBQ/TT4tSsLKaaugaetsbntH8lt7qsGwirnM9VhVDPK7rfJTsc4/eQqXtdy/wD9Cwz8pH+iXBil3OSor54s2d+z1UtnQ7eec426+q6jDl7Ryv1xk2RSOAo4+IabdS2DUOHYfQbu8aGlpd/hczE1l/TYKnWYRhVZLztZhlFUSWtvlga8/iQlwYj9zzw2DEsn5ywvEadz6aqcyKVj2kBzXNIIWMuteSazI+peMZfdSyRxRTGSnAaT+ycbs/ktqlHR4bh4c2jpaSkDvCEUbWX9NlwqsJwiumM9VhtDVSEW5ySBj3W9JCagRNyQM/uzvpPRxVcXM4hhQFJKwA8WtFmu4+UKZ11qHD6ChDhQ0VNSh3hCGJrL+mwXZUAIiIAiIgCIiAIiIAiIgCIiAKzdb/FJmb6g/wDoryVm63+KTM31B6A1Oze/SfOPrXFcpvfpPnH1rivRAIiKQXtoP45cp/aUXrW2Ban9B/HLlP7Si9a2wLzlxAREUAIiIAiIgCIiAsvUbNUuDNZRUBb3zKLl/wAQfqoulr8RqZXSvqamR7jclpP9FcGqcUjM0yPe0hr2gtJ7QvV0ircNhNVSVRjFRK8GMvHWPIvnuNnVzDMnh6k9KTaXT5Z0dCMMNhVUjG7OWkuJ4hNistDPUyPgbEXCN/YV39VsYxPDKmhbh9Y+nD2uLg3t4q8qfCsPgxB1fBTRx1D22c9otcKP9af73h3zHetXGMoVsBlMoOd2ns1fhdGlRqU8RjFJR26fgNMsdxfEcwugrq6SeIQl213lXp6q4riOGNpDQVb4N9923tVqaXVdNRZjfLVTNiZzJG53VdepqziNFXNo+9Klk2299p6loUMZL3NNup9e/XfivxNmdFe2pKO1umxV0zx3F8RzA6CurpJ4uaJ2u8quDUPM8mA00cNIGOqpr2ufBHlVm6RfCd30Ll5Oeqvv3NFXLuLg07Bx6rLGnmdahlOpSeqUmr33RMsLCpjLW2SudCsxXEayodPPWTPkcbmziu9gOacXweUGGodLDe7onm4KvbTLLlBJgnshW07ZpZyQA8eCFauo2CwYPjdqVoZTzN3Nb5D2qvqYLGYXDxxynx9Xfc2I16FWo6GngS5geIw4rhkNbA9rg9vG3Ye0KPtSsdxfDsw8xQ10kEXNg7R5V2dGaxzoayic7gwhzB614mrfwo/+Jqvcxx86+UQrxdm2r2/M0MNh408Y6bV0eUM15l6xik9h27eC93LWoGIw1cUGKEVED3AOkPhN869fTKioKvKc4rYY3ML3bnOHUPSo4xeOGLEauKmdugbI4RnyjsVJUqYzA0qWJVVvVyu/3N6MaFec6ThaxkE93fFG51NKBzjDzbx2XHArCDVzX/WTTzPNflvEoqZghkJp5Hs99iJ6Lh6QszMlOe7LFCX3vzYAv5FDfLG0eZqFk845hMR9nsKYXxhoH7aMDi0+gcQvotCp5lOM+qTOaqR0ycehjV7rnVH41F/AnuudUfjUX8Cx9ljfFK6KVpY9hLXNI4ghcVsWMTIT3XOqPxqL+BPdc6o/Gov4Fj2iWBkJ7rnVH41F/AnuudUfjUX8Cx7RLAyE91zqj8ai/gT3XOqPxqL+BY9olgZCe651R+NRfwLz8ycqLUfHsBrMGrTR971kRik2s42KgtEsD647nFx6ybr4iKQEREBe2g/jlyn9pRetbYFqf0H8cuU/tKL1rbAvOXEBERQAiIgCIiAIiIC3c8Zbix+gu3o1UQJicO3zFQzW0lXh1Y6CpjfDNGfR+BU64tjuGYVVQ09dUCF8wuy44FW1qg7BKnAhLJPEam4MLmEFx83oXJ59l2HxClXhJKcePr39ehcZfialNqnJXi+BQ05ze+sLMJxE3ma20cvxvMfOujrT/e8O+Y71q0sml4zThu2/GYXV260/3vDvmO9arljauJyaoqju4tK/4o2XQjSxsdPNMsCngmqH7II3yPtezRxXKppamnt3xDJHfq3A8VdmkQBzQ+4B/YOXr6zgBlDYAdarKeVxnl8sZq3T4G1LFOOJVG3E8jSL4Tu+hcrYxu4xmuv198P9aufSL4Tu+hcvLz9SGjzTVR7C1rjvHDgbrKtTbyqnPpJ/mRCSWLkvREq5Ct7VqS3xVZes3/mNH80r0NNszYdBgbcPragRTQ3dd3U4K19RcapsZxlrqN2+CJtmv8p7VeZljaFTKIRjJXdtue3E0MLQqRxjbW2539IN3s9La9ubN1R1b+FH/wATV7mjNG9lPWVrm9GQhrD6OteHq38KP/iatKtTcMijfnK/6nvCSlmDtyRbdNXYlFSOpaaacU7vCYwGxXey3lrEcaqmMZBIynv+0kcLWCvzSSngky890kLHu5w8SLq+WtawWa0NHkAXvl3h5YmlTrVajcWuH7XPPE5k6U5QhHfqUcPpY6KihpIr7ImBrb+ZVnta9hY4AtcLEHtC+ou3jFRSS4FE227s188tHRd2Ssxvzhgccj8FxOUunaRwp5SeI+aexY3rbrqNlLDM75Or8t4tE2Snq4yBf9137rvuK1aarZGxfTzOlZlvGIi2SF26J/ZJGfBcPSvSLILVREWQCIiAIiIAiIgCIiAIiIC9tB/HLlP7Si9a2wLU/oP45cp/aUXrW2BecuICIigBERAEREAREQEeavYZXVclJU01M6WKNpa8t4kG/kUdsoK97traSpJ8hYVkOuIYwG4Y0H0Lmsf4chjK7ra2r+haYfM5UaahpvYj3T3Js9LOzFcTBZI3jFF5POV91bw2urqqhNJTPmDGO3bR1cVIaLdeS0Fg3hIOyfF8zw9uqed5z3ZF2l2FYjRZjfLVUr4o+ZI3Edq9TVrD62ubR96U7pdt920dSv1FEMlpwwTwmp2fMmWOk66rW3RF2l+FYjRZidLVUr4mc0RcjtV0agZZOPUbJKZwbVw32X6nDyK6UWeHyijSwjwsneLMamNnOsqy2aMfKzCcSpJnQz0U7XtNjZpK7+X8rYtjFQGR074YgRvkeLWU5uY13hNB9IX0AAWAA9CqKfhOiql5Tbj0/s3JZxNxso7nSwTDoMKw2Kip2gNjHG3ae0qOtTsJxGszFz1LSSSx82BuAUpIrzHZbTxeHVC+lK3D0NDD4qVGp5nFlo6WUdVRYC6KqhdE/nCbFXciLZwmHWGoxpJ3SVjzrVXVm5vmERFsHkFj5yxdF26g5YdmLBKbdmLDo7tDeueMdbfuWQaIDUV7Rs5XI9q+LcDb+6v/AET2jZy+S+LflX/otulh5Alh5AstQNRftGzl8l8W/Kv/AET2jZy+S+LflX/otulh5Alh5AmoGov2jZy+S+LflX/ontGzl8l8W/Kv/RbdLDyBLDyBNQNRftGzl8l8W/Kv/RPaNnL5L4t+Vf8Aotulh5Alh5AmoGov2jZy+S+LflX/AKJ7Rs5fJfFvyr/0W3Sw8gSw8gTUDUX7Rs5fJfFvyr/0T2jZy+S+LflX/otulh5Alh5AmoGrzRLJ2a6TV3K1RU5dxSGJmIxue99M4NaAeJJtwW0RLDyBFDYCIigBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREB//2Q==" style="height:42px;width:auto;" alt="GoldenGate Barbershop">
     </div>
+    <button class="mob-toggle" id="mob-toggle" onclick="document.querySelector('nav').classList.toggle('mob-open');this.classList.toggle('active')" aria-label="Menu">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <nav>
-      <button class="tab active" onclick="show('report')" id="tab-report">
-        <span class="tab-pip" style="background:#C9A84C"></span> Report
+      <button class="tab active" onclick="show('report')" id="tab-report" data-tab="report">
+        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#C9A84C"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Report
       </button>
-      <button class="tab" onclick="show('zalohy')" id="tab-zalohy">
-        <span class="tab-pip" style="background:#9B6FD4"></span> Zálohy
+      <button class="tab" onclick="show('zalohy')" id="tab-zalohy" data-tab="zalohy">
+        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#9B6FD4"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Zálohy
       </button>
-      <button class="tab" onclick="show('vyplaty')" id="tab-vyplaty">
-        <span class="tab-pip" style="background:#5A9ED4"></span> Výplaty
+      <button class="tab" onclick="show('vyplaty')" id="tab-vyplaty" data-tab="vyplaty">
+        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#5A9ED4"><circle cx="12" cy="12" r="10"/><path d="M16 8h-4a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4H8"/><line x1="12" y1="6" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="18"/></svg> Výplaty
       </button>
-      <button class="tab" onclick="show('mara')" id="tab-mara">
-        <span class="tab-pip" style="background:#E8A830"></span> Mára
+      <button class="tab" onclick="show('mara')" id="tab-mara" data-tab="mara">
+        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#E8A830"><circle cx="12" cy="7" r="4"/><path d="M5.8 21a7 7 0 0 1 12.4 0"/></svg> Mára
       </button>
-      <button class="tab" onclick="show('cf')" id="tab-cf">
-        <span class="tab-pip" style="background:#9B6FD4"></span> CF
+      <button class="tab" onclick="show('barberi')" id="tab-barberi" data-tab="barberi">
+        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#5DB87A"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Barbeři
       </button>
+      <button class="tab" onclick="show('cf')" id="tab-cf" data-tab="cf">
+        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#9B6FD4"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg> CF
+      </button>
+      <div class="tab-slider" id="tab-slider"><div class="tab-slider-bg"></div><div class="tab-slider-shimmer"></div></div>
     </nav>
     <div class="user-menu-wrap">
       <button class="user-menu-trigger" id="user-menu-trigger" title="Nastavení">⚙</button>
@@ -1242,7 +1609,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 <!-- ════════════════════════════════════
      TAB 1 — REPORT
 ════════════════════════════════════ -->
-<div class="view active" id="view-report">
+<div class="view active" id="view-report" data-tab="report">
 
   <!-- ── Filtr období ── -->
   <div id="report-filter-bar" style="display:flex;align-items:center;gap:16px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 22px;margin-bottom:20px;flex-wrap:wrap;">
@@ -1281,7 +1648,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 <!-- ════════════════════════════════════
      TAB 3 — ZÁLOHY
 ════════════════════════════════════ -->
-<div class="view" id="view-zalohy">
+<div class="view" id="view-zalohy" data-tab="zalohy">
 
   <div class="zalohy-filter">
     <div class="zf-field" style="max-width:240px;">
@@ -1332,7 +1699,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 <!-- ════════════════════════════════════
      TAB 4 — VÝPLATY
 ════════════════════════════════════ -->
-<div class="view" id="view-vyplaty">
+<div class="view" id="view-vyplaty" data-tab="vyplaty">
 
   <div class="zalohy-filter" style="margin-bottom:20px;">
     <div class="zf-field" style="max-width:220px;">
@@ -1394,6 +1761,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
           <th id="vp-col1" style="text-align:right;min-width:130px"></th>
           <th id="vp-col2" style="text-align:right;min-width:130px"></th>
           <th id="vp-col3" style="text-align:right;min-width:130px"></th>
+          <th id="vp-col4" style="text-align:right;min-width:130px"></th>
         </tr></thead>
         <tbody id="vp-tbody3m"></tbody>
       </table>
@@ -1407,7 +1775,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 <!-- ════════════════════════════════════
      TAB 5 — MÁRA
 ════════════════════════════════════ -->
-<div class="view" id="view-mara">
+<div class="view" id="view-mara" data-tab="mara">
 
   <!-- Filtr období -->
   <div class="zalohy-filter" style="margin-bottom:16px;">
@@ -1531,12 +1899,63 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 </div>
 
 <!-- ════════════════════════════════════
+     TAB BARBEŘI — Přehled barberů
+════════════════════════════════════ -->
+<div class="view" id="view-barberi" data-tab="barberi">
+
+  <!-- Filtr období -->
+  <div class="zalohy-filter" style="margin-bottom:16px;">
+    <span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap">📅 Období</span>
+    <div class="zf-field" style="max-width:200px;">
+      <label class="zf-label">Od</label>
+      <select class="zf-select" id="bb-from" onchange="renderBarberi()"></select>
+    </div>
+    <span style="color:var(--muted);font-size:14px;padding-top:14px">→</span>
+    <div class="zf-field" style="max-width:200px;">
+      <label class="zf-label">Do</label>
+      <select class="zf-select" id="bb-to" onchange="renderBarberi()"></select>
+    </div>
+    <button class="zf-reset" onclick="bbReset()">✕ Reset</button>
+  </div>
+
+  <div class="sec">👥 Přehled barberů — tržby</div>
+
+  <!-- KPI strip -->
+  <div class="kpi-row kpi-row-3" style="margin-bottom:20px;" id="bb-kpi-strip"></div>
+
+  <!-- Srovnávací tabulka -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-head">
+      <div>
+        <div class="card-title">📊 Srovnání tržeb barberů</div>
+        <div class="card-sub" id="bb-period-label">Načítám data…</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="bb-table" style="width:100%">
+        <thead id="bb-thead"></thead>
+        <tbody id="bb-tbody">
+          <tr><td colspan="4" style="padding:48px;text-align:center;color:var(--muted)">Načítám data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-head"><div><div class="card-title">📈 Tržby barberů</div><div class="card-sub">Srovnání za vybrané období</div></div></div>
+    <div class="chart-wrap h280"><canvas id="bb-chart-trzby"></canvas></div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════
      TAB 6 — FINANČNÍ PLÁN
 ════════════════════════════════════ -->
 <!-- ════════════════════════════════════
      TAB CF — CASH FLOW / FINANČNÍ PLÁN
 ════════════════════════════════════ -->
-<div class="view" id="view-cf">
+<div class="view" id="view-cf" data-tab="cf">
 
   <!-- ── Filtr období ── -->
   <div style="display:flex;align-items:center;gap:16px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 22px;margin-bottom:20px;flex-wrap:wrap;">
@@ -1587,10 +2006,10 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     <div id="cf-print-period" style="font-size:12px;color:#666;margin-top:4px"></div>
   </div>
 
-  <div id="cf-table-wrap" style="overflow-x:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:16px;overflow:hidden;border-top:3px solid var(--gold)">
-    <div style="overflow-x:auto">
+  <div id="cf-table-wrap" style="overflow:hidden;background:var(--bg2);border:1px solid var(--border2);border-radius:16px;border-top:3px solid var(--gold)">
+    <div style="overflow:auto;max-height:75vh">
     <table id="cf-table" style="width:100%;border-collapse:collapse;min-width:900px">
-      <thead id="cf-thead"></thead>
+      <thead id="cf-thead" style="position:sticky;top:0;z-index:10"></thead>
       <tbody id="cf-tbody">
         <tr><td colspan="4" style="padding:48px;text-align:center;color:var(--muted)">Načítám data…</td></tr>
       </tbody>
@@ -1621,6 +2040,7 @@ const _supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 // Current user role: 'admin' | 'reader' | null
 let USER_ROLE = null;
 let AUTH_TOKEN = null;
+let USER_TAB_RIGHTS = null; // loaded from user_tab_rights table
 
 // Admin e-mails — only these get write/delete access
 const ADMIN_EMAILS = ['marek.dubak@icloud.com'];
@@ -1782,6 +2202,9 @@ async function loadAllData() {
   window._appReady = true;
   reportInitSelects(null);
   cfInitSelects(null);
+  bbInitSelects();
+  renderBarberi();
+  window._rendered.barberi = true;
   renderReport();
   renderMara();
   window._rendered.mara = true;
@@ -1798,7 +2221,7 @@ async function loadAllData() {
 Chart.defaults.color = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#5A5550';
 Chart.defaults.font.family = "'Syne', sans-serif";
 const gc = () => getComputedStyle(document.body).getPropertyValue('--stripe').trim() || 'rgba(0,0,0,0.03)';
-const tt = { backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg3').trim() || '#161616', borderColor:'rgba(201,168,76,0.2)', borderWidth:1, padding:10 };
+const tt = { backgroundColor:'rgba(15,15,15,0.92)', borderColor:'rgba(201,168,76,0.4)', borderWidth:1, padding:12, titleColor:'#C9A84C', bodyColor:'#F4F1EC', titleFont:{family:"'Syne',sans-serif",weight:'700',size:13}, bodyFont:{family:"'JetBrains Mono',monospace",size:12}, cornerRadius:8, displayColors:true, boxPadding:4 };
 const fmt = v => Math.round(v).toLocaleString('cs-CZ')+' Kč';
 
 function makeMain(id, labels, trzby, vydaje, zisk) {
@@ -1917,6 +2340,11 @@ function selectMonth(idx) {
       <div class="kpi-val sm">${marze}%</div>
       <div class="kpi-footer"><span class="kpi-sub">Zisk / Tržby</span></div>
     </div>`;
+  // Animate monthly KPI values
+  setTimeout(() => {
+    document.querySelectorAll('#m-kpi .kpi-val').forEach(e => { e._counted = false; });
+    if (typeof refreshKpiCounters === 'function') refreshKpiCounters();
+  }, 100);
 
   // Pobočky
   const pobockyData = [
@@ -2176,6 +2604,7 @@ async function doLogin() {
   AUTH_TOKEN = data.session?.access_token || SUPA_KEY;
   console.log('[AUTH] Logged in as', userEmail, '| role:', USER_ROLE);
   populateUserMenu(userEmail, USER_ROLE);
+  await loadAndApplyTabRights(userEmail);
 
   // Transition to dashboard
   const screen = document.getElementById('login-screen');
@@ -2185,6 +2614,7 @@ async function doLogin() {
     screen.style.display = 'none';
     document.getElementById('app').style.display = 'block';
     loadAllData();
+    if (typeof positionTabSlider === 'function') setTimeout(positionTabSlider, 500);
   }, 400);
 }
 
@@ -2194,6 +2624,59 @@ function populateUserMenu(email, role) {
   const elRole = document.getElementById('umd-role');
   if (elEmail) elEmail.textContent = email;
   if (elRole) elRole.textContent = role === 'admin' ? 'ADMIN' : 'READER';
+}
+
+// ── Load tab rights from Supabase and show/hide tabs & views ──
+async function loadAndApplyTabRights(userEmail) {
+  try {
+    const token = await getAuthToken();
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/user_tab_rights?email=eq.${encodeURIComponent(userEmail)}&select=*`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token } }
+    );
+    const rows = await res.json();
+    if (Array.isArray(rows) && rows.length > 0) {
+      USER_TAB_RIGHTS = rows[0];
+    } else {
+      // No rights record found — admin gets all, reader gets defaults
+      if (ADMIN_EMAILS.includes(userEmail)) {
+        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:true, tab_barberi:true, tab_cf:true };
+      } else {
+        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false };
+      }
+    }
+  } catch(e) {
+    console.warn('[RIGHTS] Failed to load tab rights:', e);
+    // Fallback — show basic tabs
+    USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false };
+  }
+  applyTabRights();
+}
+
+function applyTabRights() {
+  if (!USER_TAB_RIGHTS) return;
+  const tabs = ['report','zalohy','vyplaty','mara','barberi','cf'];
+  let firstVisible = null;
+  tabs.forEach(t => {
+    const allowed = USER_TAB_RIGHTS['tab_' + t] === true;
+    const tabBtn = document.getElementById('tab-' + t);
+    const view   = document.getElementById('view-' + t);
+    if (tabBtn) tabBtn.style.display = allowed ? '' : 'none';
+    if (view && !allowed) {
+      view.classList.remove('active');
+      view.style.display = 'none';
+    }
+    if (view && allowed) {
+      view.style.display = '';
+    }
+    if (allowed && !firstVisible) firstVisible = t;
+  });
+  // Make sure at least one tab is active
+  const anyActive = document.querySelector('.view.active');
+  if (!anyActive && firstVisible) {
+    show(firstVisible);
+  }
+  console.log('[RIGHTS] Applied tab rights:', USER_TAB_RIGHTS);
 }
 
 // ── Auto-login if session exists ──
@@ -2222,9 +2705,11 @@ document.addEventListener('DOMContentLoaded', () => {
         AUTH_TOKEN = data.session.access_token;
         console.log('[AUTH] Restored session for', userEmail, '| role:', USER_ROLE);
         populateUserMenu(userEmail, USER_ROLE);
+        await loadAndApplyTabRights(userEmail);
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         loadAllData();
+        if (typeof positionTabSlider === 'function') setTimeout(positionTabSlider, 500);
         return;
       }
     } catch(e) {
@@ -2325,6 +2810,7 @@ function vpApply(){
     document.getElementById('vp-col1').textContent='';
     document.getElementById('vp-col2').textContent='';
     document.getElementById('vp-col3').textContent='';
+    document.getElementById('vp-col4').textContent='';
     document.getElementById('vp-tbody3m').innerHTML='';
     return;
   }
@@ -2428,14 +2914,14 @@ function vpApply(){
   const idx  = VYPLA_RAW.findIndex(m => m.key === monthQ);
   // get up to 3 months ending at idx (only months where barber exists)
   const prev3 = [];
-  for(let i = idx; i >= 0 && prev3.length < 3; i--){
+  for(let i = idx; i >= 0 && prev3.length < 4; i--){
     const m = VYPLA_RAW[i];
     const b = vpSumBarber(m, nameQ);
     if(b !== null) prev3.unshift({m, b});
   }
 
   // fill column headers
-  ['vp-col1','vp-col2','vp-col3'].forEach((id,i) => {
+  ['vp-col1','vp-col2','vp-col3','vp-col4'].forEach((id,i) => {
     const el = document.getElementById(id);
     el.textContent = prev3[i] ? prev3[i].m.mesic + ' ' + prev3[i].m.rok : '';
     el.style.textAlign = 'right';
@@ -2485,7 +2971,7 @@ function vpApply(){
       tbody += `<tr style="background:var(--stripe)">
         <td style="padding:4px 8px;font-size:11px;color:var(--muted2)">${row.label}</td>
         ${deltas.map(d => `<td style="text-align:right;padding:4px 8px;font-size:11px">${d}</td>`).join('')}
-        ${prev3.length < 3 ? `<td></td>`.repeat(3 - prev3.length) : ''}
+        ${prev3.length < 4 ? `<td></td>`.repeat(4 - prev3.length) : ''}
       </tr>`;
     } else {
       const isVyplata = row.key === 'mzdy_po_zalohach';
@@ -2501,7 +2987,7 @@ function vpApply(){
             ${v !== null ? Math.round(v).toLocaleString('cs-CZ') + ' Kč' : '—'}
           </td>`;
         }).join('')}
-        ${prev3.length < 3 ? `<td></td>`.repeat(3 - prev3.length) : ''}
+        ${prev3.length < 4 ? `<td></td>`.repeat(4 - prev3.length) : ''}
       </tr>`;
     }
   });
@@ -2741,7 +3227,8 @@ async function renderReport() {
   // ── Tabulka řádek ──
   const tableRow = (lbl, vals, fmtFn, opts = {}) => {
     const {sub=false, bold=false, topLine=false, bg='', pct=false} = opts;
-    const lStyle = `padding:7px 10px 7px ${sub?'22px':'10px'};font-family:'Syne',sans-serif;font-size:${sub?'10px':'11px'};color:${bold?'var(--text)':'var(--muted2)'};font-weight:${bold?600:400};border-bottom:1px solid var(--row-border);${topLine?'border-top:1px solid var(--border2);':''}${bg?'background:'+bg+';':''}`;
+    const bgColor = bg || 'var(--bg2)';
+    const lStyle = `position:sticky;left:0;z-index:2;background:${bgColor};padding:7px 10px 7px ${sub?'22px':'10px'};font-family:'Syne',sans-serif;font-size:${sub?'10px':'11px'};color:${bold?'var(--text)':'var(--muted2)'};font-weight:${bold?600:400};border-bottom:1px solid var(--row-border);${topLine?'border-top:1px solid var(--border2);':''}white-space:nowrap`;
     const vStyle = `padding:7px 14px 7px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right;border-bottom:1px solid var(--row-border);white-space:nowrap;${topLine?'border-top:1px solid var(--border2);':''}${bg?'background:'+bg+';':''}`;
     return `<tr>
       <td style="${lStyle}">${lbl}</td>
@@ -2750,7 +3237,7 @@ async function renderReport() {
   };
 
   const thead = (color='var(--muted)') => `<thead><tr>
-    <th style="text-align:left;padding:7px 10px;font-family:'Syne',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${color};border-bottom:1px solid var(--border2);min-width:160px"></th>
+    <th style="text-align:left;padding:7px 10px;font-family:'Syne',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${color};border-bottom:1px solid var(--border2);min-width:160px;position:sticky;left:0;z-index:4;background:var(--bg2)"></th>
     ${labels.map(l => `<th style="text-align:right;padding:7px 14px 7px 8px;font-family:'Syne',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${color};border-bottom:1px solid var(--border2);min-width:${N>5?'90px':'110px'}">${l}</th>`).join('')}
   </tr></thead>`;
 
@@ -2783,7 +3270,7 @@ async function renderReport() {
     const id1 = `rc-t-${pob.replace(/\s/g,'')}-${_seq}`;
     const id2 = `rc-z-${pob.replace(/\s/g,'')}-${_seq}`;
     return {
-      html: `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px">
+      html: `<div class="rpt-charts-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px">
         <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px 18px 14px">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:12px">TRŽBY — ${pob.toUpperCase()}</div>
           <div style="height:160px;position:relative"><canvas id="${id1}"></canvas></div>
@@ -2845,7 +3332,7 @@ async function renderReport() {
   const idSumTrzby = `rc-sum-trzby-${_seq}`;
   const idSumZisk  = `rc-sum-zisk-${_seq}`;
   const grafySouhrnHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+    <div class="rpt-charts-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
       <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px 18px 14px">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:12px">TRŽBY — VŠECHNY POBOČKY</div>
         <div style="height:180px;position:relative"><canvas id="${idSumTrzby}"></canvas></div>
@@ -2879,7 +3366,7 @@ async function renderReport() {
   // ── Vykresli grafy ──
   const gc = () => getComputedStyle(document.body).getPropertyValue('--row-border').trim() || 'rgba(255,255,255,0.04)';
   const axisC = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#666';
-  const ttOpts = {backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg3').trim()||'#161616', borderColor:'rgba(201,168,76,0.2)', borderWidth:1, padding:10};
+  const ttOpts = {backgroundColor:'rgba(15,15,15,0.92)', borderColor:'rgba(201,168,76,0.4)', borderWidth:1, padding:12, titleColor:'#C9A84C', bodyColor:'#F4F1EC', titleFont:{family:"'Syne',sans-serif",weight:'700',size:13}, bodyFont:{family:"'JetBrains Mono',monospace",size:12}, cornerRadius:8, displayColors:true, boxPadding:4};
   const fmt = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
   const scalesOpts = () => ({
     x: {grid:{color:gc()}, ticks:{font:{size:10}, color:axisC}},
@@ -3174,10 +3661,17 @@ function renderMara() {
   if(el('mara-celkem'))    el('mara-celkem').textContent    = totalCastka.toLocaleString('cs-CZ') + ' Kč';
   if(el('mara-zaplaceno')) el('mara-zaplaceno').textContent = totalZaplaceno.toLocaleString('cs-CZ') + ' Kč';
   if(el('mara-dluh'))      el('mara-dluh').textContent      = totalDluh.toLocaleString('cs-CZ') + ' Kč';
+  // Animate KPI counters
+  [el('mara-celkem'), el('mara-zaplaceno'), el('mara-dluh')].forEach(e => { if(e) e._counted = false; });
+  if (typeof refreshKpiCounters === 'function') setTimeout(refreshKpiCounters, 100);
 
-  // Progress bar
+  // Progress bar — animate width
   const pct = totalCastka > 0 ? Math.round((totalZaplaceno / totalCastka) * 100) : 0;
-  if(el('mara-progress-bar'))  el('mara-progress-bar').style.width = pct + '%';
+  if(el('mara-progress-bar')) {
+    el('mara-progress-bar').style.width = '0%';
+    el('mara-progress-bar').style.transition = 'width 1.5s cubic-bezier(.16,1,.3,1)';
+    setTimeout(() => { el('mara-progress-bar').style.width = pct + '%'; }, 200);
+  }
   if(el('mara-pct-label'))     el('mara-pct-label').textContent = pct + ' %';
   if(el('mara-progress-text')) el('mara-progress-text').textContent = totalZaplaceno.toLocaleString('cs-CZ') + ' / ' + totalCastka.toLocaleString('cs-CZ') + ' Kč';
   if(el('mara-prog-zaplaceno')) el('mara-prog-zaplaceno').textContent = '✓ Zaplaceno: ' + totalZaplaceno.toLocaleString('cs-CZ') + ' Kč';
@@ -3281,8 +3775,14 @@ function cfInitSelects(availableRM) {
       lastAvail = key;
     }
   }
-  const defFrom = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Prosinec_2025') ? 'Prosinec_2025' : firstAvail;
-  const defTo   = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Únor_2026')     ? 'Únor_2026'    : lastAvail;
+  const isMobile = window.innerWidth <= 680;
+  const unor2026 = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Únor_2026') ? 'Únor_2026' : null;
+  const defFrom = isMobile
+    ? (unor2026 || lastAvail || firstAvail)
+    : (RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Prosinec_2025') ? 'Prosinec_2025' : firstAvail);
+  const defTo = isMobile
+    ? (unor2026 || lastAvail || firstAvail)
+    : (lastAvail || defFrom);
   if (defFrom) selFrom.value = defFrom;
   if (defTo)   selTo.value   = defTo;
   cfUpdateLabel();
@@ -3424,8 +3924,13 @@ async function renderCF() {
     if (!pivot[ent]) continue;
     const col = sColor[ent]||'#C9A84C';
 
-    // Sekce hlavička — class cf-page-break pro tisk
-    html += `<tr class="cf-page-break"><td colspan="${3+N}" style="background:var(--sec-head);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:${col};border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)">${ent.toUpperCase()}</td></tr>`;
+    // Sekce hlavička — separate cells so sticky works on mobile
+    html += `<tr class="cf-page-break cf-sec-row">
+      <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-head);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:${col};border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border);white-space:nowrap">${ent.toUpperCase()}</td>
+      <td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>
+      <td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>
+      ${mesice.map(()=>'<td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>').join('')}
+    </tr>`;
 
     let prevDod = null;
     const secTot = {};
@@ -3454,8 +3959,9 @@ async function renderCF() {
     // Sekce součet
     secSum = Object.values(secTot).reduce((a,b)=>a+b,0);
     const secCells = mesice.map(m=>`<td style="text-align:right;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--sec-total);white-space:nowrap">${secTot[m]!==0?fmtB(secTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
-    html += `<tr>
-      <td colspan="2" style="position:sticky;left:0;z-index:2;background:var(--sec-total);padding:7px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${col};border-top:1px solid var(--row-border)">∑ ${ent.toUpperCase()}</td>
+    html += `<tr class="cf-sec-total-row">
+      <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-total);padding:7px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${col};border-top:1px solid var(--row-border);white-space:nowrap">∑ ${ent.toUpperCase()}</td>
+      <td style="background:var(--sec-total);border-top:1px solid var(--row-border)"></td>
       <td style="position:sticky;left:260px;z-index:2;background:var(--sec-total);box-shadow:var(--shadow-sticky);border-top:1px solid var(--row-border)"></td>
       ${secCells}
     </tr>
@@ -3474,8 +3980,9 @@ async function renderCF() {
   const grandTot = {};
   mesice.forEach(m=>{ grandTot[m]=0; for(const ent of sekce){ if(!pivot[ent])continue; for(const {dod,pop} of ordRows[ent]){ grandTot[m]+=(pivot[ent][dod]&&pivot[ent][dod][pop]&&pivot[ent][dod][pop][m])||0; } } });
   const grandCells = mesice.map(m=>`<td style="text-align:right;padding:8px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:rgba(201,168,76,0.08);white-space:nowrap;border-top:2px solid rgba(201,168,76,0.3)">${grandTot[m]!==0?fmtB(grandTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
-  html += `<tr>
-    <td colspan="2" style="position:sticky;left:0;z-index:2;background:rgba(201,168,76,0.08);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:var(--gold);border-top:2px solid rgba(201,168,76,0.3)">GRAND TOTAL</td>
+  html += `<tr class="cf-grand-row">
+    <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:rgba(201,168,76,0.08);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:var(--gold);border-top:2px solid rgba(201,168,76,0.3);white-space:nowrap">GRAND TOTAL</td>
+    <td style="background:rgba(201,168,76,0.08);border-top:2px solid rgba(201,168,76,0.3)"></td>
     <td style="position:sticky;left:260px;z-index:2;background:rgba(201,168,76,0.08);box-shadow:var(--shadow-sticky);border-top:2px solid rgba(201,168,76,0.3)"></td>
     ${grandCells}
   </tr>`;
@@ -3487,7 +3994,279 @@ async function renderCF() {
   if(elId('cf-kpi-trzby'))  elId('cf-kpi-trzby').textContent  = fK(gTrzby);
   if(elId('cf-kpi-vydaje')) elId('cf-kpi-vydaje').textContent = fK(gVydaje);
   if(elId('cf-kpi-zisk'))   elId('cf-kpi-zisk').textContent   = fK(gZisk);
+  // Reset counters for fresh animation
+  [elId('cf-kpi-trzby'), elId('cf-kpi-vydaje'), elId('cf-kpi-zisk')].forEach(e => { if(e) e._counted = false; });
+  if (typeof refreshKpiCounters === 'function') setTimeout(refreshKpiCounters, 100);
 }
+
+// ═══════════════════════════════════════════════
+// BARBEŘI — Přehled barberů, tržby
+// ═══════════════════════════════════════════════
+let bbChartTrzby = null;
+
+// Minimální měsíc pro filtr: Říjen 2025
+const BB_MIN_KEY = 'Říjen_2025';
+
+function bbInitSelects() {
+  if (!VYPLA_RAW || !VYPLA_RAW.length) return;
+  const fromSel = document.getElementById('bb-from');
+  const toSel = document.getElementById('bb-to');
+  if (!fromSel || !toSel) return;
+
+  // Filtruj měsíce od Říjen 2025 dále
+  const minIdx = VYPLA_RAW.findIndex(m => m.key === BB_MIN_KEY);
+  const startIdx = minIdx >= 0 ? minIdx : 0;
+  const filtered = VYPLA_RAW.slice(startIdx);
+
+  const opts = filtered.map(m => `<option value="${m.key}">${m.mesic} ${m.rok}</option>`).join('');
+  fromSel.innerHTML = opts;
+  toSel.innerHTML = opts;
+
+  fromSel.value = filtered[0].key;
+  toSel.value = filtered[filtered.length - 1].key;
+}
+
+function bbReset() {
+  bbInitSelects();
+  renderBarberi();
+}
+
+// Pořadí poboček pro řazení
+const BB_POB_ORDER = {'Záběhlice':1,'Vršovice':2,'Veleslavín':3};
+function bbPobSortKey(pobSet) {
+  let min = 99;
+  for (const p of pobSet) {
+    const v = BB_POB_ORDER[p] || 50;
+    if (v < min) min = v;
+  }
+  return min;
+}
+
+function renderBarberi() {
+  if (!VYPLA_RAW || !VYPLA_RAW.length) return;
+
+  const fromKey = document.getElementById('bb-from').value;
+  const toKey = document.getElementById('bb-to').value;
+  if (!fromKey || !toKey) return;
+
+  const fromIdx = VYPLA_RAW.findIndex(m => m.key === fromKey);
+  const toIdx = VYPLA_RAW.findIndex(m => m.key === toKey);
+  if (fromIdx < 0 || toIdx < 0) return;
+
+  const startIdx = Math.min(fromIdx, toIdx);
+  const endIdx = Math.max(fromIdx, toIdx);
+  const selectedMonths = VYPLA_RAW.slice(startIdx, endIdx + 1);
+
+  // Period label
+  const el = document.getElementById('bb-period-label');
+  if (el) el.textContent = selectedMonths.length === 1
+    ? selectedMonths[0].mesic + ' ' + selectedMonths[0].rok
+    : selectedMonths[0].mesic + ' ' + selectedMonths[0].rok + ' → ' + selectedMonths[selectedMonths.length-1].mesic + ' ' + selectedMonths[selectedMonths.length-1].rok
+      + ' (' + selectedMonths.length + ' období)';
+
+  // Collect all barber names
+  const allNames = new Set();
+  selectedMonths.forEach(m => {
+    m.barberi.forEach(b => allNames.add(normName(b.jmeno)));
+  });
+  const names = [...allNames];
+
+  // Build per-barber data
+  const barberData = {};
+  names.forEach(name => {
+    barberData[name] = { months: [], totalTrzba: 0, pobocky: new Set() };
+    selectedMonths.forEach((m, mi) => {
+      const bd = vpSumBarber(m, name);
+      const trzba = bd ? (bd.trzba || 0) : 0;
+      barberData[name].months.push({ mesic: m.mesic, rok: m.rok, trzba });
+      barberData[name].totalTrzba += trzba;
+      if (bd && bd.pobocka) bd.pobocka.split(' + ').forEach(p => barberData[name].pobocky.add(p.trim()));
+    });
+  });
+
+  // Sort: 1) by pobočka order, 2) by total tržba desc within pobočka
+  const sorted = names.sort((a, b) => {
+    const pa = bbPobSortKey(barberData[a].pobocky);
+    const pb = bbPobSortKey(barberData[b].pobocky);
+    if (pa !== pb) return pa - pb;
+    return barberData[b].totalTrzba - barberData[a].totalTrzba;
+  });
+
+  // KPIs
+  const totalTrzby = sorted.reduce((s, n) => s + barberData[n].totalTrzba, 0);
+  const topBarber = sorted.length ? sorted.reduce((best, n) => barberData[n].totalTrzba > barberData[best].totalTrzba ? n : best, sorted[0]) : '—';
+  const topTrzba = sorted.length ? barberData[topBarber].totalTrzba : 0;
+  // Nejhorší barber (nejnižší tržba, ale musí mít alespoň nějakou)
+  const activeSorted = sorted.filter(n => barberData[n].totalTrzba > 0);
+  const worstBarber = activeSorted.length ? activeSorted.reduce((worst, n) => barberData[n].totalTrzba < barberData[worst].totalTrzba ? n : worst, activeSorted[0]) : '—';
+  const worstTrzba = worstBarber !== '—' ? barberData[worstBarber].totalTrzba : 0;
+  const fK = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
+
+  document.getElementById('bb-kpi-strip').innerHTML = `
+    <div class="kpi" style="--kpi-accent:var(--gold)">
+      <div class="kpi-label">Celkové tržby</div>
+      <div class="kpi-val sm" style="color:var(--gold2)">${fK(totalTrzby)}</div>
+      <div class="kpi-footer"><span class="kpi-sub">${sorted.length} barberů · ${selectedMonths.length} období</span></div>
+    </div>
+    <div class="kpi" style="--kpi-accent:#E8A830">
+      <div class="kpi-label">🏆 Top barber</div>
+      <div class="kpi-val sm" style="font-size:22px;color:#E8A830">${topBarber}</div>
+      <div class="kpi-footer"><span class="kpi-sub">${fK(topTrzba)}</span></div>
+    </div>
+    <div class="kpi" style="--kpi-accent:var(--neg)">
+      <div class="kpi-label">📉 Nejhorší barber</div>
+      <div class="kpi-val sm" style="font-size:22px;color:var(--neg)">${worstBarber}</div>
+      <div class="kpi-footer"><span class="kpi-sub">${fK(worstTrzba)}</span></div>
+    </div>`;
+  // Reset and animate new KPI values
+  setTimeout(() => {
+    document.querySelectorAll('#bb-kpi-strip .kpi-val').forEach(e => { e._counted = false; });
+    if (typeof refreshKpiCounters === 'function') refreshKpiCounters();
+  }, 100);
+
+  // ── Table with deltas ──
+  const thead = document.getElementById('bb-thead');
+  const tbody = document.getElementById('bb-tbody');
+
+  // Header: Barber | Pobočka | month1 | Δ | month2 | Δ | ... | ∑
+  let thHTML = '<tr><th class="bb-sticky-name" style="text-align:left;min-width:140px;position:sticky;left:0;z-index:4;background:var(--bg2)">Barber</th><th style="text-align:left;min-width:100px">Pobočka</th>';
+  selectedMonths.forEach((m, mi) => {
+    thHTML += `<th style="min-width:85px">${m.mesic}<br><span style="font-weight:400;font-size:9px">${m.rok}</span></th>`;
+    if (mi > 0 && mi < selectedMonths.length) {
+      // delta column header only between months (after each except first)
+    }
+  });
+  thHTML += '<th style="min-width:100px">∑ Celkem</th></tr>';
+  thead.innerHTML = thHTML;
+
+  let tbHTML = '';
+  let lastPob = '';
+  sorted.forEach((name, idx) => {
+    const d = barberData[name];
+    const pobLabel = [...d.pobocky].join(', ') || '—';
+    const mainPob = [...d.pobocky][0] || '';
+
+    // Sekce separator when pobočka changes
+    if (mainPob !== lastPob && mainPob) {
+      const secColor = mainPob === 'Záběhlice' ? 'var(--zabeh)' : mainPob === 'Vršovice' ? 'var(--vrsov)' : mainPob === 'Veleslavín' ? 'var(--velesv)' : 'var(--gold)';
+      tbHTML += `<tr class="bb-sec-row"><td style="position:sticky;left:0;z-index:5;background:var(--sec-head);padding:8px 14px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${secColor};border-top:1px solid var(--row-border);white-space:nowrap">${mainPob.toUpperCase()}</td><td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>`;
+      selectedMonths.forEach(() => { tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>'; });
+      tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td></tr>';
+      lastPob = mainPob;
+    }
+
+    const bg = idx % 2 === 0 ? '' : ' style="background:var(--stripe)"';
+    // Tržby row
+    tbHTML += `<tr${bg}>`;
+    tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px;position:sticky;left:0;z-index:3;background:var(--bg2);white-space:nowrap;box-shadow:var(--shadow-sticky)">${name}</td>`;
+    tbHTML += `<td style="text-align:left;font-size:11px;color:var(--muted2);padding:8px 14px;background:var(--bg2)">${pobLabel}</td>`;
+    d.months.forEach((md, mi) => {
+      const c = md.trzba > 0 ? 'color:var(--text)' : 'color:var(--muted)';
+      tbHTML += `<td style="${c}">${md.trzba ? Math.round(md.trzba).toLocaleString('cs-CZ') : '—'}</td>`;
+    });
+    tbHTML += `<td style="font-weight:700;color:var(--gold2)">${Math.round(d.totalTrzba).toLocaleString('cs-CZ')}</td>`;
+    tbHTML += '</tr>';
+
+    // Delta row (meziměsíční změny v %)
+    if (selectedMonths.length >= 2) {
+      tbHTML += `<tr style="background:var(--stripe2)">`;
+      tbHTML += `<td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:3;background:var(--bg3);white-space:nowrap;box-shadow:var(--shadow-sticky)">Δ %</td><td style="background:var(--bg3)"></td>`;
+      d.months.forEach((md, mi) => {
+        if (mi === 0) {
+          tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
+        } else {
+          const prev = d.months[mi-1].trzba;
+          const cur = md.trzba;
+          if (!prev || prev === 0) {
+            tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
+          } else {
+            const pct = ((cur - prev) / Math.abs(prev)) * 100;
+            const color = pct > 0 ? 'var(--pos)' : pct < 0 ? 'var(--neg)' : 'var(--muted)';
+            const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '–';
+            tbHTML += `<td style="text-align:right;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:${color}">${arrow} ${Math.abs(pct).toFixed(1)}%</td>`;
+          }
+        }
+      });
+      tbHTML += `<td></td></tr>`;
+    }
+  });
+
+  // Grand total
+  tbHTML += `<tr style="border-top:2px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06)">`;
+  tbHTML += `<td style="text-align:left;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--gold);padding:10px 14px;position:sticky;left:0;z-index:5;background:var(--bg2);white-space:nowrap;box-shadow:var(--shadow-sticky)">CELKEM</td>`;
+  tbHTML += `<td style="background:var(--bg2)"></td>`;
+  selectedMonths.forEach((m, mi) => {
+    const mT = sorted.reduce((s, n) => s + barberData[n].months[mi].trzba, 0);
+    tbHTML += `<td style="font-weight:700;color:var(--gold2)">${Math.round(mT).toLocaleString('cs-CZ')}</td>`;
+  });
+  tbHTML += `<td style="font-weight:700;color:var(--gold2);font-size:13px">${Math.round(totalTrzby).toLocaleString('cs-CZ')}</td>`;
+  tbHTML += '</tr>';
+
+  // Grand total delta row
+  if (selectedMonths.length >= 2) {
+    tbHTML += `<tr style="background:rgba(201,168,76,0.04)"><td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:3;background:var(--bg2);white-space:nowrap;box-shadow:var(--shadow-sticky)">Δ %</td><td style="background:var(--bg2)"></td>`;
+    selectedMonths.forEach((m, mi) => {
+      if (mi === 0) {
+        tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
+      } else {
+        const prevT = sorted.reduce((s, n) => s + barberData[n].months[mi-1].trzba, 0);
+        const curT = sorted.reduce((s, n) => s + barberData[n].months[mi].trzba, 0);
+        if (!prevT) {
+          tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
+        } else {
+          const pct = ((curT - prevT) / Math.abs(prevT)) * 100;
+          const color = pct > 0 ? 'var(--pos)' : pct < 0 ? 'var(--neg)' : 'var(--muted)';
+          const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '–';
+          tbHTML += `<td style="text-align:right;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:${color}">${arrow} ${Math.abs(pct).toFixed(1)}%</td>`;
+        }
+      }
+    });
+    tbHTML += `<td></td></tr>`;
+  }
+
+  tbody.innerHTML = tbHTML;
+
+  // ── Chart ──
+  const barColors = [
+    'rgba(201,168,76,0.7)','rgba(93,184,122,0.7)','rgba(90,158,212,0.7)',
+    'rgba(155,111,212,0.7)','rgba(232,168,48,0.7)','rgba(217,107,90,0.7)',
+    'rgba(62,207,142,0.7)','rgba(118,228,247,0.7)','rgba(245,101,101,0.7)',
+    'rgba(246,173,85,0.7)','rgba(104,211,145,0.7)','rgba(200,200,200,0.6)'
+  ];
+
+  if (bbChartTrzby) bbChartTrzby.destroy();
+  if (selectedMonths.length <= 5) {
+    const datasets = selectedMonths.map((m, i) => ({
+      label: m.mesic + ' ' + m.rok,
+      data: sorted.map(n => barberData[n].months[i].trzba),
+      backgroundColor: barColors[i % barColors.length],
+      borderColor: barColors[i % barColors.length].replace('0.7','1'),
+      borderWidth: 1, borderRadius: 5
+    }));
+    bbChartTrzby = new Chart(document.getElementById('bb-chart-trzby'), {
+      type: 'bar', data: { labels: sorted, datasets },
+      options: { responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,position:'top',labels:{font:{size:10},usePointStyle:true}},tooltip:{...tt,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+        scales:{x:{grid:{color:gc},ticks:{font:{size:9}}},y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>(v/1000).toFixed(0)+'k'}}}
+      }
+    });
+  } else {
+    bbChartTrzby = new Chart(document.getElementById('bb-chart-trzby'), {
+      type: 'bar',
+      data: { labels: sorted, datasets: [{ label: 'Celkem tržba', data: sorted.map(n => barberData[n].totalTrzba),
+        backgroundColor: sorted.map((_, i) => barColors[i % barColors.length]), borderRadius: 5
+      }]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{...tt,callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}},
+        scales:{x:{grid:{color:gc},ticks:{font:{size:9}}},y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>(v/1000).toFixed(0)+'k'}}}
+      }
+    });
+  }
+}
+
+init.barberi = function() {
+  renderBarberi();
+};
 
 // ── PDF Export — CF ──
 function cfExportPDF() {
@@ -3545,6 +4324,35 @@ function reportExportPDF() {
   document.body.classList.remove('printing-cf');
   window.print();
 }
+
+// ── Mobile: close nav on outside click ──
+document.addEventListener('click', function(e) {
+  const nav = document.querySelector('nav');
+  const tog = document.getElementById('mob-toggle');
+  if (nav && nav.classList.contains('mob-open') && !nav.contains(e.target) && e.target !== tog && !tog.contains(e.target)) {
+    nav.classList.remove('mob-open');
+  }
+});
+
+// ── Scroll hint for table wrappers (only if content overflows) ──
+document.addEventListener('DOMContentLoaded', function() {
+  function checkScrollHints() {
+    document.querySelectorAll('.tbl-wrap,.report-wrap,.fp-wrap').forEach(function(el) {
+      el.classList.add('tbl-scroll-hint');
+      if (el.scrollWidth > el.clientWidth + 10) {
+        el.classList.add('has-overflow');
+      } else {
+        el.classList.remove('has-overflow');
+      }
+      el.addEventListener('scroll', function() {
+        if (el.scrollLeft > 10) el.classList.add('scrolled');
+        else el.classList.remove('scrolled');
+      });
+    });
+  }
+  setTimeout(checkScrollHints, 1500);
+  setTimeout(checkScrollHints, 4000);
+});
 </script>
 </body>
 </html>
