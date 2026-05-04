@@ -108,11 +108,6 @@ function show(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   if (tab) tab.classList.add('active');
 
-  // Position the sliding underline
-  if (typeof positionTabSlider === 'function') setTimeout(positionTabSlider, 20);
-  // On mobile, scroll clicked tab into view
-  if (typeof scrollActiveTabIntoView === 'function') setTimeout(scrollActiveTabIntoView, 50);
-
   if (oldView && oldView !== view) {
     // Animate out
     oldView.classList.add('wow-exit');
@@ -124,10 +119,7 @@ function show(id) {
         view.querySelectorAll('.scroll-reveal').forEach(el => {
           el.classList.remove('in-view');
         });
-        // Reset KPI counters for animation on tab switch
-        view.querySelectorAll('.kpi-val').forEach(e => { e._counted = false; });
         setTimeout(setupScrollReveal, 80);
-        setTimeout(() => { if (typeof refreshKpiCounters === 'function') refreshKpiCounters(); }, 200);
       }
     }, 280);
   } else if (view && !view.classList.contains('active')) {
@@ -137,7 +129,7 @@ function show(id) {
 
   // CF vždy znovu fetchuje při kliknutí
   if (id === 'cf' && window._appReady) { setTimeout(renderCF, 350); return; }
-  if (id === 'report' && window._appReady) { setTimeout(() => { renderReport(); setTimeout(setupScrollReveal, 200); setTimeout(() => { if (typeof refreshKpiCounters === 'function') refreshKpiCounters(); }, 400); }, 350); return; }
+  if (id === 'report' && window._appReady) { setTimeout(() => { renderReport(); setTimeout(setupScrollReveal, 200); }, 350); return; }
   if (window._appReady && window.init && window.init[id] && !window._rendered[id]) {
     setTimeout(() => { window.init[id](); window._rendered[id] = true; setTimeout(setupScrollReveal, 200); }, 350);
   }
@@ -164,147 +156,6 @@ if (localStorage.getItem('gg-theme') === 'dark') {
     if (tl) tl.textContent = 'Světlý režim';
   });
 }
-
-/* ═══ ANIMATED COUNTER ENGINE ═══
-   Counts up from 0 to target value with easing.
-   Usage: animateValue(element, targetNumber, duration, suffix, prefix)
-   Also: animateKpiValues() — auto-animates all .kpi-val with data-target */
-
-function animateValue(el, target, duration, suffix, prefix) {
-  if (!el || target === null || target === undefined || isNaN(target)) return;
-  duration = duration || 1200;
-  suffix = suffix || '';
-  prefix = prefix || '';
-  const start = performance.now();
-  const isNeg = target < 0;
-  const absTarget = Math.abs(target);
-
-  function tick(now) {
-    const elapsed = now - start;
-    const progress = Math.min(elapsed / duration, 1);
-    // Cubic ease-out
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(absTarget * ease);
-    const formatted = current.toLocaleString('cs-CZ');
-    el.textContent = prefix + (isNeg ? '-' : '') + formatted + suffix;
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  // Start from 0
-  el.textContent = prefix + '0' + suffix;
-  requestAnimationFrame(tick);
-}
-
-// Animate a .kpi-val element when it becomes visible via IntersectionObserver
-function setupKpiCounters() {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting && !e.target._counted) {
-        e.target._counted = true;
-        const raw = e.target.textContent.replace(/\s/g, '').replace(/[^\d,.\-−]/g, function(ch) {
-          return (ch === '−' || ch === '–') ? '-' : '';
-        }).replace(',', '.');
-        const num = parseFloat(raw);
-        if (!isNaN(num) && Math.abs(num) > 0) {
-          const text = e.target.textContent.trim();
-          // Detect suffix (Kč, %, etc.)
-          const match = text.match(/[\d\s,.−–-]+(.*)$/);
-          const suffix = match ? match[1].trim() : '';
-          const prefix = text.match(/^([^\d−–-]*)/);
-          const pre = prefix ? prefix[1] : '';
-          animateValue(e.target, num, 1200, suffix ? ' ' + suffix : '', pre);
-        }
-        observer.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.1 });
-
-  // Observe all KPI values that exist right now
-  document.querySelectorAll('.kpi-val').forEach(el => {
-    if (!el._counted && el.textContent.trim() !== '—' && el.textContent.trim() !== '0') {
-      observer.observe(el);
-    }
-  });
-
-  return observer;
-}
-
-// Global observer reference
-let _kpiObserver = null;
-
-// Re-scan for new KPI vals (called after dynamic renders)
-function refreshKpiCounters() {
-  if (!_kpiObserver) _kpiObserver = setupKpiCounters();
-  document.querySelectorAll('.kpi-val').forEach(el => {
-    if (!el._counted && el.textContent.trim() !== '—' && el.textContent.trim() !== '0') {
-      _kpiObserver.observe(el);
-    }
-  });
-}
-
-// Auto-init after DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => { _kpiObserver = setupKpiCounters(); }, 1500);
-  // Periodic refresh for dynamically loaded content
-  let kpiRuns = 0;
-  const kpiIv = setInterval(() => {
-    refreshKpiCounters();
-    if (++kpiRuns > 15) clearInterval(kpiIv);
-  }, 2000);
-});
-
-/* ═══ TAB SLIDER POSITION ENGINE ═══ */
-function positionTabSlider() {
-  const nav = document.querySelector('nav');
-  const slider = document.getElementById('tab-slider');
-  const activeTab = document.querySelector('nav .tab.active');
-  if (!nav || !slider || !activeTab) return;
-  slider.style.opacity = '1';
-  const navRect = nav.getBoundingClientRect();
-  const tabRect = activeTab.getBoundingClientRect();
-  const scrollOffset = nav.scrollLeft || 0;
-  slider.style.left = (tabRect.left - navRect.left + scrollOffset) + 'px';
-  slider.style.width = tabRect.width + 'px';
-}
-function scrollActiveTabIntoView() {
-  const nav = document.querySelector('nav');
-  const activeTab = document.querySelector('nav .tab.active');
-  if (!nav || !activeTab || window.innerWidth > 680) return;
-  activeTab.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
-}
-// Position on load and resize
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(positionTabSlider, 300);
-  setTimeout(positionTabSlider, 1000);
-  // Reposition slider when nav is scrolled horizontally (mobile)
-  const navEl = document.querySelector('nav');
-  if (navEl) navEl.addEventListener('scroll', () => { positionTabSlider(); }, {passive:true});
-
-  // Mobile: distinguish swipe from tap on nav tabs
-  if ('ontouchstart' in window) {
-    let _navTouchStartX = 0;
-    let _navTouchMoved = false;
-    const navTabs = document.querySelectorAll('nav .tab');
-    navTabs.forEach(tab => {
-      tab.addEventListener('touchstart', (e) => {
-        _navTouchStartX = e.touches[0].clientX;
-        _navTouchMoved = false;
-      }, {passive:true});
-      tab.addEventListener('touchmove', (e) => {
-        if (Math.abs(e.touches[0].clientX - _navTouchStartX) > 8) {
-          _navTouchMoved = true;
-        }
-      }, {passive:true});
-      tab.addEventListener('click', (e) => {
-        if (_navTouchMoved) {
-          e.preventDefault();
-          e.stopPropagation();
-          _navTouchMoved = false;
-        }
-      }, {capture:true});
-    });
-  }
-});
-window.addEventListener('resize', () => { setTimeout(positionTabSlider, 50); });
 
 /* ═══ HEADER SCROLL GLOW ═══ */
 window.addEventListener('scroll', () => {
@@ -395,7 +246,7 @@ header{
 }
 
 /* ── TABS ── */
-nav{display:flex;gap:2px;align-items:center;position:relative;}
+nav{display:flex;gap:2px;align-items:center;}
 .tab{
   padding:8px 20px;border-radius:8px;border:1px solid transparent;
   background:transparent;color:var(--muted);
@@ -407,10 +258,6 @@ nav{display:flex;gap:2px;align-items:center;position:relative;}
 .tab.active{color:var(--text);background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.35);}
 .tab-pip{width:7px;height:7px;border-radius:50%;transition:opacity 0.2s;}
 .tab:not(.active) .tab-pip{opacity:0.3;}
-.tab-icon{width:16px;height:16px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;transition:transform 0.3s cubic-bezier(.16,1,.3,1),opacity 0.2s;}
-.tab:not(.active) .tab-icon{opacity:0.4;}
-.tab.active .tab-icon{opacity:1;}
-.tab:hover .tab-icon{opacity:0.8;transform:scale(1.12);}
 
 /* ── VIEWS ── */
 .view{display:none;}
@@ -510,7 +357,6 @@ main.revealed .sec.scroll-reveal.in-view::after{transform:scaleX(1);}
   background-size:250% 100%;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   animation:goldShimmer 5s ease-in-out infinite;
-  font-variant-numeric:tabular-nums;
 }
 @keyframes goldShimmer{0%,100%{background-position:200% center}50%{background-position:0% center}}
 
@@ -520,18 +366,14 @@ main.revealed .sec.scroll-reveal.in-view::after{transform:scaleX(1);}
   animation:accentPulse 3.5s ease-in-out infinite;}
 @keyframes accentPulse{0%,100%{opacity:0.3;transform:scaleX(0.6)}50%{opacity:1;transform:scaleX(1)}}
 
-/* ═══ TAB: sliding underline + shimmer ═══ */
+/* ═══ TAB: underline + pip glow ═══ */
 .tab{position:relative;transition:all 0.3s cubic-bezier(.16,1,.3,1) !important;}
-.tab.active .tab-icon{animation:iconPulse 2.5s ease-in-out infinite;}
-@keyframes iconPulse{0%,100%{filter:drop-shadow(0 0 0 transparent)}50%{filter:drop-shadow(0 0 6px rgba(201,168,76,0.3))}}
+.tab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;
+  border-radius:2px;background:var(--gold);animation:tabLine 0.4s cubic-bezier(.16,1,.3,1) both;}
+@keyframes tabLine{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+.tab.active .tab-pip{animation:pipGlow 2.5s ease-in-out infinite;}
+@keyframes pipGlow{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.5)}50%{box-shadow:0 0 8px 4px rgba(201,168,76,0.2)}}
 .tab:active{transform:scale(0.95);}
-.tab-slider{position:absolute;bottom:0;height:2.5px;border-radius:2px;pointer-events:none;
-  transition:left 0.4s cubic-bezier(.16,1,.3,1),width 0.4s cubic-bezier(.16,1,.3,1);overflow:hidden;}
-.tab-slider-bg{position:absolute;inset:0;background:var(--gold);opacity:0.35;border-radius:2px;}
-.tab-slider-shimmer{position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-  animation:tabShimmer 2s ease-in-out infinite;}
-@keyframes tabShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 
 /* ═══ HEADER scroll glow ═══ */
 header{transition:box-shadow 0.5s,background 0.5s;}
@@ -698,7 +540,11 @@ body.dark-mode .z-card{backdrop-filter:blur(8px);background:rgba(15,15,15,0.85);
 
 /* ═══ TAB ANIMATIONS ═══ */
 .tab{position:relative;transition:all 0.3s cubic-bezier(.16,1,.3,1) !important;}
-.tab.active .tab-icon{animation:iconPulse 2.5s ease-in-out infinite;}
+.tab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;
+  border-radius:2px;background:var(--gold);animation:tabLine 0.4s cubic-bezier(.16,1,.3,1) both;}
+@keyframes tabLine{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+.tab.active .tab-pip{animation:pipGlow 2.5s ease-in-out infinite;}
+@keyframes pipGlow{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.5)}50%{box-shadow:0 0 8px 4px rgba(201,168,76,0.2)}}
 .tab:active{transform:scale(0.95);}
 
 /* ═══ HEADER SCROLL GLOW ═══ */
@@ -1053,40 +899,24 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 
 @media(max-width:680px){
-  /* Hide hamburger — tabs are now horizontal scroll strip below header */
-  .mob-toggle{display:none !important;}
-
-  /* Header becomes flex-wrap so nav drops to its own row */
-  .header-inner{height:auto !important;flex-wrap:wrap;padding:8px 0 0 !important;gap:0 !important;}
-  .brand{padding:0 0 8px;flex-shrink:0;}
-  .user-menu-wrap{padding:0 0 8px;margin-left:auto;flex-shrink:0;}
-
-  /* Nav takes full width on second row */
+  /* Show hamburger, hide nav */
+  .mob-toggle{display:flex;}
   nav{
-    display:flex !important;flex-direction:row !important;
-    position:relative !important;top:auto !important;left:auto !important;right:auto !important;
-    order:99 !important;
-    width:100% !important;flex-basis:100% !important;
-    z-index:199;
-    background:var(--bg2);border-top:1px solid var(--border2);
-    padding:6px 10px !important;gap:3px !important;
-    box-shadow:none !important;
-    overflow-x:scroll !important;-webkit-overflow-scrolling:touch;
-    white-space:nowrap;
-    scrollbar-width:none;
-    -ms-overflow-style:none;
-    touch-action:pan-x !important;
+    display:none;flex-direction:column;
+    position:absolute;top:56px;left:0;right:0;z-index:199;
+    background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:8px 12px 12px;gap:4px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.15);
   }
-  nav::-webkit-scrollbar{display:none;}
-  .tab{width:auto !important;justify-content:center !important;padding:7px 12px !important;border-radius:8px !important;font-size:12px !important;flex-shrink:0 !important;touch-action:pan-x !important;-webkit-user-drag:none;}
-  .tab.active{background:rgba(201,168,76,0.15) !important;}
+  nav.mob-open{display:flex;}
+  .tab{width:100%;justify-content:flex-start;padding:11px 16px;border-radius:10px;font-size:14px;}
+  .tab.active{background:rgba(201,168,76,0.12) !important;}
   .tab.active::after{display:none;}
-  .tab-slider{display:block !important;bottom:0;height:2px;}
-  .tab-icon{width:14px !important;height:14px !important;}
 
   /* Header */
+  .header-inner{height:56px;gap:8px;}
   .brand img{height:30px !important;}
-  header{position:sticky;top:0;z-index:200;padding:0 12px !important;}
+  header{position:sticky;top:0;z-index:200;}
 
   /* Main — tight padding */
   main{padding:10px 10px 50px !important;}
@@ -1558,24 +1388,26 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     </button>
     <nav>
       <button class="tab active" onclick="show('report')" id="tab-report" data-tab="report">
-        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#C9A84C"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Report
+        <span class="tab-pip" style="background:#C9A84C"></span> Report
       </button>
       <button class="tab" onclick="show('zalohy')" id="tab-zalohy" data-tab="zalohy">
-        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#9B6FD4"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Zálohy
+        <span class="tab-pip" style="background:#9B6FD4"></span> Zálohy
       </button>
       <button class="tab" onclick="show('vyplaty')" id="tab-vyplaty" data-tab="vyplaty">
-        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#5A9ED4"><circle cx="12" cy="12" r="10"/><path d="M16 8h-4a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4H8"/><line x1="12" y1="6" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="18"/></svg> Výplaty
+        <span class="tab-pip" style="background:#5A9ED4"></span> Výplaty
       </button>
       <button class="tab" onclick="show('mara')" id="tab-mara" data-tab="mara">
-        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#E8A830"><circle cx="12" cy="7" r="4"/><path d="M5.8 21a7 7 0 0 1 12.4 0"/></svg> Mára
+        <span class="tab-pip" style="background:#E8A830"></span> Mára
       </button>
       <button class="tab" onclick="show('barberi')" id="tab-barberi" data-tab="barberi">
-        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#5DB87A"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Barbeři
+        <span class="tab-pip" style="background:#5DB87A"></span> Barbeři
       </button>
       <button class="tab" onclick="show('cf')" id="tab-cf" data-tab="cf">
-        <svg class="tab-icon" viewBox="0 0 24 24" stroke="#9B6FD4"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg> CF
+        <span class="tab-pip" style="background:#9B6FD4"></span> CF
       </button>
-      <div class="tab-slider" id="tab-slider"><div class="tab-slider-bg"></div><div class="tab-slider-shimmer"></div></div>
+      <button class="tab" onclick="show('banka')" id="tab-banka" data-tab="banka">
+        <span class="tab-pip" style="background:#26A69A"></span> Banka
+      </button>
     </nav>
     <div class="user-menu-wrap">
       <button class="user-menu-trigger" id="user-menu-trigger" title="Nastavení">⚙</button>
@@ -2019,6 +1851,36 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
 </div>
 
+<!-- ════════════════════════════════════
+     TAB BANKA
+════════════════════════════════════ -->
+<div class="view" id="view-banka" data-tab="banka">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Přehled</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">BANKA</div>
+    </div>
+    <div id="banka-rok-badge" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#26A69A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
+  </div>
+
+  <div id="banka-kpi-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #26A69A;border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Roční obrat celkem</div>
+      <div id="banka-total" style="font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;color:#26A69A">—</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Průměr / měsíc</div>
+      <div id="banka-avg" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:var(--text)">—</div>
+    </div>
+  </div>
+
+  <div id="banka-list" style="display:flex;flex-direction:column;gap:10px;">
+    <div style="padding:48px;text-align:center;color:var(--muted);font-size:13px">Načítám data…</div>
+  </div>
+
+</div>
+
 </main>
 
 <footer>
@@ -2210,6 +2072,8 @@ async function loadAllData() {
   window._rendered.mara = true;
   renderFinplan();
   window._rendered.finplan = true;
+  renderBanka();
+  window._rendered.banka = true;
   // CF si fetchuje data sama při otevření záložky
 }
 
@@ -2283,6 +2147,10 @@ const init = {
 
   cf() {
     renderCF(); // async — samo si fetchne data
+  },
+
+  banka() {
+    renderBanka();
   }
 };
 
@@ -2340,11 +2208,6 @@ function selectMonth(idx) {
       <div class="kpi-val sm">${marze}%</div>
       <div class="kpi-footer"><span class="kpi-sub">Zisk / Tržby</span></div>
     </div>`;
-  // Animate monthly KPI values
-  setTimeout(() => {
-    document.querySelectorAll('#m-kpi .kpi-val').forEach(e => { e._counted = false; });
-    if (typeof refreshKpiCounters === 'function') refreshKpiCounters();
-  }, 100);
 
   // Pobočky
   const pobockyData = [
@@ -2614,7 +2477,6 @@ async function doLogin() {
     screen.style.display = 'none';
     document.getElementById('app').style.display = 'block';
     loadAllData();
-    if (typeof positionTabSlider === 'function') setTimeout(positionTabSlider, 500);
   }, 400);
 }
 
@@ -2640,22 +2502,22 @@ async function loadAndApplyTabRights(userEmail) {
     } else {
       // No rights record found — admin gets all, reader gets defaults
       if (ADMIN_EMAILS.includes(userEmail)) {
-        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:true, tab_barberi:true, tab_cf:true };
+        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:true, tab_barberi:true, tab_cf:true, tab_banka:true };
       } else {
-        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false };
+        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false, tab_banka:true };
       }
     }
   } catch(e) {
     console.warn('[RIGHTS] Failed to load tab rights:', e);
     // Fallback — show basic tabs
-    USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false };
+    USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false, tab_banka:true };
   }
   applyTabRights();
 }
 
 function applyTabRights() {
   if (!USER_TAB_RIGHTS) return;
-  const tabs = ['report','zalohy','vyplaty','mara','barberi','cf'];
+  const tabs = ['report','zalohy','vyplaty','mara','barberi','cf','banka'];
   let firstVisible = null;
   tabs.forEach(t => {
     const allowed = USER_TAB_RIGHTS['tab_' + t] === true;
@@ -2709,7 +2571,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         loadAllData();
-        if (typeof positionTabSlider === 'function') setTimeout(positionTabSlider, 500);
         return;
       }
     } catch(e) {
@@ -3661,17 +3522,10 @@ function renderMara() {
   if(el('mara-celkem'))    el('mara-celkem').textContent    = totalCastka.toLocaleString('cs-CZ') + ' Kč';
   if(el('mara-zaplaceno')) el('mara-zaplaceno').textContent = totalZaplaceno.toLocaleString('cs-CZ') + ' Kč';
   if(el('mara-dluh'))      el('mara-dluh').textContent      = totalDluh.toLocaleString('cs-CZ') + ' Kč';
-  // Animate KPI counters
-  [el('mara-celkem'), el('mara-zaplaceno'), el('mara-dluh')].forEach(e => { if(e) e._counted = false; });
-  if (typeof refreshKpiCounters === 'function') setTimeout(refreshKpiCounters, 100);
 
-  // Progress bar — animate width
+  // Progress bar
   const pct = totalCastka > 0 ? Math.round((totalZaplaceno / totalCastka) * 100) : 0;
-  if(el('mara-progress-bar')) {
-    el('mara-progress-bar').style.width = '0%';
-    el('mara-progress-bar').style.transition = 'width 1.5s cubic-bezier(.16,1,.3,1)';
-    setTimeout(() => { el('mara-progress-bar').style.width = pct + '%'; }, 200);
-  }
+  if(el('mara-progress-bar'))  el('mara-progress-bar').style.width = pct + '%';
   if(el('mara-pct-label'))     el('mara-pct-label').textContent = pct + ' %';
   if(el('mara-progress-text')) el('mara-progress-text').textContent = totalZaplaceno.toLocaleString('cs-CZ') + ' / ' + totalCastka.toLocaleString('cs-CZ') + ' Kč';
   if(el('mara-prog-zaplaceno')) el('mara-prog-zaplaceno').textContent = '✓ Zaplaceno: ' + totalZaplaceno.toLocaleString('cs-CZ') + ' Kč';
@@ -3994,9 +3848,6 @@ async function renderCF() {
   if(elId('cf-kpi-trzby'))  elId('cf-kpi-trzby').textContent  = fK(gTrzby);
   if(elId('cf-kpi-vydaje')) elId('cf-kpi-vydaje').textContent = fK(gVydaje);
   if(elId('cf-kpi-zisk'))   elId('cf-kpi-zisk').textContent   = fK(gZisk);
-  // Reset counters for fresh animation
-  [elId('cf-kpi-trzby'), elId('cf-kpi-vydaje'), elId('cf-kpi-zisk')].forEach(e => { if(e) e._counted = false; });
-  if (typeof refreshKpiCounters === 'function') setTimeout(refreshKpiCounters, 100);
 }
 
 // ═══════════════════════════════════════════════
@@ -4118,11 +3969,6 @@ function renderBarberi() {
       <div class="kpi-val sm" style="font-size:22px;color:var(--neg)">${worstBarber}</div>
       <div class="kpi-footer"><span class="kpi-sub">${fK(worstTrzba)}</span></div>
     </div>`;
-  // Reset and animate new KPI values
-  setTimeout(() => {
-    document.querySelectorAll('#bb-kpi-strip .kpi-val').forEach(e => { e._counted = false; });
-    if (typeof refreshKpiCounters === 'function') refreshKpiCounters();
-  }, 100);
 
   // ── Table with deltas ──
   const thead = document.getElementById('bb-thead');
@@ -4158,7 +4004,7 @@ function renderBarberi() {
     const bg = idx % 2 === 0 ? '' : ' style="background:var(--stripe)"';
     // Tržby row
     tbHTML += `<tr${bg}>`;
-    tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px;position:sticky;left:0;z-index:3;background:var(--bg2);white-space:nowrap;box-shadow:var(--shadow-sticky)">${name}</td>`;
+    tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px;position:sticky;left:0;z-index:2;background:var(--bg2);white-space:nowrap">${name}</td>`;
     tbHTML += `<td style="text-align:left;font-size:11px;color:var(--muted2);padding:8px 14px;background:var(--bg2)">${pobLabel}</td>`;
     d.months.forEach((md, mi) => {
       const c = md.trzba > 0 ? 'color:var(--text)' : 'color:var(--muted)';
@@ -4170,7 +4016,7 @@ function renderBarberi() {
     // Delta row (meziměsíční změny v %)
     if (selectedMonths.length >= 2) {
       tbHTML += `<tr style="background:var(--stripe2)">`;
-      tbHTML += `<td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:3;background:var(--bg3);white-space:nowrap;box-shadow:var(--shadow-sticky)">Δ %</td><td style="background:var(--bg3)"></td>`;
+      tbHTML += `<td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:var(--stripe2)">Δ %</td><td style="background:var(--stripe2)"></td>`;
       d.months.forEach((md, mi) => {
         if (mi === 0) {
           tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
@@ -4193,8 +4039,8 @@ function renderBarberi() {
 
   // Grand total
   tbHTML += `<tr style="border-top:2px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06)">`;
-  tbHTML += `<td style="text-align:left;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--gold);padding:10px 14px;position:sticky;left:0;z-index:5;background:var(--bg2);white-space:nowrap;box-shadow:var(--shadow-sticky)">CELKEM</td>`;
-  tbHTML += `<td style="background:var(--bg2)"></td>`;
+  tbHTML += `<td style="text-align:left;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--gold);padding:10px 14px;position:sticky;left:0;z-index:5;background:rgba(201,168,76,0.06);white-space:nowrap">CELKEM</td>`;
+  tbHTML += `<td style="background:rgba(201,168,76,0.06)"></td>`;
   selectedMonths.forEach((m, mi) => {
     const mT = sorted.reduce((s, n) => s + barberData[n].months[mi].trzba, 0);
     tbHTML += `<td style="font-weight:700;color:var(--gold2)">${Math.round(mT).toLocaleString('cs-CZ')}</td>`;
@@ -4204,7 +4050,7 @@ function renderBarberi() {
 
   // Grand total delta row
   if (selectedMonths.length >= 2) {
-    tbHTML += `<tr style="background:rgba(201,168,76,0.04)"><td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:3;background:var(--bg2);white-space:nowrap;box-shadow:var(--shadow-sticky)">Δ %</td><td style="background:var(--bg2)"></td>`;
+    tbHTML += `<tr style="background:rgba(201,168,76,0.04)"><td style="padding:2px 14px;font-size:10px;color:var(--muted);position:sticky;left:0;z-index:2;background:rgba(201,168,76,0.04)">Δ %</td><td style="background:rgba(201,168,76,0.04)"></td>`;
     selectedMonths.forEach((m, mi) => {
       if (mi === 0) {
         tbHTML += `<td style="text-align:right;padding:2px 8px;font-size:10px;color:var(--muted)">—</td>`;
@@ -4326,6 +4172,117 @@ function reportExportPDF() {
 }
 
 // ── Mobile: close nav on outside click ──
+
+// ═══════════════════════════════════════════════
+// BANKA — načtení a render
+// ═══════════════════════════════════════════════
+const BANKA_MESICE = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+const BANKA_MONTH_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+async function renderBanka() {
+  var list     = document.getElementById('banka-list');
+  var totalEl  = document.getElementById('banka-total');
+  var avgEl    = document.getElementById('banka-avg');
+  var rokBadge = document.getElementById('banka-rok-badge');
+  list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px">Načítám data…</div>';
+
+  try {
+    var rows = await supaFetch('banka', 'order=rok.desc,mesic_cislo.asc');
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      list.innerHTML = '<div style="padding:48px;text-align:center;color:var(--muted);font-size:13px">Žádná data — nahráj Excel přes admin panel.</div>';
+      totalEl.textContent = '—'; avgEl.textContent = '—'; rokBadge.textContent = '';
+      return;
+    }
+
+    var roky = [...new Set(rows.map(function(r){ return r.rok; }))].sort(function(a,b){ return b-a; });
+    var rok  = roky[0];
+    rokBadge.textContent = rok + '';
+    var data = rows.filter(function(r){ return r.rok === rok; });
+
+    var byMesic = {};
+    data.forEach(function(r){ byMesic[r.mesic] = r.obrat ? parseFloat(r.obrat) : 0; });
+    var values = BANKA_MESICE.map(function(m){ return byMesic[m] || 0; });
+    var total  = values.reduce(function(s,v){ return s+v; }, 0);
+    var filled = values.filter(function(v){ return v > 0; });
+    var avg    = filled.length ? total / filled.length : 0;
+    var maxVal = Math.max.apply(null, values.concat([1]));
+    var fmt    = function(v){ return new Intl.NumberFormat('cs-CZ',{style:'currency',currency:'CZK',maximumFractionDigits:0}).format(v); };
+
+    totalEl.textContent = fmt(total);
+    avgEl.textContent   = fmt(avg);
+
+    list.innerHTML = '';
+    BANKA_MESICE.forEach(function(mesic, i) {
+      var val    = values[i];
+      var pct    = (val / maxVal * 100).toFixed(1);
+      var hasVal = val > 0;
+      var isHigh = val > avg && hasVal;
+
+      var rowEl = document.createElement('div');
+      rowEl.className = 'scroll-reveal';
+      rowEl.style.cssText = 'background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:16px;transition:border-color 0.2s,background 0.2s;cursor:default;';
+      rowEl.onmouseenter = function(){ rowEl.style.borderColor='rgba(38,166,154,0.35)'; rowEl.style.background='rgba(38,166,154,0.04)'; };
+      rowEl.onmouseleave = function(){ rowEl.style.borderColor='var(--border2)'; rowEl.style.background='var(--bg2)'; };
+
+      var numDiv = document.createElement('div');
+      numDiv.style.cssText = 'width:26px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0';
+      numDiv.textContent = BANKA_MONTH_NUM[i];
+
+      var nameDiv = document.createElement('div');
+      nameDiv.style.cssText = 'width:95px;flex-shrink:0';
+      var n1 = document.createElement('div');
+      n1.style.cssText = 'font-weight:700;font-size:13px;color:var(--text)';
+      n1.textContent = mesic;
+      var n2 = document.createElement('div');
+      n2.style.cssText = 'font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:1px';
+      n2.textContent = 'měsíc ' + (i+1);
+      nameDiv.appendChild(n1); nameDiv.appendChild(n2);
+
+      var barWrap = document.createElement('div');
+      barWrap.style.cssText = 'flex:1;height:8px;background:var(--bg3);border-radius:99px;overflow:hidden';
+      var barFill = document.createElement('div');
+      barFill.style.cssText = 'height:100%;width:' + (hasVal?pct:0) + '%;background:' + (hasVal ? '#26A69A' : 'transparent') + ';border-radius:99px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1)';
+      barWrap.appendChild(barFill);
+
+      var valDiv = document.createElement('div');
+      valDiv.style.cssText = 'width:160px;text-align:right;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;gap:8px';
+      if (isHigh) {
+        var badge = document.createElement('span');
+        badge.style.cssText = 'font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#26A69A;background:rgba(38,166,154,0.12);border-radius:6px;padding:2px 7px';
+        badge.textContent = 'avg';
+        valDiv.appendChild(badge);
+      }
+      var valSpan = document.createElement('span');
+      valSpan.style.cssText = 'font-size:15px;font-weight:600;color:' + (hasVal ? '#26A69A' : 'var(--muted)');
+      valSpan.textContent = hasVal ? fmt(val) : '—';
+      valDiv.appendChild(valSpan);
+
+      rowEl.appendChild(numDiv); rowEl.appendChild(nameDiv); rowEl.appendChild(barWrap); rowEl.appendChild(valDiv);
+      list.appendChild(rowEl);
+    });
+
+    var sumRow = document.createElement('div');
+    sumRow.style.cssText = 'background:rgba(38,166,154,0.07);border:2px solid rgba(38,166,154,0.3);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:16px;margin-top:4px;';
+    var si = document.createElement('div'); si.style.cssText = 'width:26px;text-align:center;font-size:16px;font-weight:700;color:#26A69A;flex-shrink:0'; si.textContent = '∑';
+    var sl = document.createElement('div'); sl.style.cssText = 'width:95px;flex-shrink:0';
+    var sl1 = document.createElement('div'); sl1.style.cssText = 'font-weight:800;font-size:13px;letter-spacing:1px;color:var(--text)'; sl1.textContent = 'CELKEM';
+    var sl2 = document.createElement('div'); sl2.style.cssText = 'font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:1px'; sl2.textContent = 'rok ' + rok;
+    sl.appendChild(sl1); sl.appendChild(sl2);
+    var ss = document.createElement('div'); ss.style.flex = '1';
+    var sv = document.createElement('div'); sv.style.cssText = 'width:160px;text-align:right;flex-shrink:0';
+    var svs = document.createElement('span'); svs.style.cssText = 'font-size:18px;font-weight:700;color:#26A69A'; svs.textContent = fmt(total);
+    sv.appendChild(svs);
+    sumRow.appendChild(si); sumRow.appendChild(sl); sumRow.appendChild(ss); sumRow.appendChild(sv);
+    list.appendChild(sumRow);
+
+    setTimeout(setupScrollReveal, 100);
+  } catch(e) {
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--neg);font-size:13px">Chyba: ' + e.message + '</div>';
+    console.error('[BANKA]', e);
+  }
+}
+
 document.addEventListener('click', function(e) {
   const nav = document.querySelector('nav');
   const tog = document.getElementById('mob-toggle');
