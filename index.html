@@ -905,15 +905,17 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     display:flex;flex-direction:row;
     overflow-x:auto;-webkit-overflow-scrolling:touch;
     scrollbar-width:none;
-    gap:4px;padding:0 8px;
-    border-bottom:1px solid var(--border);
+    gap:4px;padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:16px;
     background:var(--bg2);
     flex-wrap:nowrap;
     scroll-snap-type:x proximity;
+    margin:8px 10px 0;
   }
   nav::-webkit-scrollbar{display:none;}
-  .tab{flex-shrink:0;padding:10px 14px;border-radius:0;font-size:12px;width:auto;scroll-snap-align:start;border-bottom:2px solid transparent;}
-  .tab.active{background:transparent !important;border-bottom-color:var(--gold) !important;}
+  .tab{flex-shrink:0;padding:8px 14px;border-radius:99px;font-size:12px;width:auto;scroll-snap-align:start;}
+  .tab.active{background:rgba(201,168,76,0.15) !important;border:1px solid rgba(201,168,76,0.35) !important;border-radius:99px !important;}
   .tab.active::after{display:none;}
 
   /* Header */
@@ -1409,7 +1411,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
         <span class="tab-pip" style="background:#9B6FD4"></span> CF
       </button>
       <button class="tab" onclick="show('banka')" id="tab-banka" data-tab="banka">
-        <span class="tab-pip" style="background:#26A69A"></span> Banka
+        <span class="tab-pip" style="background:#E8840A"></span> Banka
       </button>
     </nav>
     <div class="user-menu-wrap">
@@ -1864,13 +1866,13 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
       <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Přehled</div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">BANKA</div>
     </div>
-    <div id="banka-rok-badge" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#26A69A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
+    <div id="banka-rok-badge" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E8840A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
   </div>
 
-  <div id="banka-kpi-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #26A69A;border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+  <div id="banka-kpi-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #E8840A;border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
     <div>
       <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Roční obrat celkem</div>
-      <div id="banka-total" style="font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;color:#26A69A">—</div>
+      <div id="banka-total" style="font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;color:#E8840A">—</div>
     </div>
     <div style="text-align:right;">
       <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Průměr / měsíc</div>
@@ -4244,19 +4246,19 @@ async function renderBanka() {
       var barWrap = document.createElement('div');
       barWrap.style.cssText = 'flex:1;height:8px;background:var(--bg3);border-radius:99px;overflow:hidden';
       var barFill = document.createElement('div');
-      barFill.style.cssText = 'height:100%;width:' + (hasVal?pct:0) + '%;background:' + (hasVal ? '#26A69A' : 'transparent') + ';border-radius:99px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1)';
+      barFill.style.cssText = 'height:100%;width:' + (hasVal?pct:0) + '%;background:' + (hasVal ? '#E8840A' : 'transparent') + ';border-radius:99px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1)';
       barWrap.appendChild(barFill);
 
       var valDiv = document.createElement('div');
       valDiv.style.cssText = 'width:160px;text-align:right;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;gap:8px';
       if (isHigh) {
         var badge = document.createElement('span');
-        badge.style.cssText = 'font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#26A69A;background:rgba(38,166,154,0.12);border-radius:6px;padding:2px 7px';
+        badge.style.cssText = 'font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#E8840A;background:rgba(38,166,154,0.12);border-radius:6px;padding:2px 7px';
         badge.textContent = 'avg';
         valDiv.appendChild(badge);
       }
       var valSpan = document.createElement('span');
-      valSpan.style.cssText = 'font-size:15px;font-weight:600;color:' + (hasVal ? '#26A69A' : 'var(--muted)');
+      valSpan.style.cssText = 'font-size:15px;font-weight:600;color:' + (hasVal ? '#E8840A' : 'var(--muted)');
       valSpan.textContent = hasVal ? fmt(val) : '—';
       valDiv.appendChild(valSpan);
 
@@ -4266,14 +4268,14 @@ async function renderBanka() {
 
     var sumRow = document.createElement('div');
     sumRow.style.cssText = 'background:rgba(38,166,154,0.07);border:2px solid rgba(38,166,154,0.3);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:16px;margin-top:4px;';
-    var si = document.createElement('div'); si.style.cssText = 'width:26px;text-align:center;font-size:16px;font-weight:700;color:#26A69A;flex-shrink:0'; si.textContent = '∑';
+    var si = document.createElement('div'); si.style.cssText = 'width:26px;text-align:center;font-size:16px;font-weight:700;color:#E8840A;flex-shrink:0'; si.textContent = '∑';
     var sl = document.createElement('div'); sl.style.cssText = 'width:95px;flex-shrink:0';
     var sl1 = document.createElement('div'); sl1.style.cssText = 'font-weight:800;font-size:13px;letter-spacing:1px;color:var(--text)'; sl1.textContent = 'CELKEM';
     var sl2 = document.createElement('div'); sl2.style.cssText = 'font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:1px'; sl2.textContent = 'rok ' + rok;
     sl.appendChild(sl1); sl.appendChild(sl2);
     var ss = document.createElement('div'); ss.style.flex = '1';
     var sv = document.createElement('div'); sv.style.cssText = 'width:160px;text-align:right;flex-shrink:0';
-    var svs = document.createElement('span'); svs.style.cssText = 'font-size:18px;font-weight:700;color:#26A69A'; svs.textContent = fmt(total);
+    var svs = document.createElement('span'); svs.style.cssText = 'font-size:18px;font-weight:700;color:#E8840A'; svs.textContent = fmt(total);
     sv.appendChild(svs);
     sumRow.appendChild(si); sumRow.appendChild(sl); sumRow.appendChild(ss); sumRow.appendChild(sv);
     list.appendChild(sumRow);
