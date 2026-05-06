@@ -899,18 +899,21 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 
 @media(max-width:680px){
-  /* Show hamburger, hide nav */
-  .mob-toggle{display:flex;}
+  /* Hide hamburger — not needed for scroll tabs */
+  .mob-toggle{display:none;}
   nav{
-    display:none;flex-direction:column;
-    position:absolute;top:56px;left:0;right:0;z-index:199;
-    background:var(--bg2);border-bottom:1px solid var(--border);
-    padding:8px 12px 12px;gap:4px;
-    box-shadow:0 12px 40px rgba(0,0,0,0.15);
+    display:flex;flex-direction:row;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    gap:4px;padding:0 8px;
+    border-bottom:1px solid var(--border);
+    background:var(--bg2);
+    flex-wrap:nowrap;
+    scroll-snap-type:x proximity;
   }
-  nav.mob-open{display:flex;}
-  .tab{width:100%;justify-content:flex-start;padding:11px 16px;border-radius:10px;font-size:14px;}
-  .tab.active{background:rgba(201,168,76,0.12) !important;}
+  nav::-webkit-scrollbar{display:none;}
+  .tab{flex-shrink:0;padding:10px 14px;border-radius:0;font-size:12px;width:auto;scroll-snap-align:start;border-bottom:2px solid transparent;}
+  .tab.active{background:transparent !important;border-bottom-color:var(--gold) !important;}
   .tab.active::after{display:none;}
 
   /* Header */
@@ -4220,7 +4223,6 @@ async function renderBanka() {
       var isHigh = val > avg && hasVal;
 
       var rowEl = document.createElement('div');
-      rowEl.className = 'scroll-reveal';
       rowEl.style.cssText = 'background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:16px;transition:border-color 0.2s,background 0.2s;cursor:default;';
       rowEl.onmouseenter = function(){ rowEl.style.borderColor='rgba(38,166,154,0.35)'; rowEl.style.background='rgba(38,166,154,0.04)'; };
       rowEl.onmouseleave = function(){ rowEl.style.borderColor='var(--border2)'; rowEl.style.background='var(--bg2)'; };
@@ -4276,7 +4278,6 @@ async function renderBanka() {
     sumRow.appendChild(si); sumRow.appendChild(sl); sumRow.appendChild(ss); sumRow.appendChild(sv);
     list.appendChild(sumRow);
 
-    setTimeout(setupScrollReveal, 100);
   } catch(e) {
     list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--neg);font-size:13px">Chyba: ' + e.message + '</div>';
     console.error('[BANKA]', e);
