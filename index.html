@@ -828,6 +828,7 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 .zf-select option{background:var(--bg3);color:var(--text);}
 .zf-reset{padding:9px 16px;border-radius:9px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;align-self:flex-end;}
 .zf-reset:hover{border-color:rgba(217,107,90,0.4);color:var(--neg);background:rgba(217,107,90,0.06);}
+.zf-select:disabled{opacity:0.45;cursor:not-allowed;}
 
 /* login inputs light mode */
 .login-input{
@@ -848,10 +849,11 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 .z-name{display:flex;align-items:center;gap:9px;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;}
 .z-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,rgba(155,111,212,0.25),rgba(201,168,76,0.2));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--purple);font-family:'JetBrains Mono',monospace;}
 .z-total{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);font-weight:500;}
-.z-month-sec{margin-bottom:10px;}
+.z-month-sec{margin-bottom:0;border-top:1px solid var(--border2);padding:14px 0 4px;}
+.z-month-sec:first-of-type{border-top:none;padding-top:4px;}
 .z-month-sec:last-child{margin-bottom:0;}
-.z-mlabel{display:flex;align-items:center;gap:5px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
-.z-mdot{width:5px;height:5px;border-radius:50%;}
+.z-mlabel{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:700;}
+.z-mdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .z-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--row-border);}
 .z-row:last-child{border-bottom:none;}
 .z-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);min-width:74px;padding-top:1px;}
@@ -1490,13 +1492,13 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   <div class="zalohy-filter">
     <div class="zf-field" style="max-width:240px;">
       <label class="zf-label">👤 Barber</label>
-      <select class="zf-select" id="sel-name" onchange="zApply()">
+      <select class="zf-select" id="sel-name" onchange="zNameChange()">
         <option value="">— Načítám barbeře… —</option>
       </select>
     </div>
     <div class="zf-field" style="max-width:180px;">
       <label class="zf-label">📅 Měsíc</label>
-      <select class="zf-select" id="sel-month" onchange="zApply()">
+      <select class="zf-select" id="sel-month" onchange="zApply()" disabled>
         <option value="">— měsíc —</option>
         <option value="Leden">Leden</option>
         <option value="Únor">Únor</option>
@@ -1514,12 +1516,19 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     </div>
     <div class="zf-field" style="max-width:100px;">
       <label class="zf-label">📆 Rok</label>
-      <select class="zf-select" id="sel-rok" onchange="zApply()">
+      <select class="zf-select" id="sel-rok" onchange="zApply()" disabled>
         <option value="">— rok —</option>
+        <option value="2025">2025</option>
         <option value="2026">2026</option>
         <option value="2027">2027</option>
         <option value="2028">2028</option>
       </select>
+    </div>
+    <div class="zf-field" style="justify-content:flex-end;flex:0 0 auto;" id="z-prehled-wrap">
+      <label id="z-prehled-label" style="display:flex;align-items:center;gap:8px;cursor:not-allowed;height:38px;padding:0 14px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);transition:all 0.2s;white-space:nowrap;opacity:0.45;pointer-events:none;">
+        <input type="checkbox" id="z-prehled" onchange="zApply()" disabled style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;">
+        <span class="zf-label" style="margin:0;cursor:pointer;">Celkový přehled</span>
+      </label>
     </div>
     <button class="zf-reset" onclick="zReset()">✕ Reset</button>
   </div>
@@ -1539,16 +1548,19 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 <div class="view" id="view-vyplaty" data-tab="vyplaty">
 
   <div class="zalohy-filter" style="margin-bottom:20px;">
-    <div class="zf-field" style="max-width:220px;">
-      <label class="zf-label">👤 Barber</label>
-      <select class="zf-select" id="vp-name" onchange="vpApply()">
-        <option value="">— Načítám barbeře… —</option>
+    <div class="zf-field" style="max-width:180px;">
+      <label class="zf-label">🏠 Pobočka</label>
+      <select class="zf-select" id="vp-pobocka" onchange="vpPobockaChange()">
+        <option value="" selected>— pobočka —</option>
+        <option value="Záběhlice">Záběhlice</option>
+        <option value="Vršovice">Vršovice</option>
+        <option value="Veleslavín">Veleslavín</option>
       </select>
     </div>
     <div class="zf-field" style="max-width:280px;">
       <label class="zf-label">📅 Měsíc &amp; Rok</label>
       <div style="display:flex;gap:8px;">
-        <select class="zf-select" id="vp-month" onchange="vpApply()">
+        <select class="zf-select" id="vp-month" onchange="vpMonthChange()" disabled>
           <option value="" selected>— měsíc —</option>
           <option value="Leden">Leden</option>
           <option value="Únor">Únor</option>
@@ -1563,7 +1575,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
           <option value="Listopad">Listopad</option>
           <option value="Prosinec">Prosinec</option>
         </select>
-        <select class="zf-select" id="vp-rok" onchange="vpApply()" style="min-width:80px;">
+        <select class="zf-select" id="vp-rok" onchange="vpMonthChange()" style="min-width:80px;" disabled>
           <option value="">— rok —</option>
           <option value="2025">2025</option>
           <option value="2026">2026</option>
@@ -1571,6 +1583,12 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
           <option value="2028">2028</option>
         </select>
       </div>
+    </div>
+    <div class="zf-field" style="max-width:220px;">
+      <label class="zf-label">👤 Barber</label>
+      <select class="zf-select" id="vp-name" onchange="vpApply()" disabled>
+        <option value="">— nejdřív vyber pobočku —</option>
+      </select>
     </div>
     <button class="zf-reset" onclick="vpReset()">✕ Reset</button>
     <button onclick="vpExportPDF()" title="Exportovat jako PDF" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;margin-left:auto" onmouseover="this.style.borderColor='rgba(201,168,76,0.5)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">
@@ -2014,7 +2032,8 @@ async function loadAllData() {
     return {mesic:mes,rok,key,barberi};
   });
 
-  // ── VÝPLATY — dynamicky naplní select barberů ──
+  // ── VÝPLATY — uložíme raw data globálně, select se plní až po výběru období ──
+  window._vyplatyRaw = vyplatyRaw;
   vpInitBarberSelect(vyplatyRaw);
 
   // ── ZÁLOHY — dynamicky naplní select barberů ──
@@ -2307,64 +2326,98 @@ let MESICE = [];
 
 const zsum = arr => arr.reduce((s,z)=>s+z.c,0);
 
+function zNameChange() {
+  const nq = document.getElementById('sel-name').value;
+  const selMonth = document.getElementById('sel-month');
+  const selRok   = document.getElementById('sel-rok');
+  const cbPrehled = document.getElementById('z-prehled');
+
+  const lbl = document.getElementById('z-prehled-label');
+  if (nq) {
+    selMonth.disabled  = false;
+    selRok.disabled    = false;
+    cbPrehled.disabled = false;
+    if (lbl) { lbl.style.opacity='1'; lbl.style.pointerEvents='auto'; lbl.style.cursor='pointer'; }
+  } else {
+    selMonth.value = ''; selMonth.disabled = true;
+    selRok.value   = ''; selRok.disabled   = true;
+    cbPrehled.checked = false; cbPrehled.disabled = true;
+    if (lbl) { lbl.style.opacity='0.45'; lbl.style.pointerEvents='none'; lbl.style.cursor='not-allowed'; }
+  }
+  // Reset grid — don't show anything until month or prehled selected
+  document.getElementById('z-grid').innerHTML = '';
+  document.getElementById('z-empty').style.display = 'none';
+  document.getElementById('z-info').innerHTML = '';
+  if (nq) zApply();
+}
+
 function zApply() {
-  const nq  = document.getElementById('sel-name').value;
-  const mq  = document.getElementById('sel-month').value;  // e.g. "Únor"
-  const rq  = document.getElementById('sel-rok').value;    // e.g. "2026"
+  const nq        = document.getElementById('sel-name').value;
+  const mq        = document.getElementById('sel-month').value;
+  const rq        = document.getElementById('sel-rok').value;
+  const prehled   = document.getElementById('z-prehled') && document.getElementById('z-prehled').checked;
+  const selMonth  = document.getElementById('sel-month');
+  const selRok    = document.getElementById('sel-rok');
 
-  // Build the key to match against zalohyMap keys like "Únor_2026"
-  const keyFilter = (mq && rq) ? mq + '_' + rq : null;
+  // Checkbox celkový přehled — disable/grey datum selects
+  if (prehled) {
+    selMonth.disabled = true;
+    selRok.disabled   = true;
+  } else if (nq) {
+    selMonth.disabled = false;
+    selRok.disabled   = false;
+  }
 
-  // For each person, get matching entries across all their months
+  // Show nothing if no name selected
+  if (!nq) {
+    document.getElementById('z-grid').innerHTML = '';
+    document.getElementById('z-empty').style.display = 'none';
+    document.getElementById('z-info').innerHTML = '';
+    return;
+  }
+
+  // Show nothing if name selected but no month/rok and no prehled
+  if (!prehled && !mq) {
+    document.getElementById('z-grid').innerHTML = '';
+    document.getElementById('z-empty').style.display = 'none';
+    document.getElementById('z-info').innerHTML = nq
+      ? `Barber: <strong style="color:var(--purple)">${nq}</strong> — vyber měsíc nebo zaškrtni Celkový přehled`
+      : '';
+    return;
+  }
+
+  const keyFilter = (!prehled && mq && rq) ? mq + '_' + rq : null;
+
   const filtered = ZALOHY.filter(p => {
     if (nq && p.name !== nq) return false;
-    // Check if person has any entries matching the filter
     const keys = Object.keys(p.mesice || {});
     if (keyFilter) return keys.includes(keyFilter);
-    if (mq && !rq) return keys.some(k => k.startsWith(mq + '_'));
-    if (!mq && rq) return keys.some(k => k.endsWith('_' + rq));
+    if (!prehled && mq && !rq) return keys.some(k => k.startsWith(mq + '_'));
+    if (!prehled && !mq && rq) return keys.some(k => k.endsWith('_' + rq));
     return true;
-  }).sort((a,b) => {
-    const sa = Object.values(a.mesice||{}).flat().reduce((s,z)=>s+z.c,0);
-    const sb = Object.values(b.mesice||{}).flat().reduce((s,z)=>s+z.c,0);
-    return sb - sa;
   });
 
-  // KPI — compute totals for the two "headline" months or filtered
-  const getTotal = (mes, rok) => {
-    const k = mes+'_'+rok;
-    return filtered.reduce((s,p) => s + zsum((p.mesice||{})[k]||[]), 0);
-  };
-  const getCount = (mes, rok) => {
-    const k = mes+'_'+rok;
-    return filtered.filter(p => ((p.mesice||{})[k]||[]).length > 0).length;
-  };
-
-  const ut = getTotal('Únor','2026');
-  const bt = getTotal('Březen','2026');
-  const uc = getCount('Únor','2026');
-  const bc = getCount('Březen','2026');
-  const elSet = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  elSet('kz-unor',     ut.toLocaleString('cs-CZ')+' Kč');
-  elSet('kz-unor-sub', uc+' barberů s zálohou');
-  elSet('kz-brezen',     bt.toLocaleString('cs-CZ')+' Kč');
-  elSet('kz-brezen-sub', bc+' barberů s zálohou');
-  const totalAll = filtered.reduce((s,p) => s + Object.values(p.mesice||{}).flat().reduce((ss,z)=>ss+z.c,0), 0);
+  // KPI update
+  const getTotal = (mes, rok) => { const k=mes+'_'+rok; return filtered.reduce((s,p)=>s+zsum((p.mesice||{})[k]||[]),0); };
+  const getCount = (mes, rok) => { const k=mes+'_'+rok; return filtered.filter(p=>((p.mesice||{})[k]||[]).length>0).length; };
+  const elSet = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  const ut=getTotal('Únor','2026'), bt=getTotal('Březen','2026');
+  const uc=getCount('Únor','2026'), bc=getCount('Březen','2026');
+  elSet('kz-unor', ut.toLocaleString('cs-CZ')+' Kč'); elSet('kz-unor-sub', uc+' barberů s zálohou');
+  elSet('kz-brezen', bt.toLocaleString('cs-CZ')+' Kč'); elSet('kz-brezen-sub', bc+' barberů s zálohou');
+  const totalAll=filtered.reduce((s,p)=>s+Object.values(p.mesice||{}).flat().reduce((ss,z)=>ss+z.c,0),0);
   elSet('kz-total', totalAll.toLocaleString('cs-CZ')+' Kč');
-  const periodLabel = keyFilter ? (mq+' '+rq) : mq ? mq : rq ? 'Rok '+rq : 'Všechna období';
-  elSet('kz-label', keyFilter||mq||rq ? 'Filtr: '+periodLabel : 'Obě období');
-  elSet('kz-total-sub', periodLabel);
+  const periodLabel = prehled ? 'Celkový přehled' : keyFilter ? (mq+' '+rq) : mq ? mq : rq ? 'Rok '+rq : 'Všechna období';
+  elSet('kz-label', 'Filtr: '+periodLabel); elSet('kz-total-sub', periodLabel);
 
-  // Info
-  const parts=[];
-  if (nq) parts.push(`barber: <strong>${nq}</strong>`);
-  if (mq) parts.push(`měsíc: <strong>${mq}</strong>`);
-  if (rq) parts.push(`rok: <strong>${rq}</strong>`);
+  const parts = [];
+  if (nq) parts.push(`barber: <strong style="color:var(--purple)">${nq}</strong>`);
+  if (prehled) parts.push('<strong>Celkový přehled</strong>');
+  else if (mq) parts.push(`měsíc: <strong>${mq}${rq?' '+rq:''}</strong>`);
   document.getElementById('z-info').innerHTML = parts.length
-    ? `Filtr: ${parts.join(' · ')} — <strong>${filtered.length}</strong> ${filtered.length===1?'barber':'barberů'}`
-    : `Všichni barbeři <strong>(${filtered.length})</strong>`;
+    ? `Filtr: ${parts.join(' · ')}`
+    : '';
 
-  // Cards
   const grid  = document.getElementById('z-grid');
   const empty = document.getElementById('z-empty');
   grid.innerHTML = '';
@@ -2375,55 +2428,94 @@ function zApply() {
 
   filtered.forEach((p, idx) => {
     const mesice = p.mesice || {};
-    // Determine which month-keys to show
-    let keysToShow = Object.keys(mesice).sort();
+    let keysToShow = Object.keys(mesice).sort((a,b) => {
+      // sort by rok desc then mesic_cislo desc
+      const [ma,ra] = a.split('_'); const [mb,rb] = b.split('_');
+      if (rb !== ra) return parseInt(rb) - parseInt(ra);
+      const MESICE = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+      return MESICE.indexOf(mb) - MESICE.indexOf(ma);
+    });
     if (keyFilter) keysToShow = keysToShow.filter(k => k === keyFilter);
-    else if (mq && !rq) keysToShow = keysToShow.filter(k => k.startsWith(mq+'_'));
-    else if (!mq && rq) keysToShow = keysToShow.filter(k => k.endsWith('_'+rq));
+    else if (!prehled && mq && !rq) keysToShow = keysToShow.filter(k => k.startsWith(mq+'_'));
+    else if (!prehled && !mq && rq) keysToShow = keysToShow.filter(k => k.endsWith('_'+rq));
 
     const rows = arr => arr.map(z => {
       const typ = (z.p || 'Záloha');
-      const typClass = typ === 'Pokuta' ? 'typ-pokuta' : typ === 'Korekce' ? 'typ-korekce' : typ === 'Bonus' ? 'typ-bonus' : 'typ-zaloha';
+      const typClass = typ==='Pokuta'?'typ-pokuta':typ==='Korekce'?'typ-korekce':typ==='Bonus'?'typ-bonus':'typ-zaloha';
       return `<div class="z-row">
         <span class="z-date">${z.d}</span>
         <span class="z-amt ${z.c<0?'neg':'pos'}">${z.c>0?'+':''}${z.c.toLocaleString('cs-CZ')} Kč</span>
         <span class="z-typ ${typClass}">${typ}</span>
-        <span class="z-note">${z.pozn || ''}</span>
+        <span class="z-note ${typ==='Pokuta'?'pokuta':''}">${z.pozn || ''}</span>
       </div>`;
     }).join('');
 
-    let secs = '';
-    keysToShow.forEach((key, ki) => {
-      const arr = mesice[key] || [];
-      if (!arr.length) return;
-      const label = key.replace('_', ' ');
-      const color = monthColors[ki % monthColors.length];
-      const subtotal = zsum(arr);
-      secs += `<div class="z-month-sec">
-        <div class="z-mlabel"><div class="z-mdot" style="background:${color}"></div>${label}</div>
-        ${rows(arr)}
-        <div class="z-subtotal">Součet: <em>${subtotal.toLocaleString('cs-CZ')} Kč</em></div>
-      </div>`;
-    });
-
-    if (!secs) return;
-
-    const card = document.createElement('div');
-    card.className = 'z-card';
-    card.style.animationDelay = (idx*0.035)+'s';
-    card.innerHTML = `
-      <div class="z-head">
-        <div class="z-name"><div class="z-avatar">${p.name.substring(0,2).toUpperCase()}</div>${p.name}</div>
-      </div>${secs}`;
-    grid.appendChild(card);
+    if (prehled) {
+      // Celkový přehled — každý měsíc jako samostatná karta
+      keysToShow.forEach((key, ki) => {
+        const arr = mesice[key] || [];
+        if (!arr.length) return;
+        const label = key.replace('_', ' ');
+        const color = monthColors[ki % monthColors.length];
+        const subtotal = zsum(arr);
+        const card = document.createElement('div');
+        card.className = 'z-card';
+        card.style.cssText = `animation-delay:${(idx*keysToShow.length+ki)*0.04}s;border-top:3px solid ${color};`;
+        card.innerHTML = `
+          <div class="z-head" style="margin-bottom:10px;padding-bottom:10px;">
+            <div class="z-name" style="gap:10px;">
+              <div class="z-mdot" style="width:10px;height:10px;background:${color};flex-shrink:0;border-radius:50%;"></div>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:${color}">${label}</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:${color}">${subtotal.toLocaleString('cs-CZ')} Kč</span>
+          </div>
+          ${rows(arr)}`;
+        grid.appendChild(card);
+      });
+    } else {
+      // Standardní zobrazení — jeden měsíc v jedné kartě
+      let secs = '';
+      keysToShow.forEach((key, ki) => {
+        const arr = mesice[key] || [];
+        if (!arr.length) return;
+        const label = key.replace('_', ' ');
+        const color = monthColors[ki % monthColors.length];
+        const subtotal = zsum(arr);
+        secs += `<div class="z-month-sec">
+          <div class="z-mlabel">
+            <div class="z-mdot" style="background:${color};box-shadow:0 0 0 3px ${color}22"></div>
+            <span style="color:${color}">${label}</span>
+          </div>
+          ${rows(arr)}
+          <div class="z-subtotal">Součet: <em>${subtotal.toLocaleString('cs-CZ')} Kč</em></div>
+        </div>`;
+      });
+      if (!secs) return;
+      const card = document.createElement('div');
+      card.className = 'z-card';
+      card.style.animationDelay = (idx*0.035)+'s';
+      card.innerHTML = `
+        <div class="z-head">
+          <div class="z-name"><div class="z-avatar">${p.name.substring(0,2).toUpperCase()}</div>${p.name}</div>
+        </div>${secs}`;
+      grid.appendChild(card);
+    }
   });
 }
 
 function zReset() {
   document.getElementById('sel-name').value  = '';
-  document.getElementById('sel-month').value = '';
-  document.getElementById('sel-rok').value   = '';
-  zApply();
+  const selMonth = document.getElementById('sel-month');
+  const selRok   = document.getElementById('sel-rok');
+  const cbPrehled = document.getElementById('z-prehled');
+  selMonth.value = ''; selMonth.disabled = true;
+  selRok.value   = ''; selRok.disabled   = true;
+  if (cbPrehled) { cbPrehled.checked = false; cbPrehled.disabled = true; }
+  const lbl2 = document.getElementById('z-prehled-label');
+  if (lbl2) { lbl2.style.opacity='0.45'; lbl2.style.pointerEvents='none'; lbl2.style.cursor='not-allowed'; }
+  document.getElementById('z-grid').innerHTML = '';
+  document.getElementById('z-empty').style.display = 'none';
+  document.getElementById('z-info').innerHTML = '';
 }
 
 // ═══════════════════════════════════════════════
@@ -2647,16 +2739,70 @@ function zInitBarberSelect(zalohyRaw) {
 
 // ── Dynamicky naplní select barberů z načtených dat ──
 function vpInitBarberSelect(vyplatyRaw) {
-  const sel = document.getElementById('vp-name');
+  // Called on init with all data — just store reference, don't populate yet
+  // Population happens in vpMonthChange()
+}
+
+function vpPobockaChange() {
+  const pobVal = document.getElementById('vp-pobocka').value;
+  const selMonth = document.getElementById('vp-month');
+  const selRok   = document.getElementById('vp-rok');
+  const selName  = document.getElementById('vp-name');
+
+  // Reset downstream filters
+  selMonth.value = ''; selMonth.disabled = !pobVal;
+  selRok.value   = ''; selRok.disabled   = !pobVal;
+  selName.innerHTML = '<option value="">— nejdřív vyber měsíc —</option>';
+  selName.disabled = true;
+
+  // Show only months that exist for this pobocka
+  if (pobVal) {
+    const dostupneMesice = [...new Set(
+      window._vyplatyRaw
+        .filter(r => r.pobocka === pobVal)
+        .map(r => r.mesic + '|' + r.rok)
+    )];
+    // enable selects — months filtered in vpMonthChange
+  }
+  vpApply();
+}
+
+function vpMonthChange() {
+  const pobVal   = document.getElementById('vp-pobocka').value;
+  const monthVal = document.getElementById('vp-month').value;
+  const rokVal   = document.getElementById('vp-rok').value;
+  const sel      = document.getElementById('vp-name');
   if (!sel) return;
 
-  // Unikátní jména, normalizovaná, seřazená abecedně
+  if (!monthVal || !rokVal) {
+    sel.innerHTML = '<option value="">— nejdřív vyber měsíc —</option>';
+    sel.disabled = true;
+    vpApply();
+    return;
+  }
+
+  // Filter by pobocka + period → unique names
+  const rok = parseInt(rokVal);
   const names = [...new Set(
-    vyplatyRaw.map(r => normName(r.jmeno || '')).filter(Boolean)
+    window._vyplatyRaw
+      .filter(r => {
+        const mesicOk = normName(r.mesic||'') === normName(monthVal) && r.rok === rok;
+        const pobOk   = !pobVal || r.pobocka === pobVal;
+        return mesicOk && pobOk;
+      })
+      .map(r => normName(r.jmeno || ''))
+      .filter(Boolean)
   )].sort((a, b) => a.localeCompare(b, 'cs'));
 
-  sel.innerHTML = `<option value="">— Všichni barbeři (${names.length}) —</option>` +
-    names.map(n => `<option value="${n}">${n}</option>`).join('');
+  if (names.length === 0) {
+    sel.innerHTML = '<option value="">— žádná data pro toto období —</option>';
+    sel.disabled = true;
+  } else {
+    sel.innerHTML = `<option value="">— Všichni (${names.length}) —</option>` +
+      names.map(n => `<option value="${n}">${n}</option>`).join('');
+    sel.disabled = false;
+  }
+  vpApply();
 }
 
 function vpApply(){
@@ -2862,8 +3008,14 @@ function vpApply(){
 }
 
 function vpReset(){
-  document.getElementById('vp-name').value  = '';
-  document.getElementById('vp-month').value = '';
+  const selPob   = document.getElementById('vp-pobocka');
+  const selMonth = document.getElementById('vp-month');
+  const selRok   = document.getElementById('vp-rok');
+  const selName  = document.getElementById('vp-name');
+  if (selPob)   { selPob.value = ''; }
+  if (selMonth) { selMonth.value = ''; selMonth.disabled = true; }
+  if (selRok)   { selRok.value = '';   selRok.disabled   = true; }
+  if (selName)  { selName.innerHTML = '<option value="">— nejdřív vyber pobočku —</option>'; selName.disabled = true; }
   vpApply();
 }
 
