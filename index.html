@@ -647,6 +647,164 @@ body.dark-mode .umd-item.umd-danger:hover .umd-text{color:#f87171;}
 body.dark-mode .user-menu-dropdown{background:var(--bg2);border-color:var(--border);
   box-shadow:0 12px 40px rgba(0,0,0,0.4),0 0 0 1px rgba(201,168,76,0.06);}
 
+/* ═══ BARBER POBOČKA PILLS ═══ */
+.bb-pob-pill {
+  padding:7px 16px;
+  border-radius:8px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted2);
+  font-family:'Syne',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.2s cubic-bezier(.16,1,.3,1);
+  letter-spacing:0.5px;
+  position:relative;
+}
+.bb-pob-pill:hover {
+  background:var(--bg3);
+  color:var(--text);
+  transform:translateY(-1px);
+}
+.bb-pob-pill.bb-pob-active {
+  background:rgba(201,168,76,0.12);
+  border-color:rgba(201,168,76,0.4);
+  color:var(--gold2);
+}
+.bb-pob-pill[data-pob="Záběhlice"].bb-pob-active {
+  background:rgba(201,168,76,0.1);
+  border-color:rgba(201,168,76,0.5);
+  color:#C9A84C;
+}
+.bb-pob-pill[data-pob="Vršovice"].bb-pob-active {
+  background:rgba(93,184,122,0.1);
+  border-color:rgba(93,184,122,0.5);
+  color:#5DB87A;
+}
+.bb-pob-pill[data-pob="Veleslavín"].bb-pob-active {
+  background:rgba(217,107,90,0.1);
+  border-color:rgba(217,107,90,0.5);
+  color:#D96B5A;
+}
+
+/* ═══ BARBER SECTION DIVIDER (enhanced) ═══ */
+.bb-sec-banner {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 14px 10px 16px;
+  margin:0;
+  border-left:3px solid var(--sec-banner-color, var(--gold));
+}
+.bb-sec-banner-label {
+  font-family:'Bebas Neue',sans-serif;
+  letter-spacing:3px;
+  font-size:13px;
+  color:var(--sec-banner-color, var(--gold));
+}
+.bb-sec-banner-dot {
+  width:8px; height:8px;
+  border-radius:50%;
+  background:var(--sec-banner-color, var(--gold));
+  flex-shrink:0;
+}
+.bb-sec-banner-line {
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg, var(--sec-banner-color, var(--gold)), transparent);
+  opacity:0.3;
+}
+.bb-sec-banner-count {
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:1px;
+}
+
+/* ═══ BARBER ACCORDION ═══ */
+.bb-barber-row {
+  cursor:pointer;
+  transition:background 0.15s;
+}
+.bb-barber-row:hover td {
+  background:rgba(201,168,76,0.06) !important;
+}
+.bb-barber-row.bb-open td {
+  background:rgba(201,168,76,0.04) !important;
+  border-bottom:none !important;
+}
+.bb-barber-row td .bb-expand-arrow {
+  display:inline-block;
+  margin-left:7px;
+  font-size:9px;
+  color:var(--muted);
+  transition:transform 0.3s cubic-bezier(.16,1,.3,1);
+  vertical-align:middle;
+}
+.bb-barber-row.bb-open td .bb-expand-arrow {
+  transform:rotate(180deg);
+  color:var(--gold);
+}
+.bb-accordion-row td {
+  padding:0 !important;
+  border:none !important;
+}
+.bb-accordion-inner {
+  overflow:hidden;
+  max-height:0;
+  transition:max-height 0.5s cubic-bezier(.16,1,.3,1);
+  background:linear-gradient(to bottom, rgba(201,168,76,0.04), transparent);
+  border-bottom:2px solid rgba(201,168,76,0.15);
+}
+.bb-accordion-inner.bb-open {
+  max-height:600px;
+}
+.bb-accordion-content {
+  padding:20px 18px 24px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+@media (max-width:700px) {
+  .bb-accordion-content { grid-template-columns:1fr; }
+}
+.bb-acc-section {
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  padding:16px 18px;
+}
+.bb-acc-title {
+  font-size:9px;
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.bb-acc-chart {
+  position:relative;
+  height:120px;
+}
+.bb-acc-stats {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.bb-stat-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  font-size:12px;
+  padding:6px 0;
+  border-bottom:1px solid var(--row-border);
+}
+.bb-stat-row:last-child { border-bottom:none; }
+.bb-stat-label { color:var(--muted2); font-family:'Syne',sans-serif; }
+.bb-stat-val { font-family:'JetBrains Mono',monospace; color:var(--gold2); font-weight:600; }
+.bb-stat-val.pos { color:var(--pos); }
+.bb-stat-val.neg { color:var(--neg); }
+
 /* ═══ MONTH PILLS ═══ */
 .mpill{transition:all 0.25s cubic-bezier(.16,1,.3,1);}
 .mpill.active{box-shadow:0 0 12px rgba(201,168,76,0.12);}
@@ -1468,6 +1626,8 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
     <div id="rpt-period-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
 
+    <button onclick="reportReset()" title="Resetovat filtr" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">✕ Reset</button>
+
     <button onclick="reportExportPDF()" title="Exportovat jako PDF" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;margin-left:auto" onmouseover="this.style.borderColor='rgba(201,168,76,0.5)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       PDF
@@ -1759,7 +1919,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 <div class="view" id="view-barberi" data-tab="barberi">
 
   <!-- Filtr období -->
-  <div class="zalohy-filter" style="margin-bottom:16px;">
+  <div class="zalohy-filter" style="margin-bottom:12px;">
     <span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap">📅 Období</span>
     <div class="zf-field" style="max-width:200px;">
       <label class="zf-label">Od</label>
@@ -1771,6 +1931,17 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
       <select class="zf-select" id="bb-to" onchange="renderBarberi()"></select>
     </div>
     <button class="zf-reset" onclick="bbReset()">✕ Reset</button>
+  </div>
+
+  <!-- Filtr pobočky -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+    <span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0">🏠 Pobočka</span>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;">
+      <button class="bb-pob-pill bb-pob-active" id="bb-pob-all" onclick="bbSetPobocka('')" data-pob="">Všechny pobočky</button>
+      <button class="bb-pob-pill" id="bb-pob-z" onclick="bbSetPobocka('Záběhlice')" data-pob="Záběhlice" style="--pob-color:#C9A84C">Záběhlice</button>
+      <button class="bb-pob-pill" id="bb-pob-v" onclick="bbSetPobocka('Vršovice')" data-pob="Vršovice" style="--pob-color:#5DB87A">Vršovice</button>
+      <button class="bb-pob-pill" id="bb-pob-ve" onclick="bbSetPobocka('Veleslavín')" data-pob="Veleslavín" style="--pob-color:#D96B5A">Veleslavín</button>
+    </div>
   </div>
 
   <div class="sec">👥 Přehled barberů — tržby</div>
@@ -3068,30 +3239,26 @@ function reportInitSelects(availableRM) {
   const selTo   = document.getElementById('rpt-to');
   if (!selFrom || !selTo) return;
 
+  const placeholder = new Option('— vyber —', '');
+  const placeholder2 = new Option('— vyber —', '');
   selFrom.innerHTML = '';
   selTo.innerHTML   = '';
-
-  let firstAvail = null, lastAvail = null;
+  selFrom.appendChild(placeholder);
+  selTo.appendChild(placeholder2);
 
   for (const [m, r, mn] of RPT_ALL_MESICE) {
     const rm  = `${r}_${mn}`;
     const key = rptKey(m, r);
     const lbl = RPT_SHORT[key] || `${m} ${r}`;
     if (!availableRM || availableRM.has(rm)) {
-      const opt1 = new Option(lbl, key);
-      const opt2 = new Option(lbl, key);
-      selFrom.appendChild(opt1);
-      selTo.appendChild(opt2);
-      if (!firstAvail) firstAvail = key;
-      lastAvail = key;
+      selFrom.appendChild(new Option(lbl, key));
+      selTo.appendChild(new Option(lbl, key));
     }
   }
 
-  // Výchozí: Pro 25 → Úno 26 (nebo první/poslední dostupné)
-  const defFrom = RPT_ALL_MESICE.find(([m,r])=>rptKey(m,r)==='Prosinec_2025') ? 'Prosinec_2025' : firstAvail;
-  const defTo   = RPT_ALL_MESICE.find(([m,r])=>rptKey(m,r)==='Únor_2026')     ? 'Únor_2026'    : lastAvail;
-  if (defFrom) selFrom.value = defFrom;
-  if (defTo)   selTo.value   = defTo;
+  // Nic nepředvybíráme — uživatel musí vybrat
+  selFrom.value = '';
+  selTo.value   = '';
 
   reportUpdateLabel();
 }
@@ -3103,7 +3270,20 @@ function reportUpdateLabel() {
   if (!selFrom || !selTo || !lbl) return;
   const fromOpt = selFrom.options[selFrom.selectedIndex];
   const toOpt   = selTo.options[selTo.selectedIndex];
-  if (fromOpt && toOpt) lbl.textContent = `${fromOpt.text} – ${toOpt.text}`;
+  if (fromOpt && toOpt && selFrom.value && selTo.value) {
+    lbl.textContent = `${fromOpt.text} – ${toOpt.text}`;
+  } else {
+    lbl.textContent = '';
+  }
+}
+
+function reportReset() {
+  const selFrom = document.getElementById('rpt-from');
+  const selTo   = document.getElementById('rpt-to');
+  if (selFrom) selFrom.value = '';
+  if (selTo)   selTo.value   = '';
+  reportUpdateLabel();
+  renderReport();
 }
 
 function reportApplyFilter() {
@@ -3118,15 +3298,30 @@ async function renderReport() {
   // ── Zjisti vybrané období ──
   const selFrom = document.getElementById('rpt-from');
   const selTo   = document.getElementById('rpt-to');
-  const fromKey = selFrom ? selFrom.value : 'Prosinec_2025';
-  const toKey   = selTo   ? selTo.value   : 'Únor_2026';
+  const fromKey = selFrom ? selFrom.value : '';
+  const toKey   = selTo   ? selTo.value   : '';
+
+  // Prázdný stav — nic nevybráno
+  if (!fromKey || !toKey) {
+    el.innerHTML = `
+      <div id="rpt-print-header" style="display:none;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #C9A84C">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:4px;color:#8B6914">GoldenGate Barbershop — Finanční Report</div>
+        <div id="rpt-print-period" style="font-size:12px;color:#666;margin-top:4px"></div>
+      </div>
+      <div style="padding:56px;text-align:center;color:var(--muted)">
+        <div style="font-size:28px;margin-bottom:12px">📅</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--muted2);margin-bottom:6px">Vyber období</div>
+        <div style="font-size:12px">Zvol počáteční a koncový měsíc pro zobrazení reportu.</div>
+      </div>`;
+    return;
+  }
 
   // Filtruj měsíce podle výběru
   const fromIdx = RPT_ALL_MESICE.findIndex(([m,r]) => rptKey(m,r) === fromKey);
   const toIdx   = RPT_ALL_MESICE.findIndex(([m,r]) => rptKey(m,r) === toKey);
-  const lo = Math.min(fromIdx < 0 ? 4 : fromIdx, toIdx < 0 ? 6 : toIdx);
-  const hi = Math.max(fromIdx < 0 ? 4 : fromIdx, toIdx < 0 ? 6 : toIdx);
-  const MESICE_SEL = RPT_ALL_MESICE.slice(lo, hi + 1); // [[name, rok, mesNum], ...]
+  const lo = Math.min(fromIdx < 0 ? 0 : fromIdx, toIdx < 0 ? 0 : toIdx);
+  const hi = Math.max(fromIdx < 0 ? 0 : fromIdx, toIdx < 0 ? 0 : toIdx);
+  const MESICE_SEL = RPT_ALL_MESICE.slice(lo, hi + 1);
 
   // ── Fetch (nebo z cache) ──
   if (!RPT_RAW_CACHE) {
@@ -4026,16 +4221,26 @@ function bbInitSelects() {
   const startIdx = minIdx >= 0 ? minIdx : 0;
   const filtered = VYPLA_RAW.slice(startIdx);
 
+  const placeholder = `<option value="">— vyber —</option>`;
   const opts = filtered.map(m => `<option value="${m.key}">${m.mesic} ${m.rok}</option>`).join('');
-  fromSel.innerHTML = opts;
-  toSel.innerHTML = opts;
+  fromSel.innerHTML = placeholder + opts;
+  toSel.innerHTML = placeholder + opts;
 
-  fromSel.value = filtered[0].key;
-  toSel.value = filtered[filtered.length - 1].key;
+  // Žádná výchozí hodnota — uživatel musí vybrat
+  fromSel.value = '';
+  toSel.value = '';
 }
 
 function bbReset() {
-  bbInitSelects();
+  BB_ACTIVE_POB = '';
+  document.querySelectorAll('.bb-pob-pill').forEach(btn => {
+    btn.classList.toggle('bb-pob-active', btn.dataset.pob === '');
+  });
+  // Resetuj selecty na prázdno
+  const fromSel = document.getElementById('bb-from');
+  const toSel = document.getElementById('bb-to');
+  if (fromSel) fromSel.value = '';
+  if (toSel) toSel.value = '';
   renderBarberi();
 }
 
@@ -4050,12 +4255,39 @@ function bbPobSortKey(pobSet) {
   return min;
 }
 
+// ── Pobočka filtr stav ──
+let BB_ACTIVE_POB = ''; // '' = všechny
+
+function bbSetPobocka(pob) {
+  BB_ACTIVE_POB = pob;
+  // Aktualizuj aktivní pill
+  document.querySelectorAll('.bb-pob-pill').forEach(btn => {
+    btn.classList.toggle('bb-pob-active', btn.dataset.pob === pob);
+  });
+  renderBarberi();
+}
+
 function renderBarberi() {
   if (!VYPLA_RAW || !VYPLA_RAW.length) return;
 
-  const fromKey = document.getElementById('bb-from').value;
-  const toKey = document.getElementById('bb-to').value;
-  if (!fromKey || !toKey) return;
+  const fromSel = document.getElementById('bb-from');
+  const toSel = document.getElementById('bb-to');
+  const fromKey = fromSel ? fromSel.value : '';
+  const toKey = toSel ? toSel.value : '';
+
+  // Prázdný stav — nic nevybráno
+  if (!fromKey || !toKey) {
+    document.getElementById('bb-kpi-strip').innerHTML = '';
+    document.getElementById('bb-thead').innerHTML = '';
+    document.getElementById('bb-tbody').innerHTML = `<tr><td colspan="10" style="padding:56px;text-align:center;color:var(--muted)">
+      <div style="font-size:28px;margin-bottom:12px">📅</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--muted2);margin-bottom:6px">Vyber období</div>
+      <div style="font-size:12px">Zvol počáteční a koncový měsíc pro zobrazení přehledu barberů.</div>
+    </td></tr>`;
+    if (bbChartTrzby) { bbChartTrzby.destroy(); bbChartTrzby = null; }
+    document.getElementById('bb-period-label').textContent = 'Vyberte období výše';
+    return;
+  }
 
   const fromIdx = VYPLA_RAW.findIndex(m => m.key === fromKey);
   const toIdx = VYPLA_RAW.findIndex(m => m.key === toKey);
@@ -4093,12 +4325,17 @@ function renderBarberi() {
   });
 
   // Sort: 1) by pobočka order, 2) by total tržba desc within pobočka
-  const sorted = names.sort((a, b) => {
+  let sorted = names.sort((a, b) => {
     const pa = bbPobSortKey(barberData[a].pobocky);
     const pb = bbPobSortKey(barberData[b].pobocky);
     if (pa !== pb) return pa - pb;
     return barberData[b].totalTrzba - barberData[a].totalTrzba;
   });
+
+  // Filtr pobočky
+  if (BB_ACTIVE_POB) {
+    sorted = sorted.filter(name => barberData[name].pobocky.has(BB_ACTIVE_POB));
+  }
 
   // KPIs
   const totalTrzby = sorted.reduce((s, n) => s + barberData[n].totalTrzba, 0);
@@ -4142,33 +4379,78 @@ function renderBarberi() {
   thHTML += '<th style="min-width:100px">∑ Celkem</th></tr>';
   thead.innerHTML = thHTML;
 
+  // Uložíme do globálu pro accordion
+  window.selectedMonthsCache = selectedMonths;
+  window.barberData = barberData;
+  const colCount = 2 + selectedMonths.length + 1;
+
   let tbHTML = '';
   let lastPob = '';
   sorted.forEach((name, idx) => {
     const d = barberData[name];
     const pobLabel = [...d.pobocky].join(', ') || '—';
     const mainPob = [...d.pobocky][0] || '';
+    const safeName = name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 
-    // Sekce separator when pobočka changes
+    // Sekce separator when pobočka changes — enhanced banner when showing all
     if (mainPob !== lastPob && mainPob) {
-      const secColor = mainPob === 'Záběhlice' ? 'var(--zabeh)' : mainPob === 'Vršovice' ? 'var(--vrsov)' : mainPob === 'Veleslavín' ? 'var(--velesv)' : 'var(--gold)';
-      tbHTML += `<tr class="bb-sec-row"><td style="position:sticky;left:0;z-index:5;background:var(--sec-head);padding:8px 14px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${secColor};border-top:1px solid var(--row-border);white-space:nowrap">${mainPob.toUpperCase()}</td><td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>`;
-      selectedMonths.forEach(() => { tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>'; });
-      tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td></tr>';
+      const secColor = mainPob === 'Záběhlice' ? '#C9A84C' : mainPob === 'Vršovice' ? '#5DB87A' : mainPob === 'Veleslavín' ? '#D96B5A' : '#C9A84C';
+      const secBg = mainPob === 'Záběhlice' ? 'rgba(201,168,76,0.07)' : mainPob === 'Vršovice' ? 'rgba(93,184,122,0.07)' : mainPob === 'Veleslavín' ? 'rgba(217,107,90,0.07)' : 'rgba(201,168,76,0.07)';
+      // Počet barberů v této pobočce
+      const pobCount = sorted.filter(n => [...barberData[n].pobocky][0] === mainPob).length;
+      const isFirst = lastPob === '';
+
+      if (!BB_ACTIVE_POB) {
+        // Plný banner při zobrazení všech poboček
+        tbHTML += `<tr class="bb-sec-row">
+          <td colspan="${colCount}" style="padding:0;border-top:${isFirst ? 'none' : '8px solid var(--bg3)'}">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px 10px;background:${secBg};border-left:3px solid ${secColor};border-bottom:1px solid rgba(${mainPob==='Záběhlice'?'201,168,76':mainPob==='Vršovice'?'93,184,122':'217,107,90'},0.2)">
+              <div style="width:9px;height:9px;border-radius:50%;background:${secColor};flex-shrink:0;box-shadow:0 0 8px ${secColor}55"></div>
+              <span style="font-family:'Bebas Neue',sans-serif;letter-spacing:3px;font-size:14px;color:${secColor}">${mainPob.toUpperCase()}</span>
+              <div style="flex:1;height:1px;background:linear-gradient(90deg,${secColor}44,transparent)"></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${secColor};opacity:0.7;letter-spacing:1px">${pobCount} BARBER${pobCount !== 1 ? 'Ů' : ''}</span>
+            </div>
+          </td>
+        </tr>`;
+      } else {
+        // Jednoduchý separator při filtrování jedné pobočky
+        tbHTML += `<tr class="bb-sec-row"><td style="position:sticky;left:0;z-index:5;background:var(--sec-head);padding:8px 14px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${secColor};border-top:1px solid var(--row-border);white-space:nowrap">${mainPob.toUpperCase()}</td><td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>`;
+        selectedMonths.forEach(() => { tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td>'; });
+        tbHTML += '<td style="background:var(--sec-head);border-top:1px solid var(--row-border)"></td></tr>';
+      }
       lastPob = mainPob;
     }
 
-    const bg = idx % 2 === 0 ? '' : ' style="background:var(--stripe)"';
-    // Tržby row
-    tbHTML += `<tr${bg}>`;
-    tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px;position:sticky;left:0;z-index:2;background:var(--bg2);white-space:nowrap">${name}</td>`;
-    tbHTML += `<td style="text-align:left;font-size:11px;color:var(--muted2);padding:8px 14px;background:var(--bg2)">${pobLabel}</td>`;
-    d.months.forEach((md, mi) => {
+    const rowBg = idx % 2 === 0 ? 'var(--bg2)' : 'var(--stripe)';
+
+    // Tržby row — klikatelný accordion trigger
+    tbHTML += `<tr class="bb-barber-row" id="bb-row-${idx}" onclick="bbToggleAccordion(${idx}, '${safeName}')" style="background:${rowBg}">`;
+    tbHTML += `<td style="text-align:left;font-family:'Syne',sans-serif;font-weight:700;color:var(--text);padding:8px 14px;position:sticky;left:0;z-index:2;background:${rowBg};white-space:nowrap">${name}<span class="bb-expand-arrow">▼</span></td>`;
+    tbHTML += `<td style="text-align:left;font-size:11px;color:var(--muted2);padding:8px 14px;">${pobLabel}</td>`;
+    d.months.forEach((md) => {
       const c = md.trzba > 0 ? 'color:var(--text)' : 'color:var(--muted)';
       tbHTML += `<td style="${c}">${md.trzba ? Math.round(md.trzba).toLocaleString('cs-CZ') : '—'}</td>`;
     });
     tbHTML += `<td style="font-weight:700;color:var(--gold2)">${Math.round(d.totalTrzba).toLocaleString('cs-CZ')}</td>`;
     tbHTML += '</tr>';
+
+    // Accordion detail row
+    tbHTML += `<tr class="bb-accordion-row" id="bb-acc-${idx}">
+      <td colspan="${colCount}" style="padding:0;border:none">
+        <div class="bb-accordion-inner" id="bb-acc-inner-${idx}">
+          <div class="bb-accordion-content">
+            <div class="bb-acc-section">
+              <div class="bb-acc-title">📈 Vývoj tržeb</div>
+              <div class="bb-acc-chart"><canvas id="bb-acc-chart-${idx}"></canvas></div>
+            </div>
+            <div class="bb-acc-section">
+              <div class="bb-acc-title">📊 Statistiky</div>
+              <div class="bb-acc-stats" id="bb-acc-stats-${idx}"></div>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
 
     // Delta row (meziměsíční změny v %)
     if (selectedMonths.length >= 2) {
@@ -4265,6 +4547,108 @@ function renderBarberi() {
       }
     });
   }
+}
+
+// ── Accordion pro detail barbera ──
+const _bbAccCharts = {}; // registry mini chartů v accordionu
+
+function bbToggleAccordion(idx, name) {
+  const row = document.getElementById('bb-row-' + idx);
+  const inner = document.getElementById('bb-acc-inner-' + idx);
+  if (!row || !inner) return;
+
+  const isOpen = row.classList.contains('bb-open');
+
+  // Zavřít všechny ostatní
+  document.querySelectorAll('.bb-barber-row.bb-open').forEach(r => {
+    r.classList.remove('bb-open');
+    const i = r.id.replace('bb-row-', '');
+    const inn = document.getElementById('bb-acc-inner-' + i);
+    if (inn) inn.classList.remove('bb-open');
+  });
+
+  if (isOpen) return; // toggle zavření
+
+  row.classList.add('bb-open');
+  inner.classList.add('bb-open');
+
+  // Pokud ještě nebyl vykreslen obsah
+  const statsEl = document.getElementById('bb-acc-stats-' + idx);
+  const chartEl = document.getElementById('bb-acc-chart-' + idx);
+  if (!statsEl || !chartEl) return;
+
+  const months = window.selectedMonthsCache;
+  const bd = window.barberData && window.barberData[name];
+  if (!bd || !months) return;
+
+  const fK = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
+  const trzby = bd.months.map(m => m.trzba);
+  const aktivniMesice = trzby.filter(v => v > 0).length;
+  const maxTrzba = Math.max(...trzby);
+  const minTrzba = Math.min(...trzby.filter(v => v > 0));
+  const avgTrzba = aktivniMesice > 0 ? trzby.reduce((s,v) => s+v, 0) / aktivniMesice : 0;
+
+  // Trend (první vs poslední aktivní)
+  const firstVal = trzby.find(v => v > 0) || 0;
+  const lastVal = [...trzby].reverse().find(v => v > 0) || 0;
+  const trendPct = firstVal > 0 ? ((lastVal - firstVal) / firstVal * 100) : null;
+
+  // Statistiky
+  const trendHtml = trendPct !== null
+    ? `<span class="${trendPct >= 0 ? 'pos' : 'neg'}">${trendPct >= 0 ? '▲ +' : '▼ '}${Math.abs(trendPct).toFixed(1)} %</span>`
+    : '—';
+
+  statsEl.innerHTML = `
+    <div class="bb-stat-row"><span class="bb-stat-label">Celkem tržby</span><span class="bb-stat-val">${fK(bd.totalTrzba)}</span></div>
+    <div class="bb-stat-row"><span class="bb-stat-label">Průměr / měsíc</span><span class="bb-stat-val">${fK(avgTrzba)}</span></div>
+    <div class="bb-stat-row"><span class="bb-stat-label">Nejlepší měsíc</span><span class="bb-stat-val pos">${fK(maxTrzba)}</span></div>
+    ${minTrzba && minTrzba !== maxTrzba ? `<div class="bb-stat-row"><span class="bb-stat-label">Nejslabší měsíc</span><span class="bb-stat-val neg">${fK(minTrzba)}</span></div>` : ''}
+    <div class="bb-stat-row"><span class="bb-stat-label">Aktivních období</span><span class="bb-stat-val">${aktivniMesice} / ${months.length}</span></div>
+    <div class="bb-stat-row"><span class="bb-stat-label">Trend (1. → pos.)</span><span class="bb-stat-val">${trendHtml}</span></div>
+    <div class="bb-stat-row"><span class="bb-stat-label">Pobočka</span><span class="bb-stat-val" style="font-family:'Syne',sans-serif;font-size:11px">${[...bd.pobocky].join(', ') || '—'}</span></div>
+  `;
+
+  // Mini line chart
+  if (_bbAccCharts[idx]) { _bbAccCharts[idx].destroy(); delete _bbAccCharts[idx]; }
+
+  const labels = months.map(m => m.mesic.slice(0,3) + ' ' + String(m.rok).slice(2));
+  const isDark = document.body.classList.contains('dark-mode');
+  const axisC = isDark ? '#8A8480' : '#7A7570';
+  const gridC = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+
+  _bbAccCharts[idx] = new Chart(chartEl, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: trzby,
+        borderColor: '#C9A84C',
+        backgroundColor: 'rgba(201,168,76,0.10)',
+        borderWidth: 2,
+        pointBackgroundColor: trzby.map(v => v > 0 ? '#C9A84C' : 'transparent'),
+        pointBorderColor: trzby.map(v => v > 0 ? '#C9A84C' : 'transparent'),
+        pointRadius: 4,
+        fill: true,
+        tension: 0.35,
+        spanGaps: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 600, easing: 'easeOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tt,
+          callbacks: { label: c => ` ${Math.round(c.raw).toLocaleString('cs-CZ')} Kč` }
+        }
+      },
+      scales: {
+        x: { grid: { color: gridC }, ticks: { font: { size: 9 }, color: axisC } },
+        y: { grid: { color: gridC }, ticks: { font: { size: 9 }, color: axisC, callback: v => (v/1000).toFixed(0) + 'k' } }
+      }
+    }
+  });
 }
 
 init.barberi = function() {
