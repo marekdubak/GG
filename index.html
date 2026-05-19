@@ -2053,7 +2053,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
     <div>
       <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Přehled</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">BANKA</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">BANKA <span style="color:var(--text)">Raiffeisenbank</span></div>
     </div>
     <div id="banka-rok-badge" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E8840A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
   </div>
@@ -2079,7 +2079,10 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
 <footer>
   <span>GoldenGate Barbershop · Finanční dashboard</span>
-  <span>Data: GG_finance · 3.3.2026</span>
+  <span id="footer-last-update" style="display:flex;align-items:center;gap:6px;">
+    <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.6;flex-shrink:0"><circle cx="8" cy="8" r="6.5"/><polyline points="8,4.5 8,8 10.5,10"/></svg>
+    <span id="footer-last-update-text">Načítám…</span>
+  </span>
 </footer>
 
 </div><!-- /#app -->
@@ -2270,6 +2273,28 @@ async function loadAllData() {
   renderBanka();
   window._rendered.banka = true;
   // CF si fetchuje data sama při otevření záložky
+
+  // ── Poslední aktualizace dat ──
+  try {
+    const _tok2 = await getAuthToken();
+    const _res2 = await fetch(
+      `${SUPA_URL}/rest/v1/app_meta?key=eq.last_upload&select=value&limit=1`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + _tok2 } }
+    );
+    const _rows2 = await _res2.json();
+    const _el = document.getElementById('footer-last-update-text');
+    if (_el && Array.isArray(_rows2) && _rows2.length > 0 && _rows2[0].value) {
+      const _d = new Date(_rows2[0].value);
+      const _dat = _d.toLocaleDateString('cs-CZ', {day:'numeric',month:'numeric',year:'numeric'});
+      const _cas = _d.toLocaleTimeString('cs-CZ', {hour:'2-digit',minute:'2-digit'});
+      _el.textContent = 'Poslední aktualizace dat: ' + _dat + ' · ' + _cas;
+    } else if (_el) {
+      _el.textContent = 'Poslední aktualizace: —';
+    }
+  } catch(_e2) {
+    const _el = document.getElementById('footer-last-update-text');
+    if (_el) _el.textContent = 'Poslední aktualizace: —';
+  }
 }
 
 
