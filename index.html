@@ -3073,7 +3073,7 @@ function vpApply(){
             <tr style="height:6px"></tr>
             ${bd.zalohy !== 0 ? `<tr class="vp-row"><td class="vp-item">Zálohy</td><td class="vp-val ${bd.zalohy > 0 ? 'vp-neg' : 'vp-pos'}">${bd.zalohy > 0 ? fn(bd.zalohy) : fp(-bd.zalohy)}</td></tr>` : ''}
             ${bd.vdsluzby ? `<tr class="vp-row"><td class="vp-item">Výplata za další služby (+)</td><td class="vp-val vp-pos">${fp(bd.vdsluzby)}</td></tr>` : ''}
-            ${bd.cssz_vzp !== 0 ? `<tr class="vp-row"><td class="vp-item">ČSSZ + VZP</td><td class="vp-val ${bd.cssz_vzp < 0 ? 'vp-pos' : 'vp-neg'}">${bd.cssz_vzp < 0 ? fp(-bd.cssz_vzp) : fn(bd.cssz_vzp)}</td></tr>` : ''}
+            ${bd.cssz_vzp !== 0 ? `<tr class="vp-row"><td class="vp-item">ČSSZ + VZP</td><td class="vp-val vp-neg">${f(Math.abs(bd.cssz_vzp))}</td></tr>` : ''}
             <tr class="vp-row vp-sub">
               <td class="vp-item">Mzdy po zálohách</td>
               <td class="vp-val">${Math.round(bd.mzdy_po_zalohach).toLocaleString('cs-CZ')} Kč</td>
