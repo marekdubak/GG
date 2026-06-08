@@ -3047,6 +3047,25 @@ function vpApply(){
     const fn = v => v ? '-' + Math.round(Math.abs(v)).toLocaleString('cs-CZ') + ' Kč' : '—';
     const fp = v => v ? '+' + Math.round(v).toLocaleString('cs-CZ') + ' Kč' : '—';
 
+    // ── KAUCE — natvrdo, pouze pro info (Roman z Veleslavína + Artem) ──
+    // Výplata "K výplatě" zůstává úplně stejná. Pod ní se jemně dopíše
+    // kauce 30 000 Kč a součet "K výplatě + kauce".
+    const KAUCE = 30000;
+    const jeRoman = /roman/i.test(nameQ) && /veleslav/i.test(bd.pobocka || '');
+    const jeArtem = /art[eě]m/i.test(nameQ);
+    const maKauci = jeRoman || jeArtem;
+    // boční odsazení 14px = stejné jako u všech ostatních buněk tabulky
+    const kauceRows = maKauci ? `
+            <tr style="height:6px"></tr>
+            <tr>
+              <td style="padding:6px 14px 4px;border-top:1px solid var(--border);border-bottom:none;font-size:11px;font-weight:400;color:var(--muted2)">Kauce</td>
+              <td style="padding:6px 14px 4px;border-top:1px solid var(--border);border-bottom:none;text-align:right;font-size:11px;font-weight:400;color:var(--muted2)">${KAUCE.toLocaleString('cs-CZ')} Kč</td>
+            </tr>
+            <tr>
+              <td style="padding:0 14px 4px;border-bottom:none;font-size:11px;font-weight:600;color:var(--muted)">K výplatě + kauce</td>
+              <td style="padding:0 14px 4px;border-bottom:none;text-align:right;font-size:11px;font-weight:600;color:var(--muted)">${Math.round(kavyp + KAUCE).toLocaleString('cs-CZ')} Kč</td>
+            </tr>` : '';
+
     listek = `
     <div class="card" style="width:100%;max-width:100%;">
       <div style="padding:20px 24px 0;">
@@ -3108,6 +3127,7 @@ function vpApply(){
               <td class="vp-item-final">💰 K VÝPLATĚ</td>
               <td class="vp-val-final" style="color:${kavypColor}">${Math.round(kavyp).toLocaleString('cs-CZ')} Kč</td>
             </tr>
+            ${kauceRows}
           </tbody>
         </table>
         <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted2)">
@@ -3281,9 +3301,14 @@ function reportInitSelects(availableRM) {
     }
   }
 
-  // Nic nepředvybíráme — uživatel musí vybrat
-  selFrom.value = '';
-  selTo.value   = '';
+  // Předvolené období: Leden 2026 → Květen 2026 (pokud jsou data k dispozici)
+  const rptAvail = k => {
+    const e = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === k);
+    if (!e) return false;
+    return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
+  };
+  selFrom.value = rptAvail('Leden_2026')  ? 'Leden_2026'  : '';
+  selTo.value   = rptAvail('Květen_2026') ? 'Květen_2026' : '';
 
   reportUpdateLabel();
 }
@@ -4006,14 +4031,14 @@ function cfInitSelects(availableRM) {
       lastAvail = key;
     }
   }
-  const isMobile = window.innerWidth <= 680;
-  const unor2026 = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Únor_2026') ? 'Únor_2026' : null;
-  const defFrom = isMobile
-    ? (unor2026 || lastAvail || firstAvail)
-    : (RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === 'Prosinec_2025') ? 'Prosinec_2025' : firstAvail);
-  const defTo = isMobile
-    ? (unor2026 || lastAvail || firstAvail)
-    : (lastAvail || defFrom);
+  // Předvolené období: Leden 2026 → Květen 2026 (s fallbacky, pokud data nejsou)
+  const cfAvail = k => {
+    const e = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === k);
+    if (!e) return false;
+    return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
+  };
+  const defFrom = cfAvail('Leden_2026')  ? 'Leden_2026'  : (firstAvail);
+  const defTo   = cfAvail('Květen_2026') ? 'Květen_2026' : (lastAvail || defFrom);
   if (defFrom) selFrom.value = defFrom;
   if (defTo)   selTo.value   = defTo;
   cfUpdateLabel();
