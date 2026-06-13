@@ -93,13 +93,23 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ═══ TAB SWITCH WITH ANIMATION ═══ */
+function _tabAllowed(id){
+  if(!USER_TAB_RIGHTS) return true;
+  if(id==='analyza'){
+    const r = USER_TAB_RIGHTS['tab_analyza'];
+    if(r===true) return true;
+    if(r===false) return false;
+    return USER_TAB_RIGHTS['tab_cf']===true;
+  }
+  return !!USER_TAB_RIGHTS['tab_'+id];
+}
 function show(id) {
   const oldView = document.querySelector('.view.active');
   const view = document.getElementById('view-' + id);
   const tab  = document.getElementById('tab-' + id);
 
   // Block access to tabs the user doesn't have rights to
-  if (view && USER_TAB_RIGHTS && !USER_TAB_RIGHTS['tab_' + id]) return;
+  if (view && !_tabAllowed(id)) return;
 
   // Close mobile menu
   const navEl = document.querySelector('nav');
@@ -129,6 +139,7 @@ function show(id) {
 
   // CF vždy znovu fetchuje při kliknutí
   if (id === 'cf' && window._appReady) { setTimeout(renderCF, 350); return; }
+  if (id === 'analyza' && window._appReady) { setTimeout(renderAnalyza, 350); return; }
   if (id === 'report' && window._appReady) { setTimeout(() => { renderReport(); setTimeout(setupScrollReveal, 200); }, 350); return; }
   if (window._appReady && window.init && window.init[id] && !window._rendered[id]) {
     setTimeout(() => { window.init[id](); window._rendered[id] = true; setTimeout(setupScrollReveal, 200); }, 350);
@@ -1570,6 +1581,9 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
       <button class="tab" onclick="show('cf')" id="tab-cf" data-tab="cf">
         <span class="tab-pip" style="background:#9B6FD4"></span> CF
       </button>
+      <button class="tab" onclick="show('analyza')" id="tab-analyza" data-tab="analyza">
+        <span class="tab-pip" style="background:#3FAE9A"></span> Analýza
+      </button>
       <button class="tab" onclick="show('banka')" id="tab-banka" data-tab="banka">
         <span class="tab-pip" style="background:#E8840A"></span> Banka
       </button>
@@ -1615,12 +1629,12 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1">
       <div style="display:flex;flex-direction:column;gap:4px;">
         <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Od</label>
-        <select id="rpt-from" onchange="reportApplyFilter()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:8px 28px 8px 12px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;outline:none;cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%235A5550' d='M5 6L0 0h10z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;min-width:110px"></select>
+        <select id="rpt-from" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="rpt-from-m" onchange="splitMonthChange('rpt-from',reportApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="rpt-from-y" onchange="splitYearChange('rpt-from',reportApplyFilter,true)" style="min-width:78px;"></select></div>
       </div>
       <span style="color:var(--muted);font-size:14px;padding-top:18px">→</span>
       <div style="display:flex;flex-direction:column;gap:4px;">
         <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Do</label>
-        <select id="rpt-to" onchange="reportApplyFilter()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:8px 28px 8px 12px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;outline:none;cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%235A5550' d='M5 6L0 0h10z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;min-width:110px"></select>
+        <select id="rpt-to" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="rpt-to-m" onchange="splitMonthChange('rpt-to',reportApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="rpt-to-y" onchange="splitYearChange('rpt-to',reportApplyFilter,true)" style="min-width:78px;"></select></div>
       </div>
     </div>
 
@@ -1923,12 +1937,12 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     <span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap">📅 Období</span>
     <div class="zf-field" style="max-width:200px;">
       <label class="zf-label">Od</label>
-      <select class="zf-select" id="bb-from" onchange="renderBarberi()"></select>
+      <select id="bb-from" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="bb-from-m" onchange="splitMonthChange('bb-from',renderBarberi)" style="min-width:104px;"></select><select class="zf-select" id="bb-from-y" onchange="splitYearChange('bb-from',renderBarberi,true)" style="min-width:78px;"></select></div>
     </div>
     <span style="color:var(--muted);font-size:14px;padding-top:14px">→</span>
     <div class="zf-field" style="max-width:200px;">
       <label class="zf-label">Do</label>
-      <select class="zf-select" id="bb-to" onchange="renderBarberi()"></select>
+      <select id="bb-to" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="bb-to-m" onchange="splitMonthChange('bb-to',renderBarberi)" style="min-width:104px;"></select><select class="zf-select" id="bb-to-y" onchange="splitYearChange('bb-to',renderBarberi,true)" style="min-width:78px;"></select></div>
     </div>
     <button class="zf-reset" onclick="bbReset()">✕ Reset</button>
   </div>
@@ -1989,12 +2003,12 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1">
       <div style="display:flex;flex-direction:column;gap:4px;">
         <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Od</label>
-        <select id="cf-from" onchange="cfApplyFilter()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:8px 28px 8px 12px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;outline:none;cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%235A5550' d='M5 6L0 0h10z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;min-width:110px"></select>
+        <select id="cf-from" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="cf-from-m" onchange="splitMonthChange('cf-from',cfApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="cf-from-y" onchange="splitYearChange('cf-from',cfApplyFilter,false)" style="min-width:78px;"></select></div>
       </div>
       <span style="color:var(--muted);font-size:14px;padding-top:18px">→</span>
       <div style="display:flex;flex-direction:column;gap:4px;">
         <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Do</label>
-        <select id="cf-to" onchange="cfApplyFilter()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:8px 28px 8px 12px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;outline:none;cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%235A5550' d='M5 6L0 0h10z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;min-width:110px"></select>
+        <select id="cf-to" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="cf-to-m" onchange="splitMonthChange('cf-to',cfApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="cf-to-y" onchange="splitYearChange('cf-to',cfApplyFilter,false)" style="min-width:78px;"></select></div>
       </div>
     </div>
     <div id="cf-period-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
@@ -2044,6 +2058,44 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   </div>
 
 </div>
+
+<!-- ════════════════════════════════════
+     TAB ANALÝZA
+════════════════════════════════════ -->
+<div class="view" id="view-analyza" data-tab="analyza">
+
+  <!-- ── Filtr období ── -->
+  <div style="display:flex;align-items:center;gap:16px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 22px;margin-bottom:16px;flex-wrap:wrap;">
+    <span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap">📅 Období</span>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Od</label>
+        <select id="an-from" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="an-from-m" onchange="splitMonthChange('an-from',analyzaApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="an-from-y" onchange="splitYearChange('an-from',analyzaApplyFilter,false)" style="min-width:78px;"></select></div>
+      </div>
+      <span style="color:var(--muted);font-size:14px;padding-top:18px">→</span>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Do</label>
+        <select id="an-to" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="an-to-m" onchange="splitMonthChange('an-to',analyzaApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="an-to-y" onchange="splitYearChange('an-to',analyzaApplyFilter,false)" style="min-width:78px;"></select></div>
+      </div>
+    </div>
+    <div id="an-period-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
+  </div>
+
+  <!-- ── Metodika ── -->
+  <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:12px 16px;margin-bottom:20px;font-size:11px;color:var(--muted2);line-height:1.55">
+    <span style="font-size:14px;line-height:1">ℹ️</span>
+    <div><b style="color:var(--muted2)">Jak se to počítá:</b> vše vychází z finančního plánu (CF), který je kompletní P&L každé pobočky: tržby (karta + hotovost) − mzdy barberů − provozní náklady = čistý zisk pobočky (přesně jako součet ∑ v záložce CF). Firemní režie se odečítá nad rámec poboček. Rozpad na jednotlivé barbery vychází z podílů ve výplatních datech — tržby a mzdy se rozdělí podle barbera, provozní náklady pobočky a firemní režie podle podílu na tržbách. Součet zisků barberů tak přesně odpovídá zisku businessu.</div>
+  </div>
+
+  <div id="an-content">
+    <div style="padding:56px;text-align:center;color:var(--muted)">
+      <div style="font-size:28px;margin-bottom:12px">📊</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--muted2)">Načítám analýzu…</div>
+    </div>
+  </div>
+
+</div>
+
 
 <!-- ════════════════════════════════════
      TAB BANKA
@@ -2262,6 +2314,7 @@ async function loadAllData() {
   window._appReady = true;
   reportInitSelects(null);
   cfInitSelects(null);
+  analyzaInitSelects(null);
   bbInitSelects();
   renderBarberi();
   window._rendered.barberi = true;
@@ -2367,6 +2420,10 @@ const init = {
 
   cf() {
     renderCF(); // async — samo si fetchne data
+  },
+
+  analyza() {
+    renderAnalyza(); // async — sdílí cache s CF
   },
 
   banka() {
@@ -2810,10 +2867,10 @@ async function loadAndApplyTabRights(userEmail) {
 
 function applyTabRights() {
   if (!USER_TAB_RIGHTS) return;
-  const tabs = ['report','zalohy','vyplaty','mara','barberi','cf','banka'];
+  const tabs = ['report','zalohy','vyplaty','mara','barberi','cf','analyza','banka'];
   let firstVisible = null;
   tabs.forEach(t => {
-    const allowed = USER_TAB_RIGHTS['tab_' + t] === true;
+    const allowed = _tabAllowed(t);
     const tabBtn = document.getElementById('tab-' + t);
     const view   = document.getElementById('view-' + t);
     if (tabBtn) tabBtn.style.display = allowed ? '' : 'none';
@@ -3275,6 +3332,60 @@ const RPT_SHORT = {
 const rptKey = (m, r) => `${m}_${r}`;
 const rptRM  = (m, r, mesNum) => `${r}_${mesNum}`;
 
+/* ═══ ODDĚLENÝ FILTR MĚSÍC + ROK (jako ve Výplatách) ═══
+   Princip OD→DO zůstává. Místo jednoho rozbalovacího pole s "měsíc rok"
+   jsou dvě pole: rozbalovací MĚSÍC a rozbalovací ROK.
+   Skrytý <select id="PREFIX"> drží zkombinovaný klíč (Měsíc_Rok) — veškerá
+   navazující logika (renderReport/renderCF/renderAnalyza) ho čte beze změny.
+   Viditelné selecty PREFIX-m / PREFIX-y ho řídí a volají původní apply funkci. */
+const SPLIT_MONTH_ORDER = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+
+function splitPairs(prefix){
+  const hidden=document.getElementById(prefix);
+  if(!hidden) return [];
+  return Array.from(hidden.options).filter(o=>o.value).map(o=>{
+    const i=o.value.lastIndexOf('_');
+    return {m:o.value.slice(0,i), y:o.value.slice(i+1), key:o.value};
+  });
+}
+function splitSetHidden(prefix){
+  const hidden=document.getElementById(prefix);
+  const selM=document.getElementById(prefix+'-m'), selY=document.getElementById(prefix+'-y');
+  if(!hidden||!selM||!selY) return;
+  const m=selM.value, y=selY.value;
+  hidden.value=(m&&y)?`${m}_${y}`:'';
+}
+function splitRefreshMonths(prefix, allowEmpty){
+  const selM=document.getElementById(prefix+'-m'), selY=document.getElementById(prefix+'-y');
+  if(!selM||!selY) return;
+  const pairs=splitPairs(prefix);
+  const y=selY.value, prev=selM.value;
+  const months=SPLIT_MONTH_ORDER.filter(m=>pairs.some(p=>p.m===m && (!y||p.y===y)));
+  selM.innerHTML='';
+  if(allowEmpty) selM.appendChild(new Option('— měsíc —',''));
+  months.forEach(m=>selM.appendChild(new Option(m,m)));
+  if(months.includes(prev)) selM.value=prev;
+  else selM.value = allowEmpty ? '' : (months[0]||'');
+}
+function splitBuild(prefix, allowEmpty){
+  const selM=document.getElementById(prefix+'-m'), selY=document.getElementById(prefix+'-y');
+  const hidden=document.getElementById(prefix);
+  if(!selM||!selY||!hidden) return;
+  const pairs=splitPairs(prefix);
+  const years=[...new Set(pairs.map(p=>p.y))];
+  const cur=hidden.value||''; let curM='',curY='';
+  if(cur){ const i=cur.lastIndexOf('_'); curM=cur.slice(0,i); curY=cur.slice(i+1); }
+  selY.innerHTML='';
+  if(allowEmpty) selY.appendChild(new Option('— rok —',''));
+  years.forEach(y=>selY.appendChild(new Option(y,y)));
+  selY.value = curY || (allowEmpty?'':(years[0]||''));
+  splitRefreshMonths(prefix, allowEmpty);
+  if(curM && Array.from(selM.options).some(o=>o.value===curM)) selM.value=curM;
+  splitSetHidden(prefix);
+}
+function splitMonthChange(prefix, applyFn){ splitSetHidden(prefix); if(typeof applyFn==='function') applyFn(); }
+function splitYearChange(prefix, applyFn, allowEmpty){ splitRefreshMonths(prefix, allowEmpty); splitSetHidden(prefix); if(typeof applyFn==='function') applyFn(); }
+
 // Cache dat aby se nefetchovalo opakovaně
 let RPT_RAW_CACHE = null;
 
@@ -3310,6 +3421,7 @@ function reportInitSelects(availableRM) {
   selFrom.value = rptAvail('Leden_2026')  ? 'Leden_2026'  : '';
   selTo.value   = rptAvail('Květen_2026') ? 'Květen_2026' : '';
 
+  splitBuild('rpt-from', true); splitBuild('rpt-to', true);
   reportUpdateLabel();
 }
 
@@ -3332,6 +3444,7 @@ function reportReset() {
   const selTo   = document.getElementById('rpt-to');
   if (selFrom) selFrom.value = '';
   if (selTo)   selTo.value   = '';
+  splitBuild('rpt-from', true); splitBuild('rpt-to', true);
   reportUpdateLabel();
   renderReport();
 }
@@ -3396,6 +3509,7 @@ async function renderReport() {
       // Inicializuj selecty s dostupnými měsíci
       const availRM = new Set(raw.map(r => r.rok_mesic).filter(Boolean));
       reportInitSelects(availRM);
+      analyzaInitSelects(availRM);
     } catch(e) {
       el.innerHTML = `<div style="padding:60px;text-align:center;color:var(--neg)">Chyba: ${e.message}</div>`;
       return;
@@ -4041,6 +4155,7 @@ function cfInitSelects(availableRM) {
   const defTo   = cfAvail('Květen_2026') ? 'Květen_2026' : (lastAvail || defFrom);
   if (defFrom) selFrom.value = defFrom;
   if (defTo)   selTo.value   = defTo;
+  splitBuild('cf-from', false); splitBuild('cf-to', false);
   cfUpdateLabel();
 }
 function cfUpdateLabel() {
@@ -4086,6 +4201,7 @@ async function renderCF() {
       const availRM = new Set(raw.map(r => r.rok_mesic).filter(Boolean));
       cfInitSelects(availRM);
       reportInitSelects(availRM);
+      analyzaInitSelects(availRM);
     } catch(e) {
       tbody.innerHTML = `<tr><td colspan="14" style="padding:40px;text-align:center;color:var(--neg)">Chyba: ${e.message}</td></tr>`;
       return;
@@ -4115,6 +4231,9 @@ async function renderCF() {
   const mesLabel = rm => { const [r,m]=rm.split('_').map(Number); return `${MNAMES[m]||m} ${String(r).slice(2)}`; };
   const mesice = [...new Set(raw.map(r=>r.rok_mesic).filter(m=>m&&ALLOWED.has(m)))].sort(sortRM);
   const N = mesice.length;
+  // Lehké pravé odsazení hodnotových sloupců, aby se čísla nelepila na okraj
+  // (platí pro jakýkoli počet měsíců — jeden i více).
+  const vpR = 26;
 
   if (!N) {
     tbody.innerHTML = `<tr><td colspan="4" style="padding:40px;text-align:center;color:var(--muted)">Žádná data pro vybrané období</td></tr>`;
@@ -4126,7 +4245,7 @@ async function renderCF() {
     <th style="text-align:left;position:sticky;left:0;top:0;z-index:6;background:var(--bg2);min-width:110px;padding:7px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2)">Entita</th>
     <th style="text-align:left;position:sticky;left:110px;top:0;z-index:6;background:var(--bg2);min-width:150px;padding:7px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2)">Dodavatel</th>
     <th style="text-align:left;position:sticky;left:260px;top:0;z-index:6;background:var(--bg2);min-width:210px;padding:7px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2);box-shadow:var(--shadow-sticky)">Popis</th>
-    ${mesice.map(m=>`<th style="text-align:right;min-width:82px;padding:7px 8px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border2);white-space:nowrap;position:sticky;top:0;background:var(--bg2)">${mesLabel(m)}</th>`).join('')}
+    ${mesice.map(m=>`<th style="text-align:right;min-width:82px;padding:7px ${vpR}px 7px 8px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border2);white-space:nowrap;position:sticky;top:0;background:var(--bg2)">${mesLabel(m)}</th>`).join('')}
   </tr>`;
 
   // ── Pivot ──
@@ -4174,7 +4293,7 @@ async function renderCF() {
   const td0 = `style="position:sticky;left:0;z-index:2;background:var(--bg2);text-align:left;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;white-space:nowrap"`;
   const td1 = `style="position:sticky;left:110px;z-index:2;background:var(--bg2);text-align:left;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;color:var(--muted2);white-space:nowrap"`;
   const td2 = `style="position:sticky;left:260px;z-index:2;background:var(--bg2);text-align:left;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;color:var(--muted2);box-shadow:var(--shadow-sticky);max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"`;
-  const tdV = `style="text-align:right;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;border-bottom:1px solid var(--row-border)"`;
+  const tdV = `style="text-align:right;padding:5px ${vpR}px 5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;border-bottom:1px solid var(--row-border)"`;
 
   for (const ent of sekce) {
     if (!pivot[ent]) continue;
@@ -4214,7 +4333,7 @@ async function renderCF() {
 
     // Sekce součet
     secSum = Object.values(secTot).reduce((a,b)=>a+b,0);
-    const secCells = mesice.map(m=>`<td style="text-align:right;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--sec-total);white-space:nowrap">${secTot[m]!==0?fmtB(secTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
+    const secCells = mesice.map(m=>`<td style="text-align:right;padding:6px ${vpR}px 6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--sec-total);white-space:nowrap">${secTot[m]!==0?fmtB(secTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
     html += `<tr class="cf-sec-total-row">
       <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-total);padding:7px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${col};border-top:1px solid var(--row-border);white-space:nowrap">∑ ${ent.toUpperCase()}</td>
       <td style="background:var(--sec-total);border-top:1px solid var(--row-border)"></td>
@@ -4235,7 +4354,7 @@ async function renderCF() {
   // Grand total
   const grandTot = {};
   mesice.forEach(m=>{ grandTot[m]=0; for(const ent of sekce){ if(!pivot[ent])continue; for(const {dod,pop} of ordRows[ent]){ grandTot[m]+=(pivot[ent][dod]&&pivot[ent][dod][pop]&&pivot[ent][dod][pop][m])||0; } } });
-  const grandCells = mesice.map(m=>`<td style="text-align:right;padding:8px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:rgba(201,168,76,0.08);white-space:nowrap;border-top:2px solid rgba(201,168,76,0.3)">${grandTot[m]!==0?fmtB(grandTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
+  const grandCells = mesice.map(m=>`<td style="text-align:right;padding:8px ${vpR}px 8px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:rgba(201,168,76,0.08);white-space:nowrap;border-top:2px solid rgba(201,168,76,0.3)">${grandTot[m]!==0?fmtB(grandTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
   html += `<tr class="cf-grand-row">
     <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:rgba(201,168,76,0.08);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:var(--gold);border-top:2px solid rgba(201,168,76,0.3);white-space:nowrap">GRAND TOTAL</td>
     <td style="background:rgba(201,168,76,0.08);border-top:2px solid rgba(201,168,76,0.3)"></td>
@@ -4250,6 +4369,693 @@ async function renderCF() {
   if(elId('cf-kpi-trzby'))  elId('cf-kpi-trzby').textContent  = fK(gTrzby);
   if(elId('cf-kpi-vydaje')) elId('cf-kpi-vydaje').textContent = fK(gVydaje);
   if(elId('cf-kpi-zisk'))   elId('cf-kpi-zisk').textContent   = fK(gZisk);
+}
+
+// ═══════════════════════════════════════════════
+// ANALÝZA — business analytika (barbeři × pobočky × náklady)
+// ═══════════════════════════════════════════════
+let AN_CHARTS = {};
+let AN_CALC = {};   // úložiště rozpadů výpočtů pro tooltip
+function anEnsureTooltip(){
+  if(window._anTipInit) return;
+  window._anTipInit=true;
+  const tip=document.createElement('div');
+  tip.id='an-calc-tip';
+  tip.style.cssText="position:fixed;z-index:99999;max-width:360px;background:var(--bg2,#1c1a17);border:1px solid var(--gold2,#C9A84C);border-radius:10px;padding:12px 14px;font-family:'Syne',sans-serif;font-size:11px;line-height:1.65;color:var(--text,#eee);box-shadow:0 12px 34px rgba(0,0,0,.55);pointer-events:none;opacity:0;transition:opacity .12s;display:none";
+  document.body.appendChild(tip);
+  const place=(e)=>{
+    const r=tip.getBoundingClientRect();
+    let x=e.clientX+16, y=e.clientY+16;
+    if(x+r.width>innerWidth-10) x=e.clientX-r.width-16;
+    if(y+r.height>innerHeight-10) y=Math.max(10,e.clientY-r.height-16);
+    tip.style.left=x+'px'; tip.style.top=y+'px';
+  };
+  const show=(el,e)=>{
+    const ck=el.getAttribute('data-ck'); if(!ck||!AN_CALC[ck]) return;
+    tip.innerHTML=AN_CALC[ck];
+    tip.style.display='block'; place(e);
+    requestAnimationFrame(()=>tip.style.opacity='1');
+  };
+  const hide=()=>{ tip.style.opacity='0'; setTimeout(()=>{ if(tip.style.opacity==='0') tip.style.display='none'; },140); };
+  document.addEventListener('mouseover',e=>{const el=e.target.closest&&e.target.closest('.an-cc'); if(el) show(el,e);});
+  document.addEventListener('mousemove',e=>{const el=e.target.closest&&e.target.closest('.an-cc'); if(el&&tip.style.display==='block') place(e);});
+  document.addEventListener('mouseout',e=>{const el=e.target.closest&&e.target.closest('.an-cc'); if(el) hide();});
+  document.addEventListener('click',e=>{const el=e.target.closest&&e.target.closest('.an-cc'); if(el){ show(el,e); } else { hide(); }});
+}
+const AN_POB = ['Záběhlice','Vršovice','Veleslavín'];
+const AN_POB_C = { 'Záběhlice':'#C9A84C', 'Vršovice':'#5DB87A', 'Veleslavín':'#D96B5A' };
+const AN_IS_WAGE = r => /mzd|výplat|vyplat/.test(((r.dodavatel||'')+' '+(r.popis||'')).toLowerCase());
+
+function analyzaInitSelects(availableRM){
+  const selFrom = document.getElementById('an-from');
+  const selTo   = document.getElementById('an-to');
+  if(!selFrom || !selTo) return;
+  selFrom.innerHTML=''; selTo.innerHTML='';
+  let firstAvail=null, lastAvail=null;
+  for(const [m,r,mn] of RPT_ALL_MESICE){
+    const rm=`${r}_${mn}`, key=rptKey(m,r), lbl=RPT_SHORT[key]||`${m} ${r}`;
+    if(!availableRM || availableRM.has(rm)){
+      selFrom.appendChild(new Option(lbl,key));
+      selTo.appendChild(new Option(lbl,key));
+      if(!firstAvail) firstAvail=key;
+      lastAvail=key;
+    }
+  }
+  const av = k => { const e=RPT_ALL_MESICE.find(([m,r])=>rptKey(m,r)===k); return !!(e && (!availableRM||availableRM.has(`${e[1]}_${e[2]}`))); };
+  const defFrom = av('Leden_2026')  ? 'Leden_2026'  : firstAvail;
+  const defTo   = av('Květen_2026') ? 'Květen_2026' : (lastAvail||defFrom);
+  if(defFrom) selFrom.value=defFrom;
+  if(defTo)   selTo.value=defTo;
+  splitBuild('an-from', false); splitBuild('an-to', false);
+  analyzaUpdateLabel();
+}
+function analyzaUpdateLabel(){
+  const sF=document.getElementById('an-from'), sT=document.getElementById('an-to'), lbl=document.getElementById('an-period-label');
+  if(!sF||!sT||!lbl) return;
+  const fo=sF.options[sF.selectedIndex], to=sT.options[sT.selectedIndex];
+  if(fo&&to) lbl.textContent=`${fo.text} – ${to.text}`;
+}
+function analyzaApplyFilter(){ analyzaUpdateLabel(); renderAnalyza(); }
+
+const anF  = v => Math.round(v||0).toLocaleString('cs-CZ')+' Kč';
+const anF0 = v => Math.round(v||0).toLocaleString('cs-CZ');
+const anPct = v => (isFinite(v)?(v*100):0).toFixed(1)+' %';
+const anSgn = v => v>=0 ? 'var(--pos)' : 'var(--neg)';
+
+// „Co kdyby?" simulátor — přepočítá zisk/marži/bod zlomu/rezervu z aktuálního období dle posuvníků
+function anSim(){
+  const B=window.AN_SIM_BASE; if(!B) return;
+  const rEl=document.getElementById('an-sim-rev'), wEl=document.getElementById('an-sim-wage'), fEl=document.getElementById('an-sim-fix');
+  if(!rEl||!wEl||!fEl) return;
+  const revD=+rEl.value/100, fixD=+fEl.value/100;
+  const basePct=Math.round((B.wageRate||0)*100);
+  const wageR=(+wEl.value===basePct)?(B.wageRate||0):(+wEl.value/100);   // při výchozí poloze přesná sazba z CF (sedí na korunu)
+  const setT=(id,t)=>{const e=document.getElementById(id); if(e) e.textContent=t;};
+  setT('an-sim-rev-o',(revD>0?'+':'')+rEl.value+' %');
+  setT('an-sim-wage-o',wEl.value+' %');
+  setT('an-sim-fix-o',(fixD>0?'+':'')+fEl.value+' %');
+  const rev=B.rev*(1+revD);
+  const wage=rev*wageR;
+  const opexNow=B.opex*(1+fixD);
+  const firmaNow=B.firma*(1+fixD);
+  const fixed=opexNow+firmaNow;
+  const marze=rev-wage;
+  const profit=marze-fixed;
+  const mr=rev>0?marze/rev:0;
+  const be=mr>0?fixed/mr:0;
+  const saf=rev>0?(rev-be)/rev:0;
+  const setV=(id,t,col)=>{const e=document.getElementById(id); if(e){e.textContent=t; if(col!==undefined) e.style.color=col;}};
+  setV('an-sim-profit',anF(profit),anSgn(profit));
+  setV('an-sim-margin',(rev>0?(profit/rev*100):0).toFixed(1)+' %');
+  setV('an-sim-be',anF(be));
+  setV('an-sim-safety',Math.round(saf*100)+' %',anSgn(saf));
+  setV('an-sim-abs-rev',anF(rev));
+  setV('an-sim-abs-wage',anF(wage));
+  setV('an-sim-abs-opex',anF(opexNow));
+  setV('an-sim-abs-firma',anF(firmaNow));
+  const d=profit-(B.profit0||0);
+  setT('an-sim-delta', `Oproti reálnému zisku období (${anF(B.profit0||0)}): ${d>=0?'+':''}${anF0(d)} Kč.`);
+  // Hover info ke každému číslu
+  const firmaTxt = B.firma>0 ? ' − firemní režie' : '';
+  const firmaCalc = B.firma>0 ? ` − ${anF(firmaNow)}` : '';
+  AN_CALC['sim-profit']=`<b>Čistý zisk = ${anF(profit)}</b><br>tržby − mzdy − provozní náklady${firmaTxt}<br>= ${anF(rev)} − ${anF(wage)} − ${anF(opexNow)}${firmaCalc}`;
+  AN_CALC['sim-margin']=`<b>Zisková marže = ${(rev>0?profit/rev*100:0).toFixed(1)} %</b><br>čistý zisk / tržby<br>= ${anF(profit)} / ${anF(rev)}`;
+  AN_CALC['sim-be']=`<b>Bod zlomu = ${anF(be)}</b><br>fixní náklady / kontribuční marže<br>fixní = ${anF(fixed)}${B.firma>0?` (provoz ${anF(opexNow)} + firma ${anF(firmaNow)})`:''}<br>kontribuční marže = ${(mr*100).toFixed(1)} % (1 − sazba ${(wageR*100).toFixed(0)} %)`;
+  AN_CALC['sim-safety']=`<b>Rezerva = ${Math.round(saf*100)} %</b><br>(tržby − bod zlomu) / tržby<br>= (${anF(rev)} − ${anF(be)}) / ${anF(rev)}`;
+  AN_CALC['sim-rate']=`<b>Sazba barberů = ${wEl.value} %</b><br>mzdy / tržby z CF<br>mzdy v simulaci = tržby × sazba`;
+  AN_CALC['sim-rev']=`<b>Tržby = ${anF(rev)}</b><br>základ období ${anF(B.rev)} × (1 ${revD>=0?'+':'−'} ${Math.abs(+rEl.value)} %)`;
+  AN_CALC['sim-wage']=`<b>Mzdy / výplaty = ${anF(wage)}</b><br>tržby × sazba barberů<br>= ${anF(rev)} × ${wEl.value} %`;
+  AN_CALC['sim-opex']=`<b>Provozní náklady = ${anF(opexNow)}</b><br>základ období ${anF(B.opex)} × (1 ${fixD>=0?'+':'−'} ${Math.abs(+fEl.value)} %)`;
+  AN_CALC['sim-firma']= B.firma>0 ? `<b>Firemní režie = ${anF(firmaNow)}</b><br>základ období ${anF(B.firma)} × (1 ${fixD>=0?'+':'−'} ${Math.abs(+fEl.value)} %)` : `<b>Firemní režie = 0 Kč</b><br>u jednotlivé pobočky se firemní (společná) režie nezapočítává`;
+}
+
+const AN_MES_NUM = {'Leden':1,'Únor':2,'Březen':3,'Duben':4,'Květen':5,'Červen':6,'Červenec':7,'Srpen':8,'Září':9,'Říjen':10,'Listopad':11,'Prosinec':12};
+
+// Doplní výběr měsíců podle zvoleného roku (jen měsíce, pro které jsou data)
+function anSimRefreshMonths(){
+  const yEl=document.getElementById('an-sim-year'), mEl=document.getElementById('an-sim-month');
+  if(!yEl||!mEl) return;
+  const have=new Set((RPT_RAW_CACHE||[]).map(r=>r.rok_mesic));
+  const yr=yEl.value, prev=mEl.value;
+  const months=Object.keys(AN_MES_NUM).filter(m=>have.has(`${yr}_${AN_MES_NUM[m]}`)).sort((a,b)=>AN_MES_NUM[a]-AN_MES_NUM[b]);
+  mEl.innerHTML=months.map(m=>`<option value="${m}">${m}</option>`).join('');
+  mEl.value = months.indexOf(prev)>=0 ? prev : (months[months.length-1]||'');
+}
+
+// Natáhne reálná data vybrané pobočky + měsíce/roku jako základ simulátoru
+function anSimLoad(){
+  const pobEl=document.getElementById('an-sim-pob'), mEl=document.getElementById('an-sim-month'), yEl=document.getElementById('an-sim-year');
+  if(!pobEl||!mEl||!yEl) return;
+  const pob=pobEl.value, mon=mEl.value, yr=yEl.value;
+  const fxLbl=document.getElementById('an-sim-fixlabel'); if(fxLbl) fxLbl.textContent = pob==='' ? 'Fixní náklady (provoz + firma)' : 'Provozní náklady pobočky';
+  if(!mon||!yr) return;
+  const rm=`${yr}_${AN_MES_NUM[mon]}`;
+  const scope = pob==='' ? AN_POB : [pob];
+  // Vše z CF (financni_plan_db) — základ sedí na hodnoty v CF i Reportu.
+  // Jednotlivá pobočka: firemní režie se nezahrnuje. „Všechny pobočky": + firemní režie.
+  let rev=0,wage=0,opex=0,firma=0;
+  (RPT_RAW_CACHE||[]).forEach(r=>{
+    if(r.rok_mesic!==rm) return;
+    const ent=(r.entita==='FIRMA'?'Firma':r.entita)||'';
+    const val=parseFloat(r.castka_s_dph)||0;
+    if(ent==='Firma'){ firma+=val; return; }
+    if(scope.indexOf(ent)<0) return;
+    if(val>0) rev+=val; else if(AN_IS_WAGE(r)) wage+=-val; else opex+=-val;
+  });
+  const firmaCost = pob==='' ? Math.max(0,-firma) : 0;
+  const wageRate = rev>0 ? wage/rev : 0;
+  const profit0 = rev-wage-opex-firmaCost;
+  window.AN_SIM_BASE={rev,wageRate,opex,firma:firmaCost,profit0};
+  const rEl=document.getElementById('an-sim-rev'), wEl=document.getElementById('an-sim-wage'), fEl=document.getElementById('an-sim-fix');
+  if(rEl) rEl.value=0; if(fEl) fEl.value=0;
+  if(wEl) wEl.value=Math.max(+wEl.min, Math.min(+wEl.max, Math.round(wageRate*100)));
+  anSim();
+}
+function anSimYearChange(){ anSimRefreshMonths(); anSimLoad(); }
+
+
+
+async function renderAnalyza(){
+  const root = document.getElementById('an-content');
+  if(!root) return;
+  Object.values(AN_CHARTS).forEach(c=>{ try{c.destroy();}catch(e){} }); AN_CHARTS={};
+  AN_CALC={}; anEnsureTooltip();
+
+  const sF=document.getElementById('an-from'), sT=document.getElementById('an-to');
+  if(!sF||!sT||!sF.value||!sT.value){
+    root.innerHTML=`<div style="padding:56px;text-align:center;color:var(--muted)"><div style="font-size:28px;margin-bottom:12px">📅</div><div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--muted2)">Vyber období</div></div>`;
+    return;
+  }
+
+  if(!RPT_RAW_CACHE){
+    root.innerHTML=`<div style="padding:60px;text-align:center;color:var(--muted)">⏳ Načítám data…</div>`;
+    try{
+      const _tok=await getAuthToken(); let raw=[],offset=0;
+      while(true){
+        const res=await fetch(`${SUPA_URL}/rest/v1/financni_plan_db?select=*&order=id.asc&limit=1000&offset=${offset}`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+_tok}});
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const page=await res.json(); if(!Array.isArray(page)||!page.length) break;
+        raw=raw.concat(page); if(page.length<1000) break; offset+=1000;
+      }
+      RPT_RAW_CACHE=raw;
+      analyzaInitSelects(new Set(raw.map(r=>r.rok_mesic).filter(Boolean)));
+    }catch(e){ root.innerHTML=`<div style="padding:60px;text-align:center;color:var(--neg)">Chyba načítání: ${e.message}</div>`; return; }
+  }
+
+  const f2=document.getElementById('an-from').value, t2=document.getElementById('an-to').value;
+  const fi=RPT_ALL_MESICE.findIndex(([m,r])=>rptKey(m,r)===f2);
+  const ti=RPT_ALL_MESICE.findIndex(([m,r])=>rptKey(m,r)===t2);
+  const lo=Math.min(fi<0?0:fi, ti<0?0:ti), hi=Math.max(fi<0?0:fi, ti<0?0:ti);
+  const months = RPT_ALL_MESICE.slice(lo,hi+1);
+  const vpKeys = new Set(months.map(([m,r])=>`${m}_${r}`));
+  const cfRMs  = new Set(months.map(([m,r,mn])=>`${r}_${mn}`));
+  const monthLbls = months.map(([m,r])=>RPT_SHORT[rptKey(m,r)]||`${m} ${r}`);
+  const monthRMs  = months.map(([m,r,mn])=>`${r}_${mn}`);
+
+  // ── CF = kompletní P&L: tržby (kladné) − mzdy (mzdová položka) − provoz (ostatní výdaje) ──
+  const REV={}, WAGE={}, OPEX={}; AN_POB.forEach(p=>{REV[p]=0;WAGE[p]=0;OPEX[p]=0;});
+  let firmaResult=0;
+  const monRev={},monWage={},monOpex={},monFirma={}; monthRMs.forEach(rm=>{monRev[rm]=0;monWage[rm]=0;monOpex[rm]=0;monFirma[rm]=0;});
+  (RPT_RAW_CACHE||[]).forEach(r=>{
+    const rm=r.rok_mesic; if(!cfRMs.has(rm)) return;
+    const ent=(r.entita==='FIRMA'?'Firma':r.entita)||'';
+    const val=parseFloat(r.castka_s_dph)||0;
+    if(ent==='Firma'){ firmaResult+=val; monFirma[rm]+=val; return; }
+    if(!REV.hasOwnProperty(ent)) return;
+    if(val>0){ REV[ent]+=val; monRev[rm]+=val; }
+    else if(AN_IS_WAGE(r)){ WAGE[ent]+=-val; monWage[rm]+=-val; }
+    else { OPEX[ent]+=-val; monOpex[rm]+=-val; }
+  });
+
+  // ── Výplatní data: skutečné tržby/sazby barberů + podíly pro rozpad nákladů ──
+  const V={}; const branchVRev={}, branchVWage={}, branchCnt={};
+  (VYPLA_RAW||[]).forEach(mo=>{
+    if(!vpKeys.has(mo.key)) return;
+    (mo.barberi||[]).forEach(b=>{
+      const name=normName(b.jmeno||''); if(!name) return;
+      const pob=b.pobocka||'—'; const trz=+b.trzba||0, mzd=+b.mzdy_po_aff||0, pct=+b.procento||0;
+      if(!V[name]) V[name]={branches:{},rN:0,rD:0,pctMap:{}};
+      if(!V[name].branches[pob]) V[name].branches[pob]={trz:0,mzd:0};
+      V[name].branches[pob].trz+=trz; V[name].branches[pob].mzd+=mzd;
+      V[name].rN+=pct*trz; V[name].rD+=trz;
+      V[name].pctMap[pct]=(V[name].pctMap[pct]||0)+trz;   // pevné procento barbera (váženo tržbou pro výběr dominantní hodnoty)
+      branchVRev[pob]=(branchVRev[pob]||0)+trz; branchVWage[pob]=(branchVWage[pob]||0)+mzd;
+      if(!branchCnt[pob]) branchCnt[pob]=new Set(); branchCnt[pob].add(name);
+    });
+  });
+  const totalVRev=Object.values(branchVRev).reduce((s,v)=>s+v,0);
+
+  // ── Souhrnné totály (z CF) ──
+  const totalRev=AN_POB.reduce((s,p)=>s+REV[p],0);
+  const totalWage=AN_POB.reduce((s,p)=>s+WAGE[p],0);
+  const totalOpex=AN_POB.reduce((s,p)=>s+OPEX[p],0);
+  const firmaCost=Math.max(0,-firmaResult);
+  const hrubaMarze=totalRev-totalWage;
+  const fixedCosts=totalOpex+firmaCost;
+  const cistyZisk=hrubaMarze-fixedCosts;
+  const marginRate=totalRev>0?hrubaMarze/totalRev:0;
+  const wageRate=totalRev>0?totalWage/totalRev:0;
+  const ziskMarze=totalRev>0?cistyZisk/totalRev:0;
+  const breakEven=marginRate>0?fixedCosts/marginRate:0;
+  const safety=totalRev>0?(totalRev-breakEven)/totalRev:0;
+
+  // ── Bod zlomu po pobočkách (POUZE provozní náklady pobočky — firemní režie se NEzahrnuje) ──
+  // Mzdy/výplaty = variabilní (procento z tržeb) → kontribuční marže = (tržby − mzdy)/tržby.
+  // Bod zlomu pobočky = provozní náklady pobočky / kontribuční marže.
+  const branchBE = AN_POB.map(p=>{
+    const rev=REV[p], wage=WAGE[p], opex=OPEX[p];
+    const mRate = rev>0 ? (rev-wage)/rev : 0;        // kontribuční marže po mzdách
+    const be    = mRate>0 ? opex/mRate : 0;          // potřebné tržby na pokrytí provozu pobočky
+    const saf   = rev>0 ? (rev-be)/rev : 0;          // rezerva (margin of safety)
+    const profit= rev-wage-opex;                     // zisk pobočky bez firemní režie
+    const wRate = rev>0 ? wage/rev : 0;
+    return {pob:p, rev, wage, opex, mRate, wRate, be, saf, profit, color:AN_POB_C[p]||'var(--gold2)'};
+  });
+
+  if(totalRev<=0 && Object.keys(V).length===0){
+    root.innerHTML=`<div style="padding:56px;text-align:center;color:var(--muted)">Žádná data pro vybrané období.</div>`;
+    return;
+  }
+
+  // ── Řádky barberů — SKUTEČNÉ tržby a sazby z výplat; náklady rozpočítané poměrově ──
+  const barberRows=Object.entries(V).map(([name,o])=>{
+    let trzba=0, mzda=0; const bTrz={};
+    for(const [p,vv] of Object.entries(o.branches)){
+      trzba+=vv.trz; mzda+=vv.mzd; bTrz[p]=(bTrz[p]||0)+vv.trz;
+    }
+    const mainPob=Object.entries(bTrz).sort((a,c)=>c[1]-a[1])[0]?.[0]||'—';
+    // Pevná sazba barbera z výplat (procento s nejvyšší tržbou, kdyby se v období lišilo)
+    const pctEntries=Object.entries(o.pctMap||{});
+    const rate = pctEntries.length ? +pctEntries.sort((a,c)=>c[1]-a[1])[0][0] : (o.rD>0?o.rN/o.rD:0);
+    const marze=trzba-mzda, margeR=trzba>0?marze/trzba:0;
+    const share=totalVRev>0?trzba/totalVRev:0;                       // podíl na celkových tržbách
+    const pobRev=branchVRev[mainPob]||0;
+    const sharePob=pobRev>0?trzba/pobRev:0;                          // podíl na tržbách pobočky
+    const allocFirma=firmaCost*share;
+    // Čistý zisk po pobočce = podíl barbera na ZISKU pobočky z CF (tržby − mzdy − provoz, přesně jak report).
+    // Tím součet sloupce přesně sedí na report (na rozdíl od tržba_z_výplat − výdaje, kde se mísí dva zdroje tržeb).
+    let netPob=0;
+    const profParts=[];
+    for(const [p,vv] of Object.entries(o.branches)){
+      if(branchVRev[p]>0 && REV.hasOwnProperty(p)){
+        const branchProfit=(REV[p]||0)-(WAGE[p]||0)-(OPEX[p]||0);    // zisk pobočky z CF = tržby − mzdy − provoz
+        const sh=vv.trz/branchVRev[p];                               // podíl barbera na tržbách pobočky
+        const c=branchProfit*sh;
+        netPob+=c;
+        profParts.push(`${p}: ${anF0(branchProfit)} × (${anF0(vv.trz)} / ${anF0(branchVRev[p])}) = ${anF0(c)}`);
+      }
+    }
+    const netFirma=netPob-allocFirma;
+
+    // ── Rozpady výpočtů (pro tooltip „odkud se to bere") ──
+    const F=anF0, bl=Object.entries(o.branches);
+    const trzbaCalc = bl.length>1
+      ? `<b>Tržby = ${F(trzba)} Kč</b><br><span style="color:var(--muted)">součet „Tržba" z výplatních pásek:</span><br>${bl.map(([p,vv])=>`${p}: ${F(vv.trz)}`).join('<br>')}`
+      : `<b>Tržby = ${F(trzba)} Kč</b><br><span style="color:var(--muted)">součet sloupce „Tržba" z výplatních pásek za vybrané období.</span>`;
+    const rateCalc = `<b>Sazba = ${(rate*100).toFixed(0)} %</b><br><span style="color:var(--muted)">pevné procento barbera z výplatních pásek (sloupec „procento").</span>`;
+    const mzdaCalc = `<b>Mzda = ${F(mzda)} Kč</b><br><span style="color:var(--muted)">součet sloupce „Mzdy po affiliate" z výplatních pásek.</span>`;
+    const marzeCalc = `<b>Hrubá marže = ${F(marze)} Kč</b><br>Tržby − Mzda<br>= ${F(trzba)} − ${F(mzda)}`;
+    const margeRCalc = `<b>Marže % = ${(margeR*100).toFixed(1)} %</b><br>Hrubá marže / Tržby<br>= ${F(marze)} / ${F(trzba)}`;
+    const shareCalc = `<b>Podíl na celkových tržbách = ${(share*100).toFixed(2)} %</b><br>tržby barbera / tržby všech barberů<br>= ${F(trzba)} / ${F(totalVRev)}`;
+    const sharePobCalc = `<b>Podíl na tržbách pobočky = ${(sharePob*100).toFixed(1)} %</b><br>tržby barbera / celkové tržby pobočky ${mainPob}<br>= ${F(trzba)} / ${F(pobRev)}`;
+    const profDetail = profParts.length ? profParts.join('<br>') : 'žádný zisk pobočky';
+    const netPobCalc = `<b>Čistý zisk po pobočce = ${F(netPob)} Kč</b><br>podíl barbera na zisku pobočky (z CF = report)<br><br><span style="color:var(--muted)">zisk pobočky (tržby − mzdy − provoz) × podíl barbera na tržbách pobočky:</span><br>${profDetail}`;
+    const netFirmaCalc = `<b>Čistý zisk + firma = ${F(netFirma)} Kč</b><br>Čistý zisk po pobočce − alokace firemní režie<br>= ${F(netPob)} − ${F(allocFirma)}<br><br><span style="color:var(--muted)">Alokace firemní režie = firemní režie × podíl na celkových tržbách:</span><br>${F(firmaCost)} × ${(share*100).toFixed(2)} % = ${F(allocFirma)}`;
+    const calc={trzba:trzbaCalc,rate:rateCalc,mzda:mzdaCalc,marze:marzeCalc,margeR:margeRCalc,share:shareCalc,sharePob:sharePobCalc,netPob:netPobCalc,netFirma:netFirmaCalc};
+
+    return {name,pob:mainPob,trzba,mzda,rate,marze,margeR,share,sharePob,allocFirma,netPob,netFirma,calc};
+  }).sort((a,c)=>c.netFirma-a.netFirma);
+
+  // ── Řádky poboček (přímo z CF) ──
+  const branchRows=AN_POB.filter(p=>REV[p]>0||WAGE[p]>0||OPEX[p]>0).map(p=>{
+    const rev=REV[p]||0, wage=WAGE[p]||0, opex=OPEX[p]||0;
+    const profit=rev-wage-opex;
+    const allocFirma=totalRev>0?firmaCost*(rev/totalRev):0;
+    const netFirma=profit-allocFirma;
+    const margeR=rev>0?profit/rev:0;
+    const cnt=branchCnt[p]?branchCnt[p].size:0;
+    return {pob:p,cnt,rev,wage,opex,profit,allocFirma,netFirma,margeR,avg:cnt?rev/cnt:0};
+  }).sort((a,c)=>c.netFirma-a.netFirma);
+
+  // ── Měsíční řady (z CF) ──
+  const trzSeries=monthRMs.map(rm=>monRev[rm]||0);
+  const marSeries=monthRMs.map(rm=>(monRev[rm]||0)-(monWage[rm]||0));
+  const netSeries=monthRMs.map(rm=>((monRev[rm]||0)-(monWage[rm]||0)-(monOpex[rm]||0))+(monFirma[rm]||0));
+
+  // ── KPI ──
+  const badge=(v)=>`<span class="badge ${v>=0?'up':'down'}">${anPct(v)}</span>`;
+  let html='';
+  html += `<div class="sec">Souhrn za období</div>
+  <div class="kpi-row kpi-row-4" style="margin-bottom:12px">
+    <div class="kpi" style="--kpi-accent:var(--gold)"><div class="kpi-label">Tržby (z CF)</div><div class="kpi-val sm" style="color:var(--gold2)">${anF(totalRev)}</div><div class="kpi-footer"><span class="kpi-sub">karta + hotovost</span></div></div>
+    <div class="kpi" style="--kpi-accent:var(--blue)"><div class="kpi-label">Mzdy barberů</div><div class="kpi-val sm" style="color:var(--blue)">${anF(totalWage)}</div><div class="kpi-footer"><span class="kpi-sub">${(wageRate*100).toFixed(0)} % z tržeb</span></div></div>
+    <div class="kpi" style="--kpi-accent:var(--gold2)"><div class="kpi-label">Hrubá marže</div><div class="kpi-val sm" style="color:var(--gold2)">${anF(hrubaMarze)}</div><div class="kpi-footer">${badge(marginRate)}<span class="kpi-sub">po mzdách</span></div></div>
+    <div class="kpi" style="--kpi-accent:${cistyZisk>=0?'var(--pos)':'var(--neg)'}"><div class="kpi-label">Čistý zisk businessu</div><div class="kpi-val sm" style="color:${anSgn(cistyZisk)}">${anF(cistyZisk)}</div><div class="kpi-footer">${badge(ziskMarze)}<span class="kpi-sub">po všech nákladech</span></div></div>
+  </div>
+  <div class="kpi-row kpi-row-3" style="margin-bottom:24px">
+    <div class="kpi" style="--kpi-accent:var(--neg)"><div class="kpi-label">Provozní náklady poboček</div><div class="kpi-val sm" style="color:var(--neg)">${anF(totalOpex)}</div><div class="kpi-footer"><span class="kpi-sub">nájem, energie, materiál…</span></div></div>
+    <div class="kpi" style="--kpi-accent:var(--neg)"><div class="kpi-label">Firemní režie</div><div class="kpi-val sm" style="color:var(--neg)">${anF(firmaCost)}</div><div class="kpi-footer"><span class="kpi-sub">společné náklady</span></div></div>
+    <div class="kpi" style="--kpi-accent:var(--neg)"><div class="kpi-label">Náklady celkem (mimo mzdy)</div><div class="kpi-val sm" style="color:var(--neg)">${anF(fixedCosts)}</div><div class="kpi-footer"><span class="kpi-sub">${(totalRev>0?fixedCosts/totalRev*100:0).toFixed(0)} % z tržeb</span></div></div>
+  </div>`;
+
+  // ── Pobočky ──
+  const thr='style="text-align:right;padding:9px 12px"';
+  const thl='style="text-align:left;padding:9px 12px"';
+  const tdr='style="text-align:right;padding:8px 12px;font-family:\'JetBrains Mono\',monospace;font-size:11px;white-space:nowrap"';
+  html += `<div class="sec">Pobočky — profitabilita (dle CF)</div>
+  <div class="chart-grid chart-grid-21" style="margin-bottom:14px">
+    <div class="card" style="padding:0;overflow:hidden"><div style="overflow:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:680px">
+      <thead><tr style="background:var(--bg2)">
+        <th ${thl}>Pobočka</th><th ${thr}>Barbeři</th><th ${thr}>Tržby</th><th ${thr}>Mzdy</th><th ${thr}>Provoz</th>
+        <th ${thr}>Čistý zisk<br><span style="font-size:8px;color:var(--muted)">pobočka</span></th>
+        <th ${thr}>Alok. firma</th>
+        <th ${thr}>Čistý zisk<br><span style="font-size:8px;color:var(--muted)">+ firma</span></th>
+        <th ${thr}>Marže %</th><th ${thr}>Ø/barber</th>
+      </tr></thead><tbody>`;
+  branchRows.forEach(r=>{
+    const pc=AN_POB_C[r.pob]||'var(--muted2)';
+    html += `<tr style="border-bottom:1px solid var(--row-border)">
+      <td style="text-align:left;padding:8px 12px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px"><span style="color:${pc}">●</span> ${r.pob}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${r.cnt}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">${anF0(r.rev)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue)">${anF0(r.wage)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--neg)">${anF0(r.opex)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(r.profit)}">${anF0(r.profit)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--neg)">${anF0(r.allocFirma)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(r.netFirma)}">${anF0(r.netFirma)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${anSgn(r.margeR)}">${(r.margeR*100).toFixed(0)} %</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${anF0(r.avg)}</td>
+    </tr>`;
+  });
+  html += `<tr style="border-top:2px solid var(--border)">
+      <td style="text-align:left;padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:var(--gold)">CELKEM</td>
+      <td></td>
+      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--gold2)">${anF0(totalRev)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700">${anF0(totalWage)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--neg)">${anF0(totalOpex)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(hrubaMarze-totalOpex)}">${anF0(hrubaMarze-totalOpex)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--neg)">${anF0(firmaCost)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(cistyZisk)}">${anF0(cistyZisk)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700">${(totalRev>0?(hrubaMarze-totalOpex)/totalRev*100:0).toFixed(0)} %</td>
+      <td></td>
+    </tr></tbody></table></div></div>
+    <div class="card"><div class="card-head"><div><div class="card-title">Čistý zisk poboček</div><div class="card-sub">po pobočce + firmě</div></div></div><div style="height:240px"><canvas id="an-chart-branches"></canvas></div></div>
+  </div>
+  <div style="font-size:10px;color:var(--muted);margin-bottom:24px">„Čistý zisk pobočka" = tržby − mzdy − provoz (přesně odpovídá součtu ∑ v záložce CF). „+ firma" navíc odečítá poměrný podíl firemní režie.</div>`;
+
+  // ── Barbeři ──
+  html += `<div class="sec">Barbeři — kdo kolik vydělá a přinese</div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><div style="overflow:auto">
+  <table style="width:100%;border-collapse:collapse;min-width:900px">
+    <thead style="position:sticky;top:0;z-index:3"><tr style="background:var(--bg2)">
+      <th ${thl}>Barber</th><th ${thl}>Pobočka</th><th ${thr}>Tržby</th><th ${thr}>Sazba</th><th ${thr}>Mzda</th>
+      <th ${thr}>Hrubá marže</th><th ${thr}>Marže %</th>
+      <th ${thr}>Podíl na<br><span style="font-size:8px;color:var(--muted)">celk. tržbách</span></th>
+      <th ${thr}>Podíl na<br><span style="font-size:8px;color:var(--muted)">tržbách pobočky</span></th>
+      <th ${thr}>Čistý zisk barbera<br><span style="font-size:8px;color:var(--muted)">na pobočku</span></th>
+      <th ${thr}>Čistý zisk barbera<br><span style="font-size:8px;color:var(--muted)">na pobočku + firemní náklady</span></th>
+    </tr></thead><tbody>`;
+  barberRows.forEach((b,i)=>{
+    const pc=AN_POB_C[b.pob]||'var(--muted2)';
+    const reg=(k)=>{ const id='b'+i+'_'+k; AN_CALC[id]=b.calc[k]; return id; };
+    const cc='cursor:help;';
+    html += `<tr style="border-bottom:1px solid var(--row-border)">
+      <td style="text-align:left;padding:8px 12px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;color:var(--text)">${b.name}</td>
+      <td style="text-align:left;padding:8px 12px;font-size:11px"><span style="color:${pc}">●</span> <span style="color:var(--muted2)">${b.pob}</span></td>
+      <td class="an-cc" data-ck="${reg('trzba')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">${anF0(b.trzba)}</td>
+      <td class="an-cc" data-ck="${reg('rate')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue)">${(b.rate*100).toFixed(0)} %</td>
+      <td class="an-cc" data-ck="${reg('mzda')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">${anF0(b.mzda)}</td>
+      <td class="an-cc" data-ck="${reg('marze')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">${anF0(b.marze)}</td>
+      <td class="an-cc" data-ck="${reg('margeR')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--pos)">${(b.margeR*100).toFixed(0)} %</td>
+      <td class="an-cc" data-ck="${reg('share')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${(b.share*100).toFixed(1)} %</td>
+      <td class="an-cc" data-ck="${reg('sharePob')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${(b.sharePob*100).toFixed(1)} %</td>
+      <td class="an-cc" data-ck="${reg('netPob')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${anSgn(b.netPob)}">${anF0(b.netPob)}</td>
+      <td class="an-cc" data-ck="${reg('netFirma')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(b.netFirma)}">${anF0(b.netFirma)}</td>
+    </tr>`;
+  });
+  // ── Součtový řádek ──
+  const sTrz=barberRows.reduce((s,b)=>s+b.trzba,0);
+  const sMzda=barberRows.reduce((s,b)=>s+b.mzda,0);
+  const sMarze=barberRows.reduce((s,b)=>s+b.marze,0);
+  const sShare=barberRows.reduce((s,b)=>s+b.share,0);
+  const sNetPob=barberRows.reduce((s,b)=>s+b.netPob,0);
+  const sNetFirma=barberRows.reduce((s,b)=>s+b.netFirma,0);
+  const sRate=sTrz>0?barberRows.reduce((s,b)=>s+b.rate*b.trzba,0)/sTrz:0;
+  const sMargeR=sTrz>0?sMarze/sTrz:0;
+  const tf='text-align:right;padding:10px 12px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;border-top:2px solid var(--border2)';
+  AN_CALC['tot_trz']=`<b>Σ Tržby = ${anF0(sTrz)} Kč</b><br>součet tržeb všech barberů (z výplat)`;
+  AN_CALC['tot_rate']=`<b>Ø Sazba = ${(sRate*100).toFixed(1)} %</b><br>vážený průměr (váha = tržba) — součet procent nedává smysl`;
+  AN_CALC['tot_mzda']=`<b>Σ Mzda = ${anF0(sMzda)} Kč</b>`;
+  AN_CALC['tot_marze']=`<b>Σ Hrubá marže = ${anF0(sMarze)} Kč</b><br>= Σ Tržby − Σ Mzda = ${anF0(sTrz)} − ${anF0(sMzda)}`;
+  AN_CALC['tot_margeR']=`<b>Ø Marže % = ${(sMargeR*100).toFixed(1)} %</b><br>= Σ marže / Σ tržby`;
+  AN_CALC['tot_share']=`<b>Σ Podíl = ${(sShare*100).toFixed(0)} %</b><br>součet podílů všech barberů = 100 %`;
+  AN_CALC['tot_netPob']=`<b>Σ Čistý zisk po pobočce = ${anF0(sNetPob)} Kč</b><br>= zisk všech poboček z CF (tržby − mzdy − provoz)`;
+  AN_CALC['tot_netFirma']=`<b>Σ Čistý zisk + firma = ${anF0(sNetFirma)} Kč</b><br>po odečtení firemní režie — <b>sedí na „ZISK CELKEM" v reportu</b>`;
+  html += `<tr style="background:var(--bg2)">
+      <td class="an-cc" data-ck="tot_trz" style="cursor:help;text-align:left;padding:10px 12px;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;border-top:2px solid var(--border2)">Σ Celkem</td>
+      <td style="text-align:left;padding:10px 12px;border-top:2px solid var(--border2);color:var(--muted2);font-size:11px">${barberRows.length} barberů</td>
+      <td class="an-cc" data-ck="tot_trz" style="cursor:help;${tf};color:var(--gold2)">${anF0(sTrz)}</td>
+      <td class="an-cc" data-ck="tot_rate" style="cursor:help;${tf};color:var(--blue)">Ø ${(sRate*100).toFixed(0)} %</td>
+      <td class="an-cc" data-ck="tot_mzda" style="cursor:help;${tf}">${anF0(sMzda)}</td>
+      <td class="an-cc" data-ck="tot_marze" style="cursor:help;${tf}">${anF0(sMarze)}</td>
+      <td class="an-cc" data-ck="tot_margeR" style="cursor:help;${tf};color:var(--pos)">Ø ${(sMargeR*100).toFixed(0)} %</td>
+      <td class="an-cc" data-ck="tot_share" style="cursor:help;${tf};color:var(--muted2)">${(sShare*100).toFixed(0)} %</td>
+      <td style="${tf};color:var(--muted)">—</td>
+      <td class="an-cc" data-ck="tot_netPob" style="cursor:help;${tf};color:${anSgn(sNetPob)}">${anF0(sNetPob)}</td>
+      <td class="an-cc" data-ck="tot_netFirma" style="cursor:help;${tf};color:${anSgn(sNetFirma)}">${anF0(sNetFirma)}</td>
+    </tr>`;
+  html += `</tbody></table></div></div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:14px">💡 <b style="color:var(--gold2)">Najeď myší (nebo klikni) na libovolné číslo</b> — ukáže se přesný výpočet. Tržby, sazba (pevné procento) a mzdy jsou <b>skutečné hodnoty z výplatních pásek</b> (kdo kolik udělal). „Čistý zisk po pobočce" = <b>podíl barbera na skutečném zisku pobočky z CF</b> (zisk pobočky × podíl na tržbách pobočky), „+ firma" navíc odečítá podíl na firemní režii. Díky tomu <b>součet posledního sloupce přesně sedí na celkový zisk v reportu</b>. (sazba = vážený průměr procenta, mzda = „Mzdy po affiliate"). Provozní náklady pobočky a firemní režie se barberovi rozpočítávají podle jeho podílu na tržbách. „Čistý zisk + firma" = co barber přinese po své mzdě a podílu na nákladech. Pozn.: pobočky/business výše počítám z CF, který navíc obsahuje drobné položky (např. ČSSZ refundaci), takže součet barberů se může od CF nepatrně lišit.</div>
+    <div class="card" style="margin-bottom:24px"><div class="card-head"><div><div class="card-title">Srovnání barberů</div><div class="card-sub">Tržby vs. mzda vs. čistý zisk (po pobočce + firmě)</div></div></div><div style="height:300px"><canvas id="an-chart-barbers"></canvas></div></div>`;
+
+  // ── Pokrytí nákladů / bod zlomu ──
+  const korunaZisk=Math.max(cistyZisk,0);
+
+  // Karta bodu zlomu — sdílená šablona pro pobočky i celek
+  const beCard = ({title, sub, accent, rev, mRate, fixed, fixedLabel, be, saf}) => `
+    <div class="card">
+      <div class="card-head"><div><div class="card-title" style="color:${accent}">${title}</div><div class="card-sub">${sub}</div></div></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Kontribuční marže (po mzdách)</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold2)">${(mRate*100).toFixed(1)} %</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">${fixedLabel}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--neg)">${anF(fixed)}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Bod zlomu (potřebné tržby)</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700">${anF(be)}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Skutečné tržby</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold2)">${anF(rev)}</span></div>
+        <div style="height:1px;background:var(--border2)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Rezerva (margin of safety)</span><span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:${anSgn(saf)}">${(saf*100).toFixed(0)} %</span></div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5">${saf>=0?`Tržby můžou klesnout o <b style="color:${anSgn(saf)}">${(saf*100).toFixed(0)} %</b> (${anF(rev-be)}) než se dostane na nulu.`:`Tržby jsou <b style="color:var(--neg)">pod bodem zlomu</b> — chybí ${anF(be-rev)} tržeb na pokrytí nákladů.`}</div>
+      </div>
+    </div>`;
+
+  html += `<div class="sec">Pokrytí nákladů & bod zlomu</div>
+  <div class="card" style="margin-bottom:14px"><div class="card-head"><div><div class="card-title">Kam jde každá koruna tržby</div><div class="card-sub">rozpad ${anF(totalRev)} tržeb</div></div></div><div style="height:240px"><canvas id="an-chart-koruna"></canvas></div></div>`;
+
+  // Bod zlomu po jednotlivých pobočkách — POUZE provozní náklady pobočky (bez firemní režie)
+  html += `<div style="font-size:11px;color:var(--muted);margin:0 0 10px 2px">💡 Bod zlomu pobočky počítá <b>jen s provozními náklady té pobočky</b> — firemní režie se rozpočítává až do celkového bodu zlomu vpravo dole. Mzdy/výplaty jsou variabilní (procento z tržeb), proto vstupují do kontribuční marže, ne do fixních nákladů.</div>
+  <div class="chart-grid chart-grid-3" style="margin-bottom:14px">
+    ${branchBE.map(b=>beCard({
+      title:b.pob,
+      sub:'jen provozní náklady pobočky',
+      accent:b.color,
+      rev:b.rev, mRate:b.mRate, fixed:b.opex, fixedLabel:'Provozní náklady pobočky', be:b.be, saf:b.saf
+    })).join('')}
+  </div>`;
+
+  // Celkový bod zlomu — všechny pobočky dohromady + veškerá firemní režie
+  html += `<div class="chart-grid chart-grid-1" style="margin-bottom:24px">
+    ${beCard({
+      title:'Celkem — všechny pobočky + firma',
+      sub:'všechny provozní náklady poboček + firemní režie',
+      accent:'var(--gold2)',
+      rev:totalRev, mRate:marginRate, fixed:fixedCosts, fixedLabel:'Fixní náklady (provoz poboček + firma)', be:breakEven, saf:safety
+    })}
+  </div>`;
+
+  // ── „Co kdyby?" simulátor (citlivostní analýza s vlastním filtrem) ──
+  const simHave = new Set((RPT_RAW_CACHE||[]).map(r=>r.rok_mesic));
+  const simYears = [...new Set(RPT_ALL_MESICE.filter(([m,r,mn])=>simHave.has(`${r}_${mn}`)).map(([m,r])=>String(r)))];
+  const simDefYear = simYears[simYears.length-1] || '';
+  const simMonthsDef = RPT_ALL_MESICE.filter(([m,r,mn])=>String(r)===simDefYear && simHave.has(`${r}_${mn}`)).map(([m])=>m);
+  const simDefMonth = simMonthsDef[simMonthsDef.length-1] || '';
+  const simYearOpts = simYears.map(y=>`<option value="${y}"${y===simDefYear?' selected':''}>${y}</option>`).join('');
+  const simMonthOpts = simMonthsDef.map(m=>`<option value="${m}"${m===simDefMonth?' selected':''}>${m}</option>`).join('');
+  html += `<div class="sec">„Co kdyby?" — citlivostní simulátor</div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-head"><div><div class="card-title">Co kdyby?</div><div class="card-sub">vyber pobočku, měsíc a rok — základ se natáhne z CF (sedí na CF i Report) a posuvníky simulují právě toto období</div></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border2)">
+      <div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Pobočka</label><select class="zf-select" id="an-sim-pob" onchange="anSimLoad()"><option value="">Všechny pobočky</option><option value="Záběhlice">Záběhlice</option><option value="Vršovice">Vršovice</option><option value="Veleslavín">Veleslavín</option></select></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Měsíc</label><select class="zf-select" id="an-sim-month" onchange="anSimLoad()">${simMonthOpts}</select></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Rok</label><select class="zf-select" id="an-sim-year" onchange="anSimYearChange()">${simYearOpts}</select></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:12px"><label style="font-size:12px;color:var(--muted2);min-width:210px">Změna tržeb</label><input type="range" id="an-sim-rev" min="-30" max="30" step="1" value="0" oninput="anSim()" style="flex:1;accent-color:var(--gold)"><span id="an-sim-rev-o" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;min-width:54px;text-align:right">0 %</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><label style="font-size:12px;color:var(--muted2);min-width:210px">Sazba barberů (% z tržeb)</label><input type="range" id="an-sim-wage" min="20" max="70" step="1" value="45" oninput="anSim()" style="flex:1;accent-color:var(--blue)"><span class="an-cc" data-ck="sim-rate" id="an-sim-wage-o" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;min-width:54px;text-align:right">45 %</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><label id="an-sim-fixlabel" style="font-size:12px;color:var(--muted2);min-width:210px">Fixní náklady (provoz + firma)</label><input type="range" id="an-sim-fix" min="-20" max="20" step="1" value="0" oninput="anSim()" style="flex:1;accent-color:var(--neg)"><span id="an-sim-fix-o" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;min-width:54px;text-align:right">0 %</span></div>
+    </div>
+    <div class="kpi-row kpi-row-4">
+      <div class="kpi" style="--kpi-accent:var(--pos)"><div class="kpi-label">Čistý zisk</div><div class="kpi-val sm an-cc" data-ck="sim-profit" id="an-sim-profit" style="cursor:help">—</div></div>
+      <div class="kpi" style="--kpi-accent:var(--gold2)"><div class="kpi-label">Zisková marže</div><div class="kpi-val sm an-cc" data-ck="sim-margin" id="an-sim-margin" style="cursor:help">—</div></div>
+      <div class="kpi" style="--kpi-accent:var(--blue)"><div class="kpi-label">Bod zlomu</div><div class="kpi-val sm an-cc" data-ck="sim-be" id="an-sim-be" style="cursor:help">—</div></div>
+      <div class="kpi" style="--kpi-accent:var(--pos)"><div class="kpi-label">Rezerva</div><div class="kpi-val sm an-cc" data-ck="sim-safety" id="an-sim-safety" style="cursor:help">—</div></div>
+    </div>
+    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px">Absolutní hodnoty (po simulaci)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Tržby</div><div class="an-cc" data-ck="sim-rev" id="an-sim-abs-rev" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--gold2)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Mzdy / výplaty</div><div class="an-cc" data-ck="sim-wage" id="an-sim-abs-wage" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--blue)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Provozní náklady</div><div class="an-cc" data-ck="sim-opex" id="an-sim-abs-opex" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--neg)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Firemní režie</div><div class="an-cc" data-ck="sim-firma" id="an-sim-abs-firma" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--neg)">—</div></div>
+    </div>
+    <div id="an-sim-delta" style="font-size:11px;color:var(--muted);margin-top:12px"></div>
+  </div>`;
+
+  // ── Bod zlomu v čase ──
+  html += `<div class="sec">Bod zlomu v čase</div>
+  <div class="card" style="margin-bottom:24px"><div class="card-head"><div><div class="card-title">Tržby vs. bod zlomu</div><div class="card-sub">skutečné tržby a potřebné tržby na pokrytí nákladů, po měsících</div></div></div><div style="height:300px"><canvas id="an-chart-betime"></canvas></div></div>`;
+
+  // ── Vývoj v čase ──
+  html += `<div class="sec">Vývoj v čase</div>
+  <div class="card" style="margin-bottom:14px"><div class="card-head"><div><div class="card-title">Měsíční trend</div><div class="card-sub">tržby · hrubá marže · čistý zisk</div></div></div><div style="height:300px"><canvas id="an-chart-trend"></canvas></div></div>
+  <div class="card" style="margin-bottom:24px"><div class="card-head"><div><div class="card-title">Vývoj struktury nákladů</div><div class="card-sub">kam šla každá koruna tržby v jednotlivých měsících — mzdy · provoz · firma · zisk</div></div></div><div style="height:300px"><canvas id="an-chart-coststruct"></canvas></div></div>`;
+
+  // ── Koncentrace tržeb (Pareto) ──
+  const paretoRows=[...barberRows].sort((a,b)=>b.trzba-a.trzba);
+  const paretoTot=paretoRows.reduce((s,b)=>s+b.trzba,0)||1;
+  let _cum=0; const paretoCum=paretoRows.map(b=>{ _cum+=b.trzba; return _cum/paretoTot*100; });
+  const topName=paretoRows[0]?paretoRows[0].name:'—';
+  const topShare=paretoRows[0]?paretoRows[0].trzba/paretoTot*100:0;
+  let n80=0; { let c=0; for(const b of paretoRows){ c+=b.trzba; n80++; if(c/paretoTot>=0.8) break; } }
+  const paretoInsight=`💡 Nejsilnější barber <b>${topName}</b> dělá <b style="color:var(--gold2)">${topShare.toFixed(0)} %</b> všech tržeb. Prvních <b>${n80}</b> z ${paretoRows.length} barberů přináší 80 % tržeb — čím méně lidí, tím větší koncentrační riziko při výpadku.`;
+  html += `<div class="sec">Koncentrace tržeb (Pareto)</div>
+  <div class="card" style="margin-bottom:8px"><div class="card-head"><div><div class="card-title">Kdo dělá tržby</div><div class="card-sub">podíl jednotlivých barberů (sloupce) + kumulativní % (linka, pravá osa)</div></div></div><div style="height:300px"><canvas id="an-chart-pareto"></canvas></div></div>
+  <div style="font-size:10px;color:var(--muted);margin-bottom:24px">${paretoInsight}</div>`;
+
+  // ── Produktivita křesla ──
+  const prodRows = branchRows.map(r=>({pob:r.pob, cnt:r.cnt, revPer:r.cnt?r.rev/r.cnt:0, profPer:r.cnt?r.netFirma/r.cnt:0, color:AN_POB_C[r.pob]||'var(--muted2)'})).sort((a,b)=>b.profPer-a.profPer);
+  const thrP='style="text-align:right;padding:9px 12px"'; const thlP='style="text-align:left;padding:9px 12px"';
+  html += `<div class="sec">Produktivita křesla</div>
+  <div class="chart-grid chart-grid-21" style="margin-bottom:24px">
+    <div class="card" style="padding:0;overflow:hidden"><div style="overflow:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:420px">
+        <thead><tr style="background:var(--bg2)"><th ${thlP}>Pobočka</th><th ${thrP}>Barbeři</th><th ${thrP}>Tržby / barber</th><th ${thrP}>Čistý zisk / barber<br><span style="font-size:8px;color:var(--muted)">po firmě</span></th></tr></thead><tbody>
+        ${prodRows.map(r=>`<tr style="border-bottom:1px solid var(--row-border)">
+          <td style="text-align:left;padding:8px 12px;font-size:12px"><span style="color:${r.color}">●</span> <span style="color:var(--muted2)">${r.pob}</span></td>
+          <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${r.cnt}</td>
+          <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">${anF0(r.revPer)}</td>
+          <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(r.profPer)}">${anF0(r.profPer)}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div></div>
+    <div class="card"><div class="card-head"><div><div class="card-title">Tržby vs. zisk na barbera</div><div class="card-sub">průměr na jedno křeslo</div></div></div><div style="height:240px"><canvas id="an-chart-prod"></canvas></div></div>
+  </div>`;
+
+  // ── Postřehy ──
+  const insights=[];
+  const top=barberRows[0];
+  const topTrz=[...barberRows].sort((a,b)=>b.trzba-a.trzba)[0];
+  const losers=barberRows.filter(b=>b.netFirma<0);
+  const bestBranch=branchRows[0];
+  const worstBranch=branchRows[branchRows.length-1];
+
+  if(cistyZisk>=0) insights.push({i:'✅',c:'var(--pos)',t:`Business je v <b>zisku</b>: po mzdách i všech provozních a firemních nákladech zbývá <b style="color:var(--pos)">${anF(cistyZisk)}</b> (zisková marže ${(ziskMarze*100).toFixed(1)} %).`});
+  else insights.push({i:'⚠️',c:'var(--neg)',t:`Business je za toto období ve <b style="color:var(--neg)">ztrátě ${anF(-cistyZisk)}</b>. Hrubá marže ${anF(hrubaMarze)} nestačí pokrýt fixní náklady ${anF(fixedCosts)}.`});
+  if(bestBranch && worstBranch && bestBranch.pob!==worstBranch.pob) insights.push({i:'📍',c:'var(--blue)',t:`Nejvýdělečnější pobočka je <b>${bestBranch.pob}</b> (${anF(bestBranch.netFirma)} čistého zisku po firmě), nejslabší <b>${worstBranch.pob}</b> (${anF(worstBranch.netFirma)}).`});
+  if(top) insights.push({i:'🏆',c:'var(--pos)',t:`Nejziskovější barber je <b>${top.name}</b> — po odečtení mzdy i podílu na nákladech přináší <b style="color:var(--pos)">${anF(top.netFirma)}</b> čistého zisku (${anF(top.trzba)} tržeb, sazba ${(top.rate*100).toFixed(0)} %).`});
+  if(topTrz && top && topTrz.name!==top.name) insights.push({i:'💈',c:'var(--gold2)',t:`Největší tržby dělá <b>${topTrz.name}</b> (${anF(topTrz.trzba)}), ale kvůli vyšší sazbě ${(topTrz.rate*100).toFixed(0)} % není nejziskovější — na zisku vede ${top.name}.`});
+  if(losers.length) insights.push({i:'🔻',c:'var(--neg)',t:`${losers.length===1?'Barber':'Barbeři'} <b>${losers.map(b=>b.name).join(', ')}</b> po plné alokaci nákladů ${losers.length===1?'nepokrývá':'nepokrývají'} svůj podíl režie (záporný čistý zisk). Stojí za to projít jejich sazbu nebo objem.`});
+  if(top && top.share>0.35) insights.push({i:'🎯',c:'var(--gold2)',t:`Koncentrační riziko: <b>${top.name}</b> dělá ${(top.share*100).toFixed(0)} % všech tržeb. Výpadek by businessu citelně ublížil — vyplatí se posilovat i ostatní křesla.`});
+  insights.push({i:'📊',c:'var(--muted2)',t:`Z každých 100 Kč tržby jde ${(wageRate*100).toFixed(0)} Kč na mzdy barberů, ${(totalRev>0?totalOpex/totalRev*100:0).toFixed(0)} Kč na provoz poboček, ${(totalRev>0?firmaCost/totalRev*100:0).toFixed(0)} Kč na firemní režii a ${(ziskMarze*100).toFixed(0)} Kč zůstává jako zisk.`});
+  if(safety>=0 && marginRate>0) insights.push({i:'🛟',c:'var(--pos)',t:`Rezerva do ztráty je ${(safety*100).toFixed(0)} % — tržby by musely spadnout pod ${anF(breakEven)}, aby se business dostal na nulu.`});
+
+  html += `<div class="sec">Postřehy & doporučení</div>
+  <div class="card" style="margin-bottom:20px"><div style="display:flex;flex-direction:column;gap:14px">
+    ${insights.map(o=>`<div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:18px;line-height:1.3">${o.i}</span><div style="font-size:13px;line-height:1.55;color:var(--muted2)">${o.t}</div></div>`).join('')}
+  </div></div>`;
+
+  root.innerHTML=html;
+
+  // ── Grafy ──
+  const legOpt={display:true,labels:{font:{size:10},usePointStyle:true,boxWidth:8,padding:12}};
+  AN_CHARTS.barbers = new Chart(document.getElementById('an-chart-barbers'),{
+    type:'bar',
+    data:{labels:barberRows.map(b=>b.name),datasets:[
+      {label:'Tržby',data:barberRows.map(b=>b.trzba),backgroundColor:'rgba(201,168,76,0.55)',borderColor:'rgba(201,168,76,0.9)',borderWidth:1,borderRadius:4},
+      {label:'Mzda',data:barberRows.map(b=>b.mzda),backgroundColor:'rgba(90,158,212,0.5)',borderColor:'rgba(90,158,212,0.9)',borderWidth:1,borderRadius:4},
+      {label:'Čistý zisk',data:barberRows.map(b=>b.netFirma),backgroundColor:barberRows.map(b=>b.netFirma>=0?'rgba(93,184,122,0.7)':'rgba(217,107,90,0.75)'),borderWidth:1,borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:legOpt,tooltip:{...tt,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:gc},ticks:{font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  AN_CHARTS.branches = new Chart(document.getElementById('an-chart-branches'),{
+    type:'bar',
+    data:{labels:branchRows.map(r=>r.pob),datasets:[{label:'Čistý zisk',data:branchRows.map(r=>r.netFirma),backgroundColor:branchRows.map(r=>(AN_POB_C[r.pob]||'#888')+'cc'),borderColor:branchRows.map(r=>AN_POB_C[r.pob]||'#888'),borderWidth:1,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tt,callbacks:{label:c=>` ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:gc},ticks:{font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  AN_CHARTS.koruna = new Chart(document.getElementById('an-chart-koruna'),{
+    type:'doughnut',
+    data:{labels:['Mzdy barberů','Provoz poboček','Firemní režie', cistyZisk>=0?'Zisk':'Ztráta (mimo)'],datasets:[{data:[totalWage,totalOpex,firmaCost,korunaZisk],backgroundColor:['#5A9ED4','#D96B5A','#C0392B','#5DB87A'],borderColor:'var(--bg2)',borderWidth:3,hoverOffset:5}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{padding:10,font:{size:10},usePointStyle:true,boxWidth:8}},tooltip:{...tt,callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${totalRev>0?(c.raw/totalRev*100).toFixed(0):0} %)`}}}}
+  });
+
+  AN_CHARTS.trend = new Chart(document.getElementById('an-chart-trend'),{
+    type:'line',
+    data:{labels:monthLbls,datasets:[
+      {label:'Tržby',data:trzSeries,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,0.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#C9A84C',fill:true,tension:0.35},
+      {label:'Hrubá marže',data:marSeries,borderColor:'#5A9ED4',backgroundColor:'rgba(90,158,212,0.05)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#5A9ED4',fill:false,tension:0.35},
+      {label:'Čistý zisk',data:netSeries,borderColor:'#5DB87A',backgroundColor:'rgba(93,184,122,0.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#5DB87A',fill:true,tension:0.35},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:legOpt,tooltip:{...tt,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:gc},ticks:{font:{size:10}}},y:{grid:{color:gc},ticks:{font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  // Bod zlomu v čase — skutečné tržby vs. potřebné tržby na nulu, po měsících
+  const beTimeSeries = monthRMs.map(rm=>{
+    const rev=monRev[rm]||0, wage=monWage[rm]||0, opex=monOpex[rm]||0;
+    const firmaC=Math.max(0,-(monFirma[rm]||0));
+    const fixed=opex+firmaC, mr=rev>0?(rev-wage)/rev:0;
+    return mr>0?fixed/mr:0;
+  });
+  AN_CHARTS.betime = new Chart(document.getElementById('an-chart-betime'),{
+    type:'line',
+    data:{labels:monthLbls,datasets:[
+      {label:'Skutečné tržby',data:trzSeries,borderColor:'#5DB87A',backgroundColor:'rgba(93,184,122,0.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#5DB87A',fill:true,tension:0.35},
+      {label:'Bod zlomu',data:beTimeSeries,borderColor:'#C9A84C',borderDash:[6,4],borderWidth:2,pointRadius:3,pointBackgroundColor:'#C9A84C',fill:false,tension:0.35},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:legOpt,tooltip:{...tt,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:gc},ticks:{font:{size:10}}},y:{grid:{color:gc},ticks:{font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  // Vývoj struktury nákladů — stacked bar (mzdy / provoz / firma / zisk) po měsících
+  AN_CHARTS.coststruct = new Chart(document.getElementById('an-chart-coststruct'),{
+    type:'bar',
+    data:{labels:monthLbls,datasets:[
+      {label:'Mzdy barberů',data:monthRMs.map(rm=>monWage[rm]||0),backgroundColor:'#5A9ED4',borderWidth:0},
+      {label:'Provoz poboček',data:monthRMs.map(rm=>monOpex[rm]||0),backgroundColor:'#D96B5A',borderWidth:0},
+      {label:'Firemní režie',data:monthRMs.map(rm=>Math.max(0,-(monFirma[rm]||0))),backgroundColor:'#C0392B',borderWidth:0},
+      {label:'Zisk',data:monthRMs.map(rm=>{const rev=monRev[rm]||0;return rev-(monWage[rm]||0)-(monOpex[rm]||0)-Math.max(0,-(monFirma[rm]||0));}),backgroundColor:'#5DB87A',borderWidth:0},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:legOpt,tooltip:{...tt,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,grid:{color:gc},ticks:{font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  // Pareto — podíl barberů na tržbách + kumulativní %
+  AN_CHARTS.pareto = new Chart(document.getElementById('an-chart-pareto'),{
+    type:'bar',
+    data:{labels:paretoRows.map(b=>b.name),datasets:[
+      {type:'bar',label:'Tržby',data:paretoRows.map(b=>b.trzba),backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#C9A84C',borderWidth:1,borderRadius:4,yAxisID:'y',order:2},
+      {type:'line',label:'Kumulativně %',data:paretoCum,borderColor:'#5A9ED4',backgroundColor:'rgba(90,158,212,0.05)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#5A9ED4',fill:false,tension:0.3,yAxisID:'y1',order:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:legOpt,tooltip:{...tt,callbacks:{label:c=>c.dataset.yAxisID==='y1'?` Kumulativně: ${(c.raw||0).toFixed(0)} %`:` Tržby: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:gc},ticks:{font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{font:{size:9},callback:v=>v+' %'}}}}
+  });
+
+  // Produktivita křesla — tržby a zisk na jednoho barbera, po pobočkách
+  AN_CHARTS.prod = new Chart(document.getElementById('an-chart-prod'),{
+    type:'bar',
+    data:{labels:prodRows.map(r=>r.pob),datasets:[
+      {label:'Tržby / barber',data:prodRows.map(r=>r.revPer),backgroundColor:'rgba(201,168,76,0.6)',borderColor:'#C9A84C',borderWidth:1,borderRadius:4},
+      {label:'Čistý zisk / barber',data:prodRows.map(r=>r.profPer),backgroundColor:prodRows.map(r=>r.profPer>=0?'rgba(93,184,122,0.7)':'rgba(217,107,90,0.75)'),borderWidth:1,borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:legOpt,tooltip:{...tt,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:gc},ticks:{font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  anSimLoad();
 }
 
 // ═══════════════════════════════════════════════
@@ -4279,6 +5085,7 @@ function bbInitSelects() {
   // Žádná výchozí hodnota — uživatel musí vybrat
   fromSel.value = '';
   toSel.value = '';
+  splitBuild('bb-from', true); splitBuild('bb-to', true);
 }
 
 function bbReset() {
@@ -4291,6 +5098,7 @@ function bbReset() {
   const toSel = document.getElementById('bb-to');
   if (fromSel) fromSel.value = '';
   if (toSel) toSel.value = '';
+  splitBuild('bb-from', true); splitBuild('bb-to', true);
   renderBarberi();
 }
 
