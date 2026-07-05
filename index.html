@@ -2102,13 +2102,17 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 ════════════════════════════════════ -->
 <div class="view" id="view-banka" data-tab="banka">
 
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
     <div>
       <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Přehled</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">BANKA <span style="color:var(--text)">Raiffeisenbank</span></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">BANKA <span id="banka-title-name" style="color:#E8840A">—</span></div>
+      <div id="banka-title-bank" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:3px"></div>
     </div>
     <div id="banka-rok-badge" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E8840A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
   </div>
+
+  <!-- Přepínač podle jména (naplní se z databáze) -->
+  <div id="banka-switch" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px"></div>
 
   <div id="banka-kpi-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #E8840A;border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
     <div>
@@ -5578,6 +5582,9 @@ function reportExportPDF() {
 const BANKA_MESICE = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
 const BANKA_MONTH_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 
+var BANKA_ALL = [];
+var BANKA_SELECTED = null;
+
 async function renderBanka() {
   var list     = document.getElementById('banka-list');
   var totalEl  = document.getElementById('banka-total');
@@ -5591,14 +5598,82 @@ async function renderBanka() {
     if (!Array.isArray(rows) || rows.length === 0) {
       list.innerHTML = '<div style="padding:48px;text-align:center;color:var(--muted);font-size:13px">Žádná data — nahráj Excel přes admin panel.</div>';
       totalEl.textContent = '—'; avgEl.textContent = '—'; rokBadge.textContent = '';
+      var _sw = document.getElementById('banka-switch'); if (_sw) _sw.innerHTML = '';
+      var _tn = document.getElementById('banka-title-name'); if (_tn) _tn.textContent = '—';
+      var _tb = document.getElementById('banka-title-bank'); if (_tb) _tb.textContent = '';
       return;
     }
 
-    var roky = [...new Set(rows.map(function(r){ return r.rok; }))].sort(function(a,b){ return b-a; });
-    var rok  = roky[0];
-    rokBadge.textContent = rok + '';
-    var data = rows.filter(function(r){ return r.rok === rok; });
+    BANKA_ALL = rows;
 
+    // ── Seznam osob (z databáze, list Banka) ──
+    var people = [];
+    var seen = {};
+    rows.forEach(function(r){
+      var j = r.jmeno || 'Neuvedeno';
+      if (!seen[j]) { seen[j] = true; people.push({ jmeno: j, banka: '' }); }
+    });
+    // doplň název banky (první neprázdný pro danou osobu)
+    people.forEach(function(p){
+      var withBank = rows.find(function(r){ return (r.jmeno || 'Neuvedeno') === p.jmeno && r.banka; });
+      if (withBank) p.banka = withBank.banka;
+    });
+
+    // zachovej výběr, jinak vezmi první osobu
+    if (!BANKA_SELECTED || !people.some(function(p){ return p.jmeno === BANKA_SELECTED; })) {
+      BANKA_SELECTED = people[0].jmeno;
+    }
+
+    buildBankaSwitch(people);
+    renderBankaMonths();
+
+  } catch(e) {
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--neg);font-size:13px">Chyba: ' + e.message + '</div>';
+    console.error('[BANKA]', e);
+  }
+}
+
+// ── Přepínač osob ──
+function buildBankaSwitch(people) {
+  var wrap = document.getElementById('banka-switch');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  wrap.style.display = people.length > 1 ? 'flex' : 'none';
+  people.forEach(function(p){
+    var active = p.jmeno === BANKA_SELECTED;
+    var btn = document.createElement('button');
+    btn.textContent = p.jmeno;
+    btn.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;padding:8px 16px;border-radius:99px;cursor:pointer;transition:all 0.2s;'
+      + 'border:1px solid ' + (active ? '#E8840A' : 'var(--border2)') + ';'
+      + 'background:' + (active ? 'rgba(232,132,10,0.12)' : 'var(--bg2)') + ';'
+      + 'color:' + (active ? '#E8840A' : 'var(--muted)') + ';';
+    btn.onmouseenter = function(){ if (!active) btn.style.borderColor = 'rgba(232,132,10,0.4)'; };
+    btn.onmouseleave = function(){ if (!active) btn.style.borderColor = 'var(--border2)'; };
+    btn.onclick = function(){ BANKA_SELECTED = p.jmeno; buildBankaSwitch(people); renderBankaMonths(); };
+    wrap.appendChild(btn);
+  });
+}
+
+// ── Vykreslení měsíčního přehledu pro vybranou osobu ──
+function renderBankaMonths() {
+  var list     = document.getElementById('banka-list');
+  var totalEl  = document.getElementById('banka-total');
+  var avgEl    = document.getElementById('banka-avg');
+  var rokBadge = document.getElementById('banka-rok-badge');
+  var titleName= document.getElementById('banka-title-name');
+  var titleBank= document.getElementById('banka-title-bank');
+
+  var personRows = BANKA_ALL.filter(function(r){ return (r.jmeno || 'Neuvedeno') === BANKA_SELECTED; });
+  var roky = [...new Set(personRows.map(function(r){ return r.rok; }))].sort(function(a,b){ return b-a; });
+  var rok  = roky[0];
+  var data = personRows.filter(function(r){ return r.rok === rok; });
+  var bankName = (data.find(function(r){ return r.banka; }) || {}).banka || '';
+
+  if (titleName) titleName.textContent = BANKA_SELECTED;
+  if (titleBank) titleBank.textContent = bankName ? ('Banka: ' + bankName) : '';
+  rokBadge.textContent = rok + '';
+
+  {
     var byMesic = {};
     data.forEach(function(r){ byMesic[r.mesic] = r.obrat ? parseFloat(r.obrat) : 0; });
     var values = BANKA_MESICE.map(function(m){ return byMesic[m] || 0; });
@@ -5673,10 +5748,6 @@ async function renderBanka() {
     sv.appendChild(svs);
     sumRow.appendChild(si); sumRow.appendChild(sl); sumRow.appendChild(ss); sumRow.appendChild(sv);
     list.appendChild(sumRow);
-
-  } catch(e) {
-    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--neg);font-size:13px">Chyba: ' + e.message + '</div>';
-    console.error('[BANKA]', e);
   }
 }
 
