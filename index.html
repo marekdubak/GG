@@ -2114,15 +2114,30 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   <!-- Přepínač podle jména (naplní se z databáze) -->
   <div id="banka-switch" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px"></div>
 
-  <div id="banka-kpi-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #E8840A;border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-    <div>
-      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Roční obrat celkem</div>
-      <div id="banka-total" style="font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;color:#E8840A">—</div>
+  <!-- Součet vs. limit 1 850 000 -->
+  <div id="banka-limit-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #E8840A;border-radius:16px;padding:22px 28px;margin-bottom:24px;">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)">Součet vs. limit</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">Limit <span style="color:var(--text);font-weight:600">1 850 000 Kč</span></div>
     </div>
-    <div style="text-align:right;">
-      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Průměr / měsíc</div>
-      <div id="banka-avg" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:var(--text)">—</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+      <div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Součet</div>
+        <div id="banka-limit-sum" style="font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:2px;color:#E8840A">—</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Průměr / měsíc</div>
+        <div id="banka-avg" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--text)">—</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Zbývá do limitu</div>
+        <div id="banka-limit-left" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--text)">—</div>
+      </div>
     </div>
+    <div style="height:10px;background:var(--bg3);border-radius:99px;overflow:hidden;">
+      <div id="banka-limit-bar" style="height:100%;width:0%;background:#E8840A;border-radius:99px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1)"></div>
+    </div>
+    <div id="banka-limit-note" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px"></div>
   </div>
 
   <div id="banka-list" style="display:flex;flex-direction:column;gap:10px;">
@@ -5581,6 +5596,7 @@ function reportExportPDF() {
 // ═══════════════════════════════════════════════
 const BANKA_MESICE = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
 const BANKA_MONTH_NUM = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+const BANKA_LIMIT = 1850000;
 
 var BANKA_ALL = [];
 var BANKA_SELECTED = null;
@@ -5597,7 +5613,7 @@ async function renderBanka() {
 
     if (!Array.isArray(rows) || rows.length === 0) {
       list.innerHTML = '<div style="padding:48px;text-align:center;color:var(--muted);font-size:13px">Žádná data — nahráj Excel přes admin panel.</div>';
-      totalEl.textContent = '—'; avgEl.textContent = '—'; rokBadge.textContent = '';
+      totalEl && (totalEl.textContent = '—'); avgEl && (avgEl.textContent = '—'); rokBadge.textContent = '';
       var _sw = document.getElementById('banka-switch'); if (_sw) _sw.innerHTML = '';
       var _tn = document.getElementById('banka-title-name'); if (_tn) _tn.textContent = '—';
       var _tb = document.getElementById('banka-title-bank'); if (_tb) _tb.textContent = '';
@@ -5683,8 +5699,31 @@ function renderBankaMonths() {
     var maxVal = Math.max.apply(null, values.concat([1]));
     var fmt    = function(v){ return new Intl.NumberFormat('cs-CZ',{style:'currency',currency:'CZK',maximumFractionDigits:0}).format(v); };
 
-    totalEl.textContent = fmt(total);
-    avgEl.textContent   = fmt(avg);
+    totalEl && (totalEl.textContent = fmt(total));
+    avgEl   && (avgEl.textContent   = fmt(avg));
+
+    // ── Součet vs. limit 1 850 000 ──
+    var remaining = BANKA_LIMIT - total;
+    var pctLimit  = BANKA_LIMIT > 0 ? (total / BANKA_LIMIT * 100) : 0;
+    var over      = remaining < 0;
+    var sumEl  = document.getElementById('banka-limit-sum');
+    var leftEl = document.getElementById('banka-limit-left');
+    var barEl  = document.getElementById('banka-limit-bar');
+    var noteEl = document.getElementById('banka-limit-note');
+    if (sumEl)  sumEl.textContent = fmt(total);
+    if (leftEl) {
+      leftEl.textContent = over ? ('−' + fmt(Math.abs(remaining))) : fmt(remaining);
+      leftEl.style.color = over ? 'var(--neg)' : 'var(--text)';
+    }
+    if (barEl) {
+      barEl.style.width = Math.min(100, Math.max(0, pctLimit)).toFixed(1) + '%';
+      barEl.style.background = over ? 'var(--neg)' : '#E8840A';
+    }
+    if (noteEl) {
+      noteEl.textContent = over
+        ? ('Limit překročen o ' + fmt(Math.abs(remaining)))
+        : (pctLimit.toFixed(1) + ' % z limitu · zbývá ' + fmt(remaining));
+    }
 
     list.innerHTML = '';
     BANKA_MESICE.forEach(function(mesic, i) {
@@ -5742,7 +5781,12 @@ function renderBankaMonths() {
     var sl1 = document.createElement('div'); sl1.style.cssText = 'font-weight:800;font-size:13px;letter-spacing:1px;color:var(--text)'; sl1.textContent = 'CELKEM';
     var sl2 = document.createElement('div'); sl2.style.cssText = 'font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:1px'; sl2.textContent = 'rok ' + rok;
     sl.appendChild(sl1); sl.appendChild(sl2);
-    var ss = document.createElement('div'); ss.style.flex = '1';
+    var ss = document.createElement('div'); ss.style.cssText = 'flex:1;text-align:right;padding-right:14px;';
+    var _remain = BANKA_LIMIT - total; var _over = _remain < 0;
+    var ssNote = document.createElement('span');
+    ssNote.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:10px;color:' + (_over ? 'var(--neg)' : 'var(--muted)');
+    ssNote.textContent = 'součet · limit ' + fmt(BANKA_LIMIT) + ' · ' + (_over ? ('překročeno o ' + fmt(Math.abs(_remain))) : ('zbývá ' + fmt(_remain)));
+    ss.appendChild(ssNote);
     var sv = document.createElement('div'); sv.style.cssText = 'width:160px;text-align:right;flex-shrink:0';
     var svs = document.createElement('span'); svs.style.cssText = 'font-size:18px;font-weight:700;color:#E8840A'; svs.textContent = fmt(total);
     sv.appendChild(svs);
