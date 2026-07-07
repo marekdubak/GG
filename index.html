@@ -2112,7 +2112,10 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   </div>
 
   <!-- Přepínač podle jména (naplní se z databáze) -->
-  <div id="banka-switch" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px"></div>
+  <div id="banka-switch" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+
+  <!-- Přepínač podle roku (naplní se z databáze) -->
+  <div id="banka-year-switch" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:24px"></div>
 
   <!-- Součet vs. limit 1 850 000 -->
   <div id="banka-limit-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #E8840A;border-radius:16px;padding:22px 28px;margin-bottom:24px;">
@@ -3341,12 +3344,16 @@ const RPT_ALL_MESICE = [
   ['Listopad', 2025, 11], ['Prosinec', 2025, 12], ['Leden',    2026, 1],
   ['Únor',     2026, 2],  ['Březen',   2026, 3],  ['Duben',    2026, 4],
   ['Květen',   2026, 5],  ['Červen',   2026, 6],  ['Červenec', 2026, 7],
+  ['Srpen',    2026, 8],  ['Září',     2026, 9],  ['Říjen',    2026, 10],
+  ['Listopad', 2026, 11], ['Prosinec', 2026, 12],
 ];
 const RPT_SHORT = {
   'Srpen_2025':'Srp 25','Září_2025':'Zář 25','Říjen_2025':'Říj 25',
   'Listopad_2025':'Lis 25','Prosinec_2025':'Pro 25','Leden_2026':'Led 26',
   'Únor_2026':'Úno 26','Březen_2026':'Bře 26','Duben_2026':'Dub 26',
   'Květen_2026':'Kvě 26','Červen_2026':'Čvn 26','Červenec_2026':'Čvc 26',
+  'Srpen_2026':'Srp 26','Září_2026':'Zář 26','Říjen_2026':'Říj 26',
+  'Listopad_2026':'Lis 26','Prosinec_2026':'Pro 26',
 };
 const rptKey = (m, r) => `${m}_${r}`;
 const rptRM  = (m, r, mesNum) => `${r}_${mesNum}`;
@@ -3425,7 +3432,7 @@ function reportInitSelects(availableRM) {
     const rm  = `${r}_${mn}`;
     const key = rptKey(m, r);
     const lbl = RPT_SHORT[key] || `${m} ${r}`;
-    if (!availableRM || availableRM.has(rm)) {
+    if (!availableRM || availableRM.has(rm) || r === 2026) {
       selFrom.appendChild(new Option(lbl, key));
       selTo.appendChild(new Option(lbl, key));
     }
@@ -3438,7 +3445,7 @@ function reportInitSelects(availableRM) {
     return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
   };
   selFrom.value = rptAvail('Leden_2026')  ? 'Leden_2026'  : '';
-  selTo.value   = rptAvail('Květen_2026') ? 'Květen_2026' : '';
+  selTo.value   = rptAvail('Červen_2026') ? 'Červen_2026' : (rptAvail('Květen_2026') ? 'Květen_2026' : '');
 
   splitBuild('rpt-from', true); splitBuild('rpt-to', true);
   reportUpdateLabel();
@@ -3620,6 +3627,26 @@ async function renderReport() {
 
   const labels = MESICE.map(toShort);
 
+  // ── Legenda stavu měsíců (vyplněno vs predikce) ──
+  const rptStatus = await loadCfStatus();
+  const rptStatusLegend = () => {
+    const items = MESICE.map(m => {
+      const rm = toRM(m), lbl = toShort(m);
+      const done = rptStatus[rm] === true;
+      const c  = done ? '#5DB87A' : '#D9A441';
+      const bg = done ? 'rgba(93,184,122,0.13)' : 'rgba(217,164,65,0.13)';
+      const t  = done ? 'Vyplněno' : 'Predikce';
+      return `<span style="display:inline-flex;align-items:center;gap:7px;padding:4px 12px;border-radius:99px;background:${bg};white-space:nowrap">
+        <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:var(--muted2)">${lbl}</span>
+        <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:${c}">${t}</span>
+      </span>`;
+    }).join('');
+    return `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px;padding:13px 16px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px">
+      <span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-right:2px">Stav měsíců</span>
+      ${items}
+    </div>`;
+  };
+
   // ── Tabulka řádek ──
   const tableRow = (lbl, vals, fmtFn, opts = {}) => {
     const {sub=false, bold=false, topLine=false, bg='', pct=false} = opts;
@@ -3740,6 +3767,7 @@ async function renderReport() {
     </div>`;
 
   el.innerHTML = `<div style="padding:0 0 40px">
+    ${rptStatusLegend()}
     <div class="rpt-page">
       ${tabelkaPobocky('Záběhlice')}
       ${gZ.html}
@@ -4157,7 +4185,7 @@ function cfInitSelects(availableRM) {
     const rm  = `${r}_${mn}`;
     const key = rptKey(m, r);
     const lbl = RPT_SHORT[key] || `${m} ${r}`;
-    if (!availableRM || availableRM.has(rm)) {
+    if (!availableRM || availableRM.has(rm) || r === 2026) {
       selFrom.appendChild(new Option(lbl, key));
       selTo.appendChild(new Option(lbl, key));
       if (!firstAvail) firstAvail = key;
@@ -4171,7 +4199,7 @@ function cfInitSelects(availableRM) {
     return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
   };
   const defFrom = cfAvail('Leden_2026')  ? 'Leden_2026'  : (firstAvail);
-  const defTo   = cfAvail('Květen_2026') ? 'Květen_2026' : (lastAvail || defFrom);
+  const defTo   = cfAvail('Červen_2026') ? 'Červen_2026' : (cfAvail('Květen_2026') ? 'Květen_2026' : (lastAvail || defFrom));
   if (defFrom) selFrom.value = defFrom;
   if (defTo)   selTo.value   = defTo;
   splitBuild('cf-from', false); splitBuild('cf-to', false);
@@ -4189,6 +4217,24 @@ function cfUpdateLabel() {
 function cfApplyFilter() {
   cfUpdateLabel();
   renderCF();
+}
+
+// ── CF status měsíců (vyplněno = realita vs predikce) ──
+let CF_STATUS_CACHE = null;
+async function loadCfStatus(force) {
+  if (CF_STATUS_CACHE && !force) return CF_STATUS_CACHE;
+  var map = {};
+  try {
+    const _tok = await getAuthToken();
+    const res = await fetch(`${SUPA_URL}/rest/v1/cf_mesic_status?select=rok_mesic,vyplneno`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + _tok } });
+    if (res.ok) {
+      const rows = await res.json();
+      if (Array.isArray(rows)) rows.forEach(function(r){ map[r.rok_mesic] = !!r.vyplneno; });
+    }
+  } catch(e) { console.warn('[CF status]', e); }
+  CF_STATUS_CACHE = map;
+  return map;
 }
 
 async function renderCF() {
@@ -4259,12 +4305,22 @@ async function renderCF() {
     return;
   }
 
+  // Status měsíců (vyplněno vs predikce)
+  const cfStatus = await loadCfStatus();
+  const cfBadge = m => {
+    const done = cfStatus[m] === true;
+    const c  = done ? '#5DB87A' : '#D9A441';
+    const bg = done ? 'rgba(93,184,122,0.13)' : 'rgba(217,164,65,0.13)';
+    const t  = done ? 'Vyplněno' : 'Predikce';
+    return `<div style="margin-top:5px;text-align:right"><span style="display:inline-block;padding:2px 8px;border-radius:99px;background:${bg};color:${c};font-family:'Syne',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.2px;line-height:1.5;text-transform:none;white-space:nowrap">${t}</span></div>`;
+  };
+
   // Thead — bez sloupce Celkem
   thead.innerHTML = `<tr>
     <th style="text-align:left;position:sticky;left:0;top:0;z-index:6;background:var(--bg2);min-width:110px;padding:7px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2)">Entita</th>
     <th style="text-align:left;position:sticky;left:110px;top:0;z-index:6;background:var(--bg2);min-width:150px;padding:7px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2)">Dodavatel</th>
     <th style="text-align:left;position:sticky;left:260px;top:0;z-index:6;background:var(--bg2);min-width:210px;padding:7px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2);box-shadow:var(--shadow-sticky)">Popis</th>
-    ${mesice.map(m=>`<th style="text-align:right;min-width:82px;padding:7px ${vpR}px 7px 8px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border2);white-space:nowrap;position:sticky;top:0;background:var(--bg2)">${mesLabel(m)}</th>`).join('')}
+    ${mesice.map(m=>`<th style="text-align:right;min-width:82px;padding:7px ${vpR}px 7px 8px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border2);white-space:nowrap;position:sticky;top:0;background:var(--bg2)">${mesLabel(m)}${cfBadge(m)}</th>`).join('')}
   </tr>`;
 
   // ── Pivot ──
@@ -4433,7 +4489,7 @@ function analyzaInitSelects(availableRM){
   let firstAvail=null, lastAvail=null;
   for(const [m,r,mn] of RPT_ALL_MESICE){
     const rm=`${r}_${mn}`, key=rptKey(m,r), lbl=RPT_SHORT[key]||`${m} ${r}`;
-    if(!availableRM || availableRM.has(rm)){
+    if(!availableRM || availableRM.has(rm) || r === 2026){
       selFrom.appendChild(new Option(lbl,key));
       selTo.appendChild(new Option(lbl,key));
       if(!firstAvail) firstAvail=key;
@@ -4442,7 +4498,7 @@ function analyzaInitSelects(availableRM){
   }
   const av = k => { const e=RPT_ALL_MESICE.find(([m,r])=>rptKey(m,r)===k); return !!(e && (!availableRM||availableRM.has(`${e[1]}_${e[2]}`))); };
   const defFrom = av('Leden_2026')  ? 'Leden_2026'  : firstAvail;
-  const defTo   = av('Květen_2026') ? 'Květen_2026' : (lastAvail||defFrom);
+  const defTo   = av('Červen_2026') ? 'Červen_2026' : (av('Květen_2026') ? 'Květen_2026' : (lastAvail||defFrom));
   if(defFrom) selFrom.value=defFrom;
   if(defTo)   selTo.value=defTo;
   splitBuild('an-from', false); splitBuild('an-to', false);
@@ -5600,6 +5656,7 @@ const BANKA_LIMIT = 1850000;
 
 var BANKA_ALL = [];
 var BANKA_SELECTED = null;
+var BANKA_SELECTED_ROK = null;
 
 async function renderBanka() {
   var list     = document.getElementById('banka-list');
@@ -5615,6 +5672,7 @@ async function renderBanka() {
       list.innerHTML = '<div style="padding:48px;text-align:center;color:var(--muted);font-size:13px">Žádná data — nahráj Excel přes admin panel.</div>';
       totalEl && (totalEl.textContent = '—'); avgEl && (avgEl.textContent = '—'); rokBadge.textContent = '';
       var _sw = document.getElementById('banka-switch'); if (_sw) _sw.innerHTML = '';
+      var _yw = document.getElementById('banka-year-switch'); if (_yw) _yw.innerHTML = '';
       var _tn = document.getElementById('banka-title-name'); if (_tn) _tn.textContent = '—';
       var _tb = document.getElementById('banka-title-bank'); if (_tb) _tb.textContent = '';
       return;
@@ -5641,6 +5699,7 @@ async function renderBanka() {
     }
 
     buildBankaSwitch(people);
+    refreshBankaYearSwitch();
     renderBankaMonths();
 
   } catch(e) {
@@ -5665,7 +5724,43 @@ function buildBankaSwitch(people) {
       + 'color:' + (active ? '#E8840A' : 'var(--muted)') + ';';
     btn.onmouseenter = function(){ if (!active) btn.style.borderColor = 'rgba(232,132,10,0.4)'; };
     btn.onmouseleave = function(){ if (!active) btn.style.borderColor = 'var(--border2)'; };
-    btn.onclick = function(){ BANKA_SELECTED = p.jmeno; buildBankaSwitch(people); renderBankaMonths(); };
+    btn.onclick = function(){ BANKA_SELECTED = p.jmeno; buildBankaSwitch(people); refreshBankaYearSwitch(); renderBankaMonths(); };
+    wrap.appendChild(btn);
+  });
+}
+
+// ── Přepínač roku (pro vybranou osobu) ──
+function refreshBankaYearSwitch() {
+  var wrap = document.getElementById('banka-year-switch');
+  if (!wrap) return;
+  var personRows = BANKA_ALL.filter(function(r){ return (r.jmeno || 'Neuvedeno') === BANKA_SELECTED; });
+  var roky = [...new Set(personRows.map(function(r){ return r.rok; }))].sort(function(a,b){ return b-a; });
+
+  // zachovej vybraný rok, jinak vezmi nejnovější
+  if (BANKA_SELECTED_ROK === null || roky.indexOf(BANKA_SELECTED_ROK) === -1) {
+    BANKA_SELECTED_ROK = roky.length ? roky[0] : null;
+  }
+
+  wrap.innerHTML = '';
+  wrap.style.display = roky.length > 1 ? 'flex' : 'none';
+  if (roky.length <= 1) return;
+
+  var lbl = document.createElement('span');
+  lbl.textContent = 'ROK';
+  lbl.style.cssText = 'font-size:9px;letter-spacing:2px;color:var(--muted);margin-right:4px';
+  wrap.appendChild(lbl);
+
+  roky.forEach(function(y){
+    var active = y === BANKA_SELECTED_ROK;
+    var btn = document.createElement('button');
+    btn.textContent = y;
+    btn.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;cursor:pointer;transition:all 0.2s;'
+      + 'border:1px solid ' + (active ? '#26A69A' : 'var(--border2)') + ';'
+      + 'background:' + (active ? 'rgba(38,166,154,0.14)' : 'var(--bg2)') + ';'
+      + 'color:' + (active ? '#26A69A' : 'var(--muted)') + ';';
+    btn.onmouseenter = function(){ if (!active) btn.style.borderColor = 'rgba(38,166,154,0.4)'; };
+    btn.onmouseleave = function(){ if (!active) btn.style.borderColor = 'var(--border2)'; };
+    btn.onclick = function(){ BANKA_SELECTED_ROK = y; refreshBankaYearSwitch(); renderBankaMonths(); };
     wrap.appendChild(btn);
   });
 }
@@ -5681,7 +5776,7 @@ function renderBankaMonths() {
 
   var personRows = BANKA_ALL.filter(function(r){ return (r.jmeno || 'Neuvedeno') === BANKA_SELECTED; });
   var roky = [...new Set(personRows.map(function(r){ return r.rok; }))].sort(function(a,b){ return b-a; });
-  var rok  = roky[0];
+  var rok  = (BANKA_SELECTED_ROK !== null && roky.indexOf(BANKA_SELECTED_ROK) !== -1) ? BANKA_SELECTED_ROK : roky[0];
   var data = personRows.filter(function(r){ return r.rok === rok; });
   var bankName = (data.find(function(r){ return r.banka; }) || {}).banka || '';
 
