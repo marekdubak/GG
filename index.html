@@ -178,7 +178,7 @@ window.addEventListener('scroll', () => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GoldenGate — Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
@@ -227,7 +227,7 @@ body.dark-mode .fp-total-row td { background:rgba(255,255,255,0.04) !important; 
 .theme-toggle:hover { border-color:var(--gold); color:var(--gold); }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;overflow-x:hidden;}
-body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;font-variant-numeric:tabular-nums;}
 
 /* ── GRAIN */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0.025;
@@ -251,7 +251,7 @@ header{
 .brand-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--gold);}
 .brand-sub{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:1px;}
 .period-tag{
-  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);
+  font-family:'Inter',sans-serif;font-size:11px;color:var(--gold);
   background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);
   border-radius:20px;padding:5px 14px;letter-spacing:1px;
 }
@@ -727,7 +727,7 @@ body.dark-mode .user-menu-dropdown{background:var(--bg2);border-color:var(--bord
   opacity:0.3;
 }
 .bb-sec-banner-count {
-  font-family:'JetBrains Mono',monospace;
+  font-family:'Inter',sans-serif;
   font-size:10px;
   color:var(--muted);
   letter-spacing:1px;
@@ -812,7 +812,7 @@ body.dark-mode .user-menu-dropdown{background:var(--bg2);border-color:var(--bord
 }
 .bb-stat-row:last-child { border-bottom:none; }
 .bb-stat-label { color:var(--muted2); font-family:'Syne',sans-serif; }
-.bb-stat-val { font-family:'JetBrains Mono',monospace; color:var(--gold2); font-weight:600; }
+.bb-stat-val { font-family:'Inter',sans-serif; color:var(--gold2); font-weight:600; }
 .bb-stat-val.pos { color:var(--pos); }
 .bb-stat-val.neg { color:var(--neg); }
 
@@ -899,7 +899,7 @@ main{padding:36px 40px 80px;max-width:1440px;margin:0 auto;}
 .kpi-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .badge{
   display:inline-flex;align-items:center;gap:3px;
-  font-family:'JetBrains Mono',monospace;font-size:11px;
+  font-family:'Inter',sans-serif;font-size:11px;
   padding:3px 8px;border-radius:5px;font-weight:500;
 }
 .badge.up{background:rgba(93,184,122,0.15);color:var(--pos);}
@@ -931,7 +931,7 @@ table{width:100%;border-collapse:collapse;}
 th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;
   padding:8px 14px;text-align:right;border-bottom:1px solid var(--border2);}
 th:first-child{text-align:left;}
-td{padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right;
+td{padding:11px 14px;font-family:'Inter',sans-serif;font-size:12px;text-align:right;
   border-bottom:1px solid var(--row-border);}
 td:first-child{text-align:left;font-family:'Syne',sans-serif;font-size:12px;color:var(--muted2);font-weight:500;}
 tr:hover td{background:rgba(201,168,76,0.025);}
@@ -961,7 +961,7 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 }
 .mpill:hover{background:var(--bg3);color:var(--text);}
 .mpill.active{background:var(--bg3);border-color:rgba(201,168,76,0.35);color:var(--gold);}
-.month-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;}
+.month-meta{font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);white-space:nowrap;}
 
 /* ── SPARKLINE STRIP ── */
 .spark-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:0;}
@@ -979,7 +979,7 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 .pobocka-line{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2);}
 .pobocka-line:last-child{border-bottom:none;}
 .p-lbl{font-size:11px;color:var(--muted2);}
-.p-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;}
+.p-val{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;}
 
 /* ── ZÁLOHY ── */
 .zalohy-filter{display:flex;gap:10px;align-items:flex-end;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 24px;margin-bottom:16px;flex-wrap:wrap;}
@@ -1016,8 +1016,8 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 .z-card:hover{border-color:var(--border);}
 .z-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border2);}
 .z-name{display:flex;align-items:center;gap:9px;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;}
-.z-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,rgba(155,111,212,0.25),rgba(201,168,76,0.2));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--purple);font-family:'JetBrains Mono',monospace;}
-.z-total{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);font-weight:500;}
+.z-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,rgba(155,111,212,0.25),rgba(201,168,76,0.2));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--purple);font-family:'Inter',sans-serif;}
+.z-total{font-family:'Inter',sans-serif;font-size:12px;color:var(--gold);font-weight:500;}
 .z-month-sec{margin-bottom:0;border-top:1px solid var(--border2);padding:14px 0 4px;}
 .z-month-sec:first-of-type{border-top:none;padding-top:4px;}
 .z-month-sec:last-child{margin-bottom:0;}
@@ -1025,8 +1025,8 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 .z-mdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .z-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--row-border);}
 .z-row:last-child{border-bottom:none;}
-.z-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);min-width:74px;padding-top:1px;}
-.z-amt{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;min-width:86px;}
+.z-date{font-family:'Inter',sans-serif;font-size:10px;color:var(--muted);min-width:74px;padding-top:1px;}
+.z-amt{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;min-width:86px;}
 .z-amt.pos{color:var(--pos);} .z-amt.neg{color:var(--neg);}
 .z-note{font-size:10px;color:var(--muted2);line-height:1.4;flex:3;min-width:0;white-space:nowrap;}
 .z-note.pokuta{color:var(--neg);}
@@ -1035,7 +1035,7 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 .typ-pokuta{background:rgba(245,101,101,.15);color:#f56565;}
 .typ-korekce{background:rgba(100,149,237,.15);color:#6495ed;}
 .typ-bonus{background:rgba(62,207,142,.15);color:#3ecf8e;}
-.z-subtotal{display:flex;justify-content:flex-end;margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.z-subtotal{display:flex;justify-content:flex-end;margin-top:5px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);}
 .z-subtotal em{color:var(--gold2);font-style:normal;margin-left:5px;}
 .z-empty{text-align:center;padding:60px 20px;color:var(--muted);}
 
@@ -1053,7 +1053,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 .tbl-scroll-hint::after{display:none;}
 @media(max-width:680px){
   .tbl-scroll-hint.has-overflow::after{content:'← scroll →';display:block;position:absolute;bottom:8px;right:12px;
-    font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);
+    font-family:'Inter',sans-serif;font-size:9px;letter-spacing:1px;color:var(--muted);
     background:var(--bg2);padding:3px 10px;border-radius:20px;border:1px solid var(--border2);
     opacity:0.7;pointer-events:none;transition:opacity .3s;}
   .tbl-scroll-hint.scrolled::after{opacity:0;}
@@ -1325,7 +1325,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 .fp-table th:nth-child(2) { z-index: 5; }
 .fp-table th:nth-child(3) { z-index: 5; }
 .fp-table td {
-  padding: 6px 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  padding: 6px 10px; font-family: 'Inter',sans-serif; font-size: 11px;
   text-align: right; border-bottom: 1px solid var(--row-border);
   white-space: nowrap;
 }
@@ -1346,7 +1346,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 .fp-total-row td {
   background: var(--sec-total) !important;
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'Inter',sans-serif !important;
   font-weight: 700 !important; color: var(--gold2) !important;
   border-top: 1px solid var(--border) !important;
   font-size: 11px !important;
@@ -1368,7 +1368,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 .report-tbl {
   width: 100%; border-collapse: collapse;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Inter',sans-serif;
   font-size: 11.5px;
 }
 .report-tbl th {
@@ -1638,7 +1638,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
       </div>
     </div>
 
-    <div id="rpt-period-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
+    <div id="rpt-period-label" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
 
     <button onclick="reportReset()" title="Resetovat filtr" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">✕ Reset</button>
 
@@ -1861,15 +1861,15 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   <div class="card" style="margin-bottom:12px;padding:20px 24px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
       <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);">Průběh splácení</div>
-      <div id="mara-pct-label" style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;color:var(--gold2);">—</div>
+      <div id="mara-pct-label" style="font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:var(--gold2);">—</div>
     </div>
     <div style="position:relative;height:28px;background:var(--bg3);border-radius:14px;overflow:hidden;border:1px solid var(--border);">
       <div id="mara-progress-bar" style="position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg, var(--pos), #5DB87A);border-radius:14px;transition:width 0.8s ease;width:0%;"></div>
-      <div id="mara-progress-text" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);font-weight:500;z-index:1;"></div>
+      <div id="mara-progress-text" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:11px;color:var(--text);font-weight:500;z-index:1;"></div>
     </div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;">
-      <span id="mara-prog-zaplaceno" style="font-size:11px;color:var(--pos);font-family:'JetBrains Mono',monospace;">—</span>
-      <span id="mara-prog-zbyva" style="font-size:11px;color:var(--neg);font-family:'JetBrains Mono',monospace;">—</span>
+      <span id="mara-prog-zaplaceno" style="font-size:11px;color:var(--pos);font-family:'Inter',sans-serif;">—</span>
+      <span id="mara-prog-zbyva" style="font-size:11px;color:var(--neg);font-family:'Inter',sans-serif;">—</span>
     </div>
   </div>
 
@@ -2011,7 +2011,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
         <select id="cf-to" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="cf-to-m" onchange="splitMonthChange('cf-to',cfApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="cf-to-y" onchange="splitYearChange('cf-to',cfApplyFilter,false)" style="min-width:78px;"></select></div>
       </div>
     </div>
-    <div id="cf-period-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
+    <div id="cf-period-label" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
 
     <button onclick="cfExportPDF()" title="Exportovat jako PDF" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;margin-left:auto" onmouseover="this.style.borderColor='rgba(201,168,76,0.5)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -2057,6 +2057,19 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     </div>
   </div>
 
+  <!-- ══════════ GG ACADEMY — samostatná tabulka (mimo výpočty firmy) ══════════ -->
+  <div id="cf-gg-section" style="display:none;margin-top:30px">
+    <div class="sec" style="color:#8E6FD8">🎓 GG Academy — samostatný přehled</div>
+    <div id="cf-gg-wrap" style="overflow:hidden;background:var(--bg2);border:1px solid var(--border2);border-radius:16px;border-top:3px solid #8E6FD8">
+      <div style="overflow:auto;max-height:75vh">
+      <table id="cf-gg-table" style="width:100%;border-collapse:collapse;min-width:900px">
+        <thead id="cf-gg-thead" style="position:sticky;top:0;z-index:10"></thead>
+        <tbody id="cf-gg-tbody"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ════════════════════════════════════
@@ -2078,7 +2091,7 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
         <select id="an-to" style="display:none"></select><div style="display:flex;gap:6px;"><select class="zf-select" id="an-to-m" onchange="splitMonthChange('an-to',analyzaApplyFilter)" style="min-width:104px;"></select><select class="zf-select" id="an-to-y" onchange="splitYearChange('an-to',analyzaApplyFilter,false)" style="min-width:78px;"></select></div>
       </div>
     </div>
-    <div id="an-period-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
+    <div id="an-period-label" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:5px 14px;white-space:nowrap"></div>
   </div>
 
   <!-- ── Metodika ── -->
@@ -2106,9 +2119,9 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     <div>
       <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Přehled</div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">BANKA <span id="banka-title-name" style="color:#E8840A">—</span></div>
-      <div id="banka-title-bank" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:3px"></div>
+      <div id="banka-title-bank" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);margin-top:3px"></div>
     </div>
-    <div id="banka-rok-badge" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E8840A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
+    <div id="banka-rok-badge" style="font-family:'Inter',sans-serif;font-size:11px;color:#E8840A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
   </div>
 
   <!-- Přepínač podle jména (naplní se z databáze) -->
@@ -2117,11 +2130,37 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
   <!-- Přepínač podle roku (naplní se z databáze) -->
   <div id="banka-year-switch" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:24px"></div>
 
+  <!-- ══════════ ČÁST 1: Rychlý přehled všech osob ══════════ -->
+  <div class="card" id="banka-summary-card" style="margin-bottom:24px;border-top:3px solid #E8840A;">
+    <div class="card-head">
+      <div>
+        <div class="card-title">⚡ Rychlý přehled</div>
+        <div class="card-sub">Souhrn všech osob za vybraný rok · klikni na řádek pro detail</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left">Jméno</th>
+            <th style="text-align:left">Banka</th>
+            <th style="text-align:center">Rok</th>
+            <th>Čerpáno</th>
+            <th>Limit</th>
+            <th>Zbývá</th>
+          </tr>
+        </thead>
+        <tbody id="banka-summary-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ ČÁST 2: Podrobný rozpad po měsících ══════════ -->
   <!-- Součet vs. limit 1 850 000 -->
   <div id="banka-limit-wrap" style="background:var(--bg2);border:1px solid rgba(38,166,154,0.3);border-top:3px solid #E8840A;border-radius:16px;padding:22px 28px;margin-bottom:24px;">
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
       <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)">Součet vs. limit</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">Limit <span style="color:var(--text);font-weight:600">1 850 000 Kč</span></div>
+      <div style="font-family:'Inter',sans-serif;font-size:12px;color:var(--muted)">Limit <span style="color:var(--text);font-weight:600">1 850 000 Kč</span></div>
     </div>
     <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
       <div>
@@ -2130,17 +2169,17 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
       </div>
       <div style="text-align:center;">
         <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Průměr / měsíc</div>
-        <div id="banka-avg" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--text)">—</div>
+        <div id="banka-avg" style="font-family:'Inter',sans-serif;font-size:20px;font-weight:600;color:var(--text)">—</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Zbývá do limitu</div>
-        <div id="banka-limit-left" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--text)">—</div>
+        <div id="banka-limit-left" style="font-family:'Inter',sans-serif;font-size:22px;font-weight:700;color:var(--text)">—</div>
       </div>
     </div>
     <div style="height:10px;background:var(--bg3);border-radius:99px;overflow:hidden;">
       <div id="banka-limit-bar" style="height:100%;width:0%;background:#E8840A;border-radius:99px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1)"></div>
     </div>
-    <div id="banka-limit-note" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px"></div>
+    <div id="banka-limit-note" style="font-family:'Inter',sans-serif;font-size:10px;color:var(--muted);margin-top:8px"></div>
   </div>
 
   <div id="banka-list" style="display:flex;flex-direction:column;gap:10px;">
@@ -2380,7 +2419,7 @@ async function loadAllData() {
 Chart.defaults.color = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#5A5550';
 Chart.defaults.font.family = "'Syne', sans-serif";
 const gc = () => getComputedStyle(document.body).getPropertyValue('--stripe').trim() || 'rgba(0,0,0,0.03)';
-const tt = { backgroundColor:'rgba(15,15,15,0.92)', borderColor:'rgba(201,168,76,0.4)', borderWidth:1, padding:12, titleColor:'#C9A84C', bodyColor:'#F4F1EC', titleFont:{family:"'Syne',sans-serif",weight:'700',size:13}, bodyFont:{family:"'JetBrains Mono',monospace",size:12}, cornerRadius:8, displayColors:true, boxPadding:4 };
+const tt = { backgroundColor:'rgba(15,15,15,0.92)', borderColor:'rgba(201,168,76,0.4)', borderWidth:1, padding:12, titleColor:'#C9A84C', bodyColor:'#F4F1EC', titleFont:{family:"'Syne',sans-serif",weight:'700',size:13}, bodyFont:{family:"'Inter',sans-serif",size:12}, cornerRadius:8, displayColors:true, boxPadding:4 };
 const fmt = v => Math.round(v).toLocaleString('cs-CZ')+' Kč';
 
 function makeMain(id, labels, trzby, vydaje, zisk) {
@@ -2742,7 +2781,7 @@ function zApply() {
               <div class="z-mdot" style="width:10px;height:10px;background:${color};flex-shrink:0;border-radius:50%;"></div>
               <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:${color}">${label}</span>
             </div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:${color}">${subtotal.toLocaleString('cs-CZ')} Kč</span>
+            <span style="font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:${color}">${subtotal.toLocaleString('cs-CZ')} Kč</span>
           </div>
           ${rows(arr)}`;
         grid.appendChild(card);
@@ -3290,7 +3329,7 @@ function vpApply(){
           const color = isVyplata ? (v >= 0 ? 'var(--gold2)' : 'var(--neg)') : 'var(--gold2)';
           const weight = isLast ? '700' : '400';
           const bg = isLast ? 'background:rgba(201,168,76,0.05);' : '';
-          return `<td style="text-align:right;padding:7px 8px;font-weight:${weight};color:${v!==null?color:'var(--muted)'};${bg}font-family:'JetBrains Mono',monospace">
+          return `<td style="text-align:right;padding:7px 8px;font-weight:${weight};color:${v!==null?color:'var(--muted)'};${bg}font-family:'Inter',sans-serif">
             ${v !== null ? Math.round(v).toLocaleString('cs-CZ') + ' Kč' : '—'}
           </td>`;
         }).join('')}
@@ -3590,6 +3629,21 @@ async function renderReport() {
   const POB_CSS   = {Záběhlice:'var(--zabeh)', Vršovice:'var(--vrsov)', Veleslavín:'var(--velesv)'};
   const POB_EMOJI = {Záběhlice:'🟡', Vršovice:'🟢', Veleslavín:'🔴'};
 
+  // GG Academy — samostatná agregace (case-insensitive): kladné = tržby, záporné = výdaje.
+  // NEvstupuje do poboček/firmy/celkem.
+  const aggGG = mes => {
+    const rm = toRM(mes);
+    const rows = raw.filter(r => /gg\s*academy/i.test(r.entita||'') && r.rok_mesic===rm && r.rok_mesic!=='1900_1');
+    let trzby=0, vydaje=0;
+    for (const r of rows) {
+      const v = parseFloat(r.castka_s_dph)||0;
+      if (v >= 0) trzby += v; else vydaje += v;
+    }
+    return {trzby, vydaje, zisk: trzby + vydaje};
+  };
+  const ggData    = MESICE.map(m => aggGG(m));
+  const ggHasData = ggData.some(d => d.trzby || d.vydaje);
+
   const pobData   = {};
   for (const p of POBOCKY) pobData[p] = MESICE.map(m => agg(p, m));
   const firmaData = MESICE.map(m => aggFirma(m));
@@ -3621,8 +3675,8 @@ async function renderReport() {
     const v = (curr - prev) / Math.abs(prev);
     const s = Math.abs(v * 100).toFixed(1) + '%';
     return v >= 0
-      ? `<div style="color:var(--pos);font-size:9px;font-family:'JetBrains Mono',monospace;margin-top:1px">▲ +${s}</div>`
-      : `<div style="color:var(--neg);font-size:9px;font-family:'JetBrains Mono',monospace;margin-top:1px">▼ −${s}</div>`;
+      ? `<div style="color:var(--pos);font-size:9px;font-family:'Inter',sans-serif;margin-top:1px">▲ +${s}</div>`
+      : `<div style="color:var(--neg);font-size:9px;font-family:'Inter',sans-serif;margin-top:1px">▼ −${s}</div>`;
   };
 
   const labels = MESICE.map(toShort);
@@ -3652,7 +3706,7 @@ async function renderReport() {
     const {sub=false, bold=false, topLine=false, bg='', pct=false} = opts;
     const bgColor = bg || 'var(--bg2)';
     const lStyle = `position:sticky;left:0;z-index:2;background:${bgColor};padding:7px 10px 7px ${sub?'22px':'10px'};font-family:'Syne',sans-serif;font-size:${sub?'10px':'11px'};color:${bold?'var(--text)':'var(--muted2)'};font-weight:${bold?600:400};border-bottom:1px solid var(--row-border);${topLine?'border-top:1px solid var(--border2);':''}white-space:nowrap`;
-    const vStyle = `padding:7px 14px 7px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right;border-bottom:1px solid var(--row-border);white-space:nowrap;${topLine?'border-top:1px solid var(--border2);':''}${bg?'background:'+bg+';':''}`;
+    const vStyle = `padding:7px 14px 7px 8px;font-family:'Inter',sans-serif;font-size:12px;text-align:right;border-bottom:1px solid var(--row-border);white-space:nowrap;${topLine?'border-top:1px solid var(--border2);':''}${bg?'background:'+bg+';':''}`;
     return `<tr>
       <td style="${lStyle}">${lbl}</td>
       ${vals.map((v,i) => `<td style="${vStyle}">${fmtFn(v)}${pct && i > 0 ? fPct(v, vals[i-1]) : ''}</td>`).join('')}
@@ -3681,6 +3735,47 @@ async function renderReport() {
           ${tableRow('Výdaje bez mezd',  d.map(x=>x.vydaje_bez),    fV, {pct:true})}
           ${tableRow('Výdaje celkem',    d.map(x=>x.vydaje_celkem), fV, {bold:true, topLine:true, pct:true})}
           ${tableRow('Zisk',             d.map(x=>x.zisk),          fZ, {bold:true, topLine:true, bg:'rgba(46,139,79,0.08)'})}
+        </tbody>
+      </table></div>
+    </div>`;
+  };
+
+  // ── Karta GG Academy (samostatná, mimo součty) — jen Tržby / Výdaje / Zisk ──
+  const cardGGAcademy = () => {
+    const d = ggData;
+    const ggC = '#8E6FD8';
+    const note = ggHasData ? '' : ' · zatím žádná data pro vybrané období';
+    return `
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;overflow:hidden;margin-bottom:8px;border-top:3px solid ${ggC}">
+      <div style="padding:16px 18px 14px;border-bottom:1px solid var(--border2);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:${ggC}">🎓 GG ACADEMY</span>
+        <span style="font-family:'Syne',sans-serif;font-size:10px;color:var(--muted)">samostatně — mimo součty poboček i firmy${note}</span>
+      </div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+        ${thead(ggC)}
+        <tbody>
+          ${tableRow('Tržby',  d.map(x=>x.trzby),  fT, {bold:true, pct:true})}
+          ${tableRow('Výdaje', d.map(x=>x.vydaje), fV, {bold:true, pct:true})}
+          ${tableRow('Zisk (pouze GG Academy)',   d.map(x=>x.zisk),   fZbig, {bold:true, topLine:true, bg:'rgba(142,111,216,0.08)'})}
+        </tbody>
+      </table></div>
+    </div>`;
+  };
+
+  // ── Karta: souhrnný zisk (pobočky + firma + GG Academy) — po měsících ──
+  const cardZiskCelkovy = () => {
+    const grandZ = MESICE.map((_,i) => cData[i].zisk + ggData[i].zisk); // pobočky+firma + GG Academy, pro každý měsíc
+    const ggC = '#8E6FD8';
+    return `
+    <div style="background:rgba(142,111,216,0.05);border:1px solid rgba(142,111,216,0.25);border-radius:16px;overflow:hidden;margin-bottom:8px;border-top:3px solid ${ggC}">
+      <div style="padding:16px 18px 14px;border-bottom:1px solid rgba(142,111,216,0.2);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:${ggC}">🧮 ZISK (POBOČKY, FIRMA A GG ACADEMY)</span>
+        <span style="font-family:'Syne',sans-serif;font-size:10px;color:var(--muted)">zisk / ztráta za každý měsíc</span>
+      </div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+        ${thead(ggC)}
+        <tbody>
+          ${tableRow('Zisk / ztráta', grandZ, fZbig, {bold:true, bg:'rgba(142,111,216,0.08)'})}
         </tbody>
       </table></div>
     </div>`;
@@ -3733,7 +3828,7 @@ async function renderReport() {
   const cardCelkem = () => `
     <div style="background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.25);border-radius:16px;overflow:hidden;margin-bottom:8px;border-top:3px solid var(--gold)">
       <div style="padding:16px 18px 14px;border-bottom:1px solid rgba(201,168,76,0.2)">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--gold)">🟡 CELKEM</span>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--gold)">🟡 CELKEM (POBOČKY A FIRMA)</span>
       </div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
         ${thead('var(--gold)')}
@@ -3785,12 +3880,14 @@ async function renderReport() {
       ${cardCelkem()}
       ${grafySouhrnHTML}
     </div>
+    <div class="rpt-page">${cardGGAcademy()}</div>
+    <div class="rpt-page">${cardZiskCelkovy()}</div>
   </div>`;
 
   // ── Vykresli grafy ──
   const gc = () => getComputedStyle(document.body).getPropertyValue('--row-border').trim() || 'rgba(255,255,255,0.04)';
   const axisC = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#666';
-  const ttOpts = {backgroundColor:'rgba(15,15,15,0.92)', borderColor:'rgba(201,168,76,0.4)', borderWidth:1, padding:12, titleColor:'#C9A84C', bodyColor:'#F4F1EC', titleFont:{family:"'Syne',sans-serif",weight:'700',size:13}, bodyFont:{family:"'JetBrains Mono',monospace",size:12}, cornerRadius:8, displayColors:true, boxPadding:4};
+  const ttOpts = {backgroundColor:'rgba(15,15,15,0.92)', borderColor:'rgba(201,168,76,0.4)', borderWidth:1, padding:12, titleColor:'#C9A84C', bodyColor:'#F4F1EC', titleFont:{family:"'Syne',sans-serif",weight:'700',size:13}, bodyFont:{family:"'Inter',sans-serif",size:12}, cornerRadius:8, displayColors:true, boxPadding:4};
   const fmt = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
   const scalesOpts = () => ({
     x: {grid:{color:gc()}, ticks:{font:{size:10}, color:axisC}},
@@ -4100,7 +4197,7 @@ function renderMara() {
     const zbyvaji = r.zbyvajici_dluh ?? (r.castka - zap);
     const zapStr = r.zaplaceno === null || r.zaplaceno === undefined
       ? '<span style="color:var(--muted)">—</span>'
-      : `<span style="color:${zap >= r.castka ? 'var(--pos)' : 'var(--neg)'}">${zap.toLocaleString('cs-CZ')} Kč</span>`;
+      : `<span style="color:${zap > 0 ? 'var(--pos)' : 'var(--neg)'}">${zap.toLocaleString('cs-CZ')} Kč</span>`;
     const dluhStr = zbyvaji === 0
       ? `<span style="color:var(--pos)">0 Kč ✓</span>`
       : `<span style="color:var(--neg)">${zbyvaji.toLocaleString('cs-CZ')} Kč</span>`;
@@ -4117,9 +4214,9 @@ function renderMara() {
   // Splátky tfoot
   el('mara-splatky-tfoot').innerHTML = `<tr style="border-top:1px solid var(--border);">
     <td colspan="2" style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--text);padding:10px 14px;text-align:left;">CELKEM</td>
-    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold2);text-align:right;padding:10px 14px;">${totalCastka.toLocaleString('cs-CZ')} Kč</td>
-    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--pos);text-align:right;padding:10px 14px;">${totalZaplaceno.toLocaleString('cs-CZ')} Kč</td>
-    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--neg);text-align:right;padding:10px 14px;">${totalDluh.toLocaleString('cs-CZ')} Kč</td>
+    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--gold2);text-align:right;padding:10px 14px;">${totalCastka.toLocaleString('cs-CZ')} Kč</td>
+    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--pos);text-align:right;padding:10px 14px;">${totalZaplaceno.toLocaleString('cs-CZ')} Kč</td>
+    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--neg);text-align:right;padding:10px 14px;">${totalDluh.toLocaleString('cs-CZ')} Kč</td>
   </tr>`;
 
   // --- tabulka výplat ---
@@ -4139,7 +4236,7 @@ function renderMara() {
     </tr>`;
   }).join('') + `<tr style="border-top:1px solid var(--border);">
     <td style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:var(--text);">CELKEM VYPLACENO</td>
-    <td style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold2);font-weight:700;">${totalVyplaceno.toLocaleString('cs-CZ')} Kč</td>
+    <td style="font-family:'Inter',sans-serif;font-size:13px;color:var(--gold2);font-weight:700;">${totalVyplaceno.toLocaleString('cs-CZ')} Kč</td>
   </tr>`;
   el('mara-vyplaty-tbody').innerHTML = vyplatyRows;
 
@@ -4368,7 +4465,7 @@ async function renderCF() {
   const td0 = `style="position:sticky;left:0;z-index:2;background:var(--bg2);text-align:left;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;white-space:nowrap"`;
   const td1 = `style="position:sticky;left:110px;z-index:2;background:var(--bg2);text-align:left;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;color:var(--muted2);white-space:nowrap"`;
   const td2 = `style="position:sticky;left:260px;z-index:2;background:var(--bg2);text-align:left;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;color:var(--muted2);box-shadow:var(--shadow-sticky);max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"`;
-  const tdV = `style="text-align:right;padding:5px ${vpR}px 5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;border-bottom:1px solid var(--row-border)"`;
+  const tdV = `style="text-align:right;padding:5px ${vpR}px 5px 8px;font-family:'Inter',sans-serif;font-size:11px;white-space:nowrap;border-bottom:1px solid var(--row-border)"`;
 
   for (const ent of sekce) {
     if (!pivot[ent]) continue;
@@ -4408,7 +4505,7 @@ async function renderCF() {
 
     // Sekce součet
     secSum = Object.values(secTot).reduce((a,b)=>a+b,0);
-    const secCells = mesice.map(m=>`<td style="text-align:right;padding:6px ${vpR}px 6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--sec-total);white-space:nowrap">${secTot[m]!==0?fmtB(secTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
+    const secCells = mesice.map(m=>`<td style="text-align:right;padding:6px ${vpR}px 6px 8px;font-family:'Inter',sans-serif;font-size:11px;background:var(--sec-total);white-space:nowrap">${secTot[m]!==0?fmtB(secTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
     html += `<tr class="cf-sec-total-row">
       <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-total);padding:7px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${col};border-top:1px solid var(--row-border);white-space:nowrap">∑ ${ent.toUpperCase()}</td>
       <td style="background:var(--sec-total);border-top:1px solid var(--row-border)"></td>
@@ -4429,7 +4526,7 @@ async function renderCF() {
   // Grand total
   const grandTot = {};
   mesice.forEach(m=>{ grandTot[m]=0; for(const ent of sekce){ if(!pivot[ent])continue; for(const {dod,pop} of ordRows[ent]){ grandTot[m]+=(pivot[ent][dod]&&pivot[ent][dod][pop]&&pivot[ent][dod][pop][m])||0; } } });
-  const grandCells = mesice.map(m=>`<td style="text-align:right;padding:8px ${vpR}px 8px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:rgba(201,168,76,0.08);white-space:nowrap;border-top:2px solid rgba(201,168,76,0.3)">${grandTot[m]!==0?fmtB(grandTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
+  const grandCells = mesice.map(m=>`<td style="text-align:right;padding:8px ${vpR}px 8px 8px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;background:rgba(201,168,76,0.08);white-space:nowrap;border-top:2px solid rgba(201,168,76,0.3)">${grandTot[m]!==0?fmtB(grandTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
   html += `<tr class="cf-grand-row">
     <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:rgba(201,168,76,0.08);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:var(--gold);border-top:2px solid rgba(201,168,76,0.3);white-space:nowrap">GRAND TOTAL</td>
     <td style="background:rgba(201,168,76,0.08);border-top:2px solid rgba(201,168,76,0.3)"></td>
@@ -4444,6 +4541,63 @@ async function renderCF() {
   if(elId('cf-kpi-trzby'))  elId('cf-kpi-trzby').textContent  = fK(gTrzby);
   if(elId('cf-kpi-vydaje')) elId('cf-kpi-vydaje').textContent = fK(gVydaje);
   if(elId('cf-kpi-zisk'))   elId('cf-kpi-zisk').textContent   = fK(gZisk);
+
+  // ══════════ GG ACADEMY — samostatná tabulka (mimo grand total i KPI) ══════════
+  const ggSection = document.getElementById('cf-gg-section');
+  const ggTheadEl = document.getElementById('cf-gg-thead');
+  const ggTbodyEl = document.getElementById('cf-gg-tbody');
+  const ggKeys = Object.keys(pivot).filter(k => /gg\s*academy/i.test(k));
+  if (ggSection && ggTheadEl && ggTbodyEl) {
+    ggSection.style.display = '';
+    ggTheadEl.innerHTML = thead.innerHTML; // stejná hlavička (období) jako hlavní tabulka
+    if (!ggKeys.length) {
+      ggTbodyEl.innerHTML = `<tr><td colspan="${3+N}" style="padding:26px;text-align:center;color:var(--muted);font-size:12px;font-family:'Syne',sans-serif">Žádné transakce GG Academy pro vybrané období.</td></tr>`;
+    } else {
+      const ggColor = '#8E6FD8';
+      let ggHtml = '';
+
+      // Sekce hlavička
+      ggHtml += `<tr class="cf-page-break cf-sec-row">
+        <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-head);padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;font-size:14px;color:${ggColor};border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border);white-space:nowrap">GG ACADEMY</td>
+        <td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>
+        <td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>
+        ${mesice.map(()=>'<td style="background:var(--sec-head);border-top:1px solid var(--row-border);border-bottom:1px solid var(--row-border)"></td>').join('')}
+      </tr>`;
+
+      const ggTot = {};
+      mesice.forEach(m => ggTot[m] = 0);
+      let ggPrevDod = null;
+
+      ggKeys.forEach(k => {
+        for (const {dod,pop} of (ordRows[k]||[])) {
+          const popVals = (pivot[k][dod] && pivot[k][dod][pop]) || {};
+          if (mesice.every(m => (popVals[m]||0) === 0)) continue;
+          const cells = mesice.map(m => {
+            const v = popVals[m]||0; ggTot[m] += v;
+            return `<td ${tdV}>${v!==0?fmtV(v):'<span style="color:var(--col-empty)">—</span>'}</td>`;
+          }).join('');
+          ggHtml += `<tr style="border-bottom:1px solid var(--row-border)">
+            <td ${td0}></td>
+            <td ${td1}>${dod===ggPrevDod?'':dod}</td>
+            <td ${td2}>${pop}</td>
+            ${cells}
+          </tr>`;
+          ggPrevDod = dod;
+        }
+      });
+
+      // Součet GG Academy (samostatný, nikam se nepřičítá)
+      const ggCells = mesice.map(m=>`<td style="text-align:right;padding:6px ${vpR}px 6px 8px;font-family:'Inter',sans-serif;font-size:11px;background:var(--sec-total);white-space:nowrap">${ggTot[m]!==0?fmtB(ggTot[m]):'<span style="color:var(--col-empty)">—</span>'}</td>`).join('');
+      ggHtml += `<tr class="cf-sec-total-row">
+        <td class="cf-sec-name" style="position:sticky;left:0;z-index:5;background:var(--sec-total);padding:7px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:${ggColor};border-top:1px solid var(--row-border);white-space:nowrap">∑ GG ACADEMY</td>
+        <td style="background:var(--sec-total);border-top:1px solid var(--row-border)"></td>
+        <td style="position:sticky;left:260px;z-index:2;background:var(--sec-total);box-shadow:var(--shadow-sticky);border-top:1px solid var(--row-border)"></td>
+        ${ggCells}
+      </tr>`;
+
+      ggTbodyEl.innerHTML = ggHtml;
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -4796,7 +4950,7 @@ async function renderAnalyza(){
   // ── Pobočky ──
   const thr='style="text-align:right;padding:9px 12px"';
   const thl='style="text-align:left;padding:9px 12px"';
-  const tdr='style="text-align:right;padding:8px 12px;font-family:\'JetBrains Mono\',monospace;font-size:11px;white-space:nowrap"';
+  const tdr='style="text-align:right;padding:8px 12px;font-family:\'Inter\',sans-serif;font-size:11px;white-space:nowrap"';
   html += `<div class="sec">Pobočky — profitabilita (dle CF)</div>
   <div class="chart-grid chart-grid-21" style="margin-bottom:14px">
     <div class="card" style="padding:0;overflow:hidden"><div style="overflow:auto">
@@ -4812,27 +4966,27 @@ async function renderAnalyza(){
     const pc=AN_POB_C[r.pob]||'var(--muted2)';
     html += `<tr style="border-bottom:1px solid var(--row-border)">
       <td style="text-align:left;padding:8px 12px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px"><span style="color:${pc}">●</span> ${r.pob}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${r.cnt}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">${anF0(r.rev)}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue)">${anF0(r.wage)}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--neg)">${anF0(r.opex)}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(r.profit)}">${anF0(r.profit)}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--neg)">${anF0(r.allocFirma)}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(r.netFirma)}">${anF0(r.netFirma)}</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${anSgn(r.margeR)}">${(r.margeR*100).toFixed(0)} %</td>
-      <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${anF0(r.avg)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted2)">${r.cnt}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--gold2)">${anF0(r.rev)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--blue)">${anF0(r.wage)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--neg)">${anF0(r.opex)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:${anSgn(r.profit)}">${anF0(r.profit)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--neg)">${anF0(r.allocFirma)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:${anSgn(r.netFirma)}">${anF0(r.netFirma)}</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:${anSgn(r.margeR)}">${(r.margeR*100).toFixed(0)} %</td>
+      <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted2)">${anF0(r.avg)}</td>
     </tr>`;
   });
   html += `<tr style="border-top:2px solid var(--border)">
       <td style="text-align:left;padding:9px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:var(--gold)">CELKEM</td>
       <td></td>
-      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--gold2)">${anF0(totalRev)}</td>
-      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700">${anF0(totalWage)}</td>
-      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--neg)">${anF0(totalOpex)}</td>
-      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(hrubaMarze-totalOpex)}">${anF0(hrubaMarze-totalOpex)}</td>
-      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--neg)">${anF0(firmaCost)}</td>
-      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(cistyZisk)}">${anF0(cistyZisk)}</td>
-      <td style="text-align:right;padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700">${(totalRev>0?(hrubaMarze-totalOpex)/totalRev*100:0).toFixed(0)} %</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:var(--gold2)">${anF0(totalRev)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700">${anF0(totalWage)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:var(--neg)">${anF0(totalOpex)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:${anSgn(hrubaMarze-totalOpex)}">${anF0(hrubaMarze-totalOpex)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:var(--neg)">${anF0(firmaCost)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:${anSgn(cistyZisk)}">${anF0(cistyZisk)}</td>
+      <td style="text-align:right;padding:9px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700">${(totalRev>0?(hrubaMarze-totalOpex)/totalRev*100:0).toFixed(0)} %</td>
       <td></td>
     </tr></tbody></table></div></div>
     <div class="card"><div class="card-head"><div><div class="card-title">Čistý zisk poboček</div><div class="card-sub">po pobočce + firmě</div></div></div><div style="height:240px"><canvas id="an-chart-branches"></canvas></div></div>
@@ -4858,15 +5012,15 @@ async function renderAnalyza(){
     html += `<tr style="border-bottom:1px solid var(--row-border)">
       <td style="text-align:left;padding:8px 12px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;color:var(--text)">${b.name}</td>
       <td style="text-align:left;padding:8px 12px;font-size:11px"><span style="color:${pc}">●</span> <span style="color:var(--muted2)">${b.pob}</span></td>
-      <td class="an-cc" data-ck="${reg('trzba')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">${anF0(b.trzba)}</td>
-      <td class="an-cc" data-ck="${reg('rate')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue)">${(b.rate*100).toFixed(0)} %</td>
-      <td class="an-cc" data-ck="${reg('mzda')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">${anF0(b.mzda)}</td>
-      <td class="an-cc" data-ck="${reg('marze')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">${anF0(b.marze)}</td>
-      <td class="an-cc" data-ck="${reg('margeR')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--pos)">${(b.margeR*100).toFixed(0)} %</td>
-      <td class="an-cc" data-ck="${reg('share')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${(b.share*100).toFixed(1)} %</td>
-      <td class="an-cc" data-ck="${reg('sharePob')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${(b.sharePob*100).toFixed(1)} %</td>
-      <td class="an-cc" data-ck="${reg('netPob')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${anSgn(b.netPob)}">${anF0(b.netPob)}</td>
-      <td class="an-cc" data-ck="${reg('netFirma')}" style="${cc}text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(b.netFirma)}">${anF0(b.netFirma)}</td>
+      <td class="an-cc" data-ck="${reg('trzba')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--gold2)">${anF0(b.trzba)}</td>
+      <td class="an-cc" data-ck="${reg('rate')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--blue)">${(b.rate*100).toFixed(0)} %</td>
+      <td class="an-cc" data-ck="${reg('mzda')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;white-space:nowrap">${anF0(b.mzda)}</td>
+      <td class="an-cc" data-ck="${reg('marze')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;white-space:nowrap">${anF0(b.marze)}</td>
+      <td class="an-cc" data-ck="${reg('margeR')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--pos)">${(b.margeR*100).toFixed(0)} %</td>
+      <td class="an-cc" data-ck="${reg('share')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted2)">${(b.share*100).toFixed(1)} %</td>
+      <td class="an-cc" data-ck="${reg('sharePob')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted2)">${(b.sharePob*100).toFixed(1)} %</td>
+      <td class="an-cc" data-ck="${reg('netPob')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:${anSgn(b.netPob)}">${anF0(b.netPob)}</td>
+      <td class="an-cc" data-ck="${reg('netFirma')}" style="${cc}text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:${anSgn(b.netFirma)}">${anF0(b.netFirma)}</td>
     </tr>`;
   });
   // ── Součtový řádek ──
@@ -4878,7 +5032,7 @@ async function renderAnalyza(){
   const sNetFirma=barberRows.reduce((s,b)=>s+b.netFirma,0);
   const sRate=sTrz>0?barberRows.reduce((s,b)=>s+b.rate*b.trzba,0)/sTrz:0;
   const sMargeR=sTrz>0?sMarze/sTrz:0;
-  const tf='text-align:right;padding:10px 12px;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;border-top:2px solid var(--border2)';
+  const tf='text-align:right;padding:10px 12px;font-family:\'Inter\',sans-serif;font-size:11px;font-weight:700;border-top:2px solid var(--border2)';
   AN_CALC['tot_trz']=`<b>Σ Tržby = ${anF0(sTrz)} Kč</b><br>součet tržeb všech barberů (z výplat)`;
   AN_CALC['tot_rate']=`<b>Ø Sazba = ${(sRate*100).toFixed(1)} %</b><br>vážený průměr (váha = tržba) — součet procent nedává smysl`;
   AN_CALC['tot_mzda']=`<b>Σ Mzda = ${anF0(sMzda)} Kč</b>`;
@@ -4912,12 +5066,12 @@ async function renderAnalyza(){
     <div class="card">
       <div class="card-head"><div><div class="card-title" style="color:${accent}">${title}</div><div class="card-sub">${sub}</div></div></div>
       <div style="display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Kontribuční marže (po mzdách)</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold2)">${(mRate*100).toFixed(1)} %</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">${fixedLabel}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--neg)">${anF(fixed)}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Bod zlomu (potřebné tržby)</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700">${anF(be)}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Skutečné tržby</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold2)">${anF(rev)}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Kontribuční marže (po mzdách)</span><span style="font-family:'Inter',sans-serif;font-size:13px;color:var(--gold2)">${(mRate*100).toFixed(1)} %</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">${fixedLabel}</span><span style="font-family:'Inter',sans-serif;font-size:13px;color:var(--neg)">${anF(fixed)}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Bod zlomu (potřebné tržby)</span><span style="font-family:'Inter',sans-serif;font-size:13px;font-weight:700">${anF(be)}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Skutečné tržby</span><span style="font-family:'Inter',sans-serif;font-size:13px;color:var(--gold2)">${anF(rev)}</span></div>
         <div style="height:1px;background:var(--border2)"></div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Rezerva (margin of safety)</span><span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:${anSgn(saf)}">${(saf*100).toFixed(0)} %</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted2)">Rezerva (margin of safety)</span><span style="font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:${anSgn(saf)}">${(saf*100).toFixed(0)} %</span></div>
         <div style="font-size:11px;color:var(--muted);line-height:1.5">${saf>=0?`Tržby můžou klesnout o <b style="color:${anSgn(saf)}">${(saf*100).toFixed(0)} %</b> (${anF(rev-be)}) než se dostane na nulu.`:`Tržby jsou <b style="color:var(--neg)">pod bodem zlomu</b> — chybí ${anF(be-rev)} tržeb na pokrytí nákladů.`}</div>
       </div>
     </div>`;
@@ -4963,9 +5117,9 @@ async function renderAnalyza(){
       <div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Rok</label><select class="zf-select" id="an-sim-year" onchange="anSimYearChange()">${simYearOpts}</select></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:12px"><label style="font-size:12px;color:var(--muted2);min-width:210px">Změna tržeb</label><input type="range" id="an-sim-rev" min="-30" max="30" step="1" value="0" oninput="anSim()" style="flex:1;accent-color:var(--gold)"><span id="an-sim-rev-o" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;min-width:54px;text-align:right">0 %</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><label style="font-size:12px;color:var(--muted2);min-width:210px">Sazba barberů (% z tržeb)</label><input type="range" id="an-sim-wage" min="20" max="70" step="1" value="45" oninput="anSim()" style="flex:1;accent-color:var(--blue)"><span class="an-cc" data-ck="sim-rate" id="an-sim-wage-o" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;min-width:54px;text-align:right">45 %</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><label id="an-sim-fixlabel" style="font-size:12px;color:var(--muted2);min-width:210px">Fixní náklady (provoz + firma)</label><input type="range" id="an-sim-fix" min="-20" max="20" step="1" value="0" oninput="anSim()" style="flex:1;accent-color:var(--neg)"><span id="an-sim-fix-o" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;min-width:54px;text-align:right">0 %</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><label style="font-size:12px;color:var(--muted2);min-width:210px">Změna tržeb</label><input type="range" id="an-sim-rev" min="-30" max="30" step="1" value="0" oninput="anSim()" style="flex:1;accent-color:var(--gold)"><span id="an-sim-rev-o" style="font-family:'Inter',sans-serif;font-size:12px;font-weight:700;min-width:54px;text-align:right">0 %</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><label style="font-size:12px;color:var(--muted2);min-width:210px">Sazba barberů (% z tržeb)</label><input type="range" id="an-sim-wage" min="20" max="70" step="1" value="45" oninput="anSim()" style="flex:1;accent-color:var(--blue)"><span class="an-cc" data-ck="sim-rate" id="an-sim-wage-o" style="cursor:help;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;min-width:54px;text-align:right">45 %</span></div>
+      <div style="display:flex;align-items:center;gap:12px"><label id="an-sim-fixlabel" style="font-size:12px;color:var(--muted2);min-width:210px">Fixní náklady (provoz + firma)</label><input type="range" id="an-sim-fix" min="-20" max="20" step="1" value="0" oninput="anSim()" style="flex:1;accent-color:var(--neg)"><span id="an-sim-fix-o" style="font-family:'Inter',sans-serif;font-size:12px;font-weight:700;min-width:54px;text-align:right">0 %</span></div>
     </div>
     <div class="kpi-row kpi-row-4">
       <div class="kpi" style="--kpi-accent:var(--pos)"><div class="kpi-label">Čistý zisk</div><div class="kpi-val sm an-cc" data-ck="sim-profit" id="an-sim-profit" style="cursor:help">—</div></div>
@@ -4975,10 +5129,10 @@ async function renderAnalyza(){
     </div>
     <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px">Absolutní hodnoty (po simulaci)</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Tržby</div><div class="an-cc" data-ck="sim-rev" id="an-sim-abs-rev" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--gold2)">—</div></div>
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Mzdy / výplaty</div><div class="an-cc" data-ck="sim-wage" id="an-sim-abs-wage" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--blue)">—</div></div>
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Provozní náklady</div><div class="an-cc" data-ck="sim-opex" id="an-sim-abs-opex" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--neg)">—</div></div>
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Firemní režie</div><div class="an-cc" data-ck="sim-firma" id="an-sim-abs-firma" style="cursor:help;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--neg)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Tržby</div><div class="an-cc" data-ck="sim-rev" id="an-sim-abs-rev" style="cursor:help;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--gold2)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Mzdy / výplaty</div><div class="an-cc" data-ck="sim-wage" id="an-sim-abs-wage" style="cursor:help;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--blue)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Provozní náklady</div><div class="an-cc" data-ck="sim-opex" id="an-sim-abs-opex" style="cursor:help;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--neg)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Firemní režie</div><div class="an-cc" data-ck="sim-firma" id="an-sim-abs-firma" style="cursor:help;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:var(--neg)">—</div></div>
     </div>
     <div id="an-sim-delta" style="font-size:11px;color:var(--muted);margin-top:12px"></div>
   </div>`;
@@ -5014,9 +5168,9 @@ async function renderAnalyza(){
         <thead><tr style="background:var(--bg2)"><th ${thlP}>Pobočka</th><th ${thrP}>Barbeři</th><th ${thrP}>Tržby / barber</th><th ${thrP}>Čistý zisk / barber<br><span style="font-size:8px;color:var(--muted)">po firmě</span></th></tr></thead><tbody>
         ${prodRows.map(r=>`<tr style="border-bottom:1px solid var(--row-border)">
           <td style="text-align:left;padding:8px 12px;font-size:12px"><span style="color:${r.color}">●</span> <span style="color:var(--muted2)">${r.pob}</span></td>
-          <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)">${r.cnt}</td>
-          <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">${anF0(r.revPer)}</td>
-          <td style="text-align:right;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${anSgn(r.profPer)}">${anF0(r.profPer)}</td>
+          <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted2)">${r.cnt}</td>
+          <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;color:var(--gold2)">${anF0(r.revPer)}</td>
+          <td style="text-align:right;padding:8px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:${anSgn(r.profPer)}">${anF0(r.profPer)}</td>
         </tr>`).join('')}
       </tbody></table>
     </div></div>
@@ -5341,7 +5495,7 @@ function renderBarberi() {
               <div style="width:9px;height:9px;border-radius:50%;background:${secColor};flex-shrink:0;box-shadow:0 0 8px ${secColor}55"></div>
               <span style="font-family:'Bebas Neue',sans-serif;letter-spacing:3px;font-size:14px;color:${secColor}">${mainPob.toUpperCase()}</span>
               <div style="flex:1;height:1px;background:linear-gradient(90deg,${secColor}44,transparent)"></div>
-              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${secColor};opacity:0.7;letter-spacing:1px">${pobCount} BARBER${pobCount !== 1 ? 'Ů' : ''}</span>
+              <span style="font-family:'Inter',sans-serif;font-size:10px;color:${secColor};opacity:0.7;letter-spacing:1px">${pobCount} BARBER${pobCount !== 1 ? 'Ů' : ''}</span>
             </div>
           </td>
         </tr>`;
@@ -5401,7 +5555,7 @@ function renderBarberi() {
             const pct = ((cur - prev) / Math.abs(prev)) * 100;
             const color = pct > 0 ? 'var(--pos)' : pct < 0 ? 'var(--neg)' : 'var(--muted)';
             const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '–';
-            tbHTML += `<td style="text-align:right;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:${color}">${arrow} ${Math.abs(pct).toFixed(1)}%</td>`;
+            tbHTML += `<td style="text-align:right;padding:2px 8px;font-family:'Inter',sans-serif;font-size:10px;color:${color}">${arrow} ${Math.abs(pct).toFixed(1)}%</td>`;
           }
         }
       });
@@ -5435,7 +5589,7 @@ function renderBarberi() {
           const pct = ((curT - prevT) / Math.abs(prevT)) * 100;
           const color = pct > 0 ? 'var(--pos)' : pct < 0 ? 'var(--neg)' : 'var(--muted)';
           const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '–';
-          tbHTML += `<td style="text-align:right;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:${color}">${arrow} ${Math.abs(pct).toFixed(1)}%</td>`;
+          tbHTML += `<td style="text-align:right;padding:2px 8px;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;color:${color}">${arrow} ${Math.abs(pct).toFixed(1)}%</td>`;
         }
       }
     });
@@ -5655,6 +5809,7 @@ const BANKA_MONTH_NUM = ['01','02','03','04','05','06','07','08','09','10','11',
 const BANKA_LIMIT = 1850000;
 
 var BANKA_ALL = [];
+var BANKA_PEOPLE = [];
 var BANKA_SELECTED = null;
 var BANKA_SELECTED_ROK = null;
 
@@ -5693,6 +5848,8 @@ async function renderBanka() {
       if (withBank) p.banka = withBank.banka;
     });
 
+    BANKA_PEOPLE = people;
+
     // zachovej výběr, jinak vezmi první osobu
     if (!BANKA_SELECTED || !people.some(function(p){ return p.jmeno === BANKA_SELECTED; })) {
       BANKA_SELECTED = people[0].jmeno;
@@ -5718,7 +5875,7 @@ function buildBankaSwitch(people) {
     var active = p.jmeno === BANKA_SELECTED;
     var btn = document.createElement('button');
     btn.textContent = p.jmeno;
-    btn.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;padding:8px 16px;border-radius:99px;cursor:pointer;transition:all 0.2s;'
+    btn.style.cssText = 'font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;padding:8px 16px;border-radius:99px;cursor:pointer;transition:all 0.2s;'
       + 'border:1px solid ' + (active ? '#E8840A' : 'var(--border2)') + ';'
       + 'background:' + (active ? 'rgba(232,132,10,0.12)' : 'var(--bg2)') + ';'
       + 'color:' + (active ? '#E8840A' : 'var(--muted)') + ';';
@@ -5754,7 +5911,7 @@ function refreshBankaYearSwitch() {
     var active = y === BANKA_SELECTED_ROK;
     var btn = document.createElement('button');
     btn.textContent = y;
-    btn.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;cursor:pointer;transition:all 0.2s;'
+    btn.style.cssText = 'font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;cursor:pointer;transition:all 0.2s;'
       + 'border:1px solid ' + (active ? '#26A69A' : 'var(--border2)') + ';'
       + 'background:' + (active ? 'rgba(38,166,154,0.14)' : 'var(--bg2)') + ';'
       + 'color:' + (active ? '#26A69A' : 'var(--muted)') + ';';
@@ -5763,6 +5920,89 @@ function refreshBankaYearSwitch() {
     btn.onclick = function(){ BANKA_SELECTED_ROK = y; refreshBankaYearSwitch(); renderBankaMonths(); };
     wrap.appendChild(btn);
   });
+}
+
+// ── ČÁST 1: Rychlý přehled — souhrn všech osob za vybraný rok ──
+function renderBankaSummary(rok) {
+  var tbody = document.getElementById('banka-summary-tbody');
+  if (!tbody) return;
+  if (rok === undefined || rok === null) rok = BANKA_SELECTED_ROK;
+
+  var fmt = function(v){ return new Intl.NumberFormat('cs-CZ',{style:'currency',currency:'CZK',maximumFractionDigits:0}).format(v); };
+
+  // pořadí osob jako v seznamu
+  var people = (BANKA_PEOPLE && BANKA_PEOPLE.length)
+    ? BANKA_PEOPLE.map(function(p){ return p.jmeno; })
+    : (function(){
+        var out = [], seen = {};
+        BANKA_ALL.forEach(function(r){ var j = r.jmeno || 'Neuvedeno'; if(!seen[j]){ seen[j]=true; out.push(j); } });
+        return out;
+      })();
+
+  tbody.innerHTML = '';
+
+  var mkTd = function(txt, align, color, mono, bold){
+    var td = document.createElement('td');
+    td.textContent = txt;
+    if (align) td.style.textAlign = align;
+    if (color) td.style.color = color;
+    if (mono)  td.style.fontFamily = "'Inter',sans-serif";
+    if (bold)  td.style.fontWeight = '700';
+    return td;
+  };
+
+  var shown = 0;
+  people.forEach(function(jm){
+    var pr = BANKA_ALL.filter(function(r){ return (r.jmeno || 'Neuvedeno') === jm && r.rok === rok; });
+    if (pr.length === 0) return; // osoba nemá data pro tento rok
+    shown++;
+
+    var banka   = (pr.find(function(r){ return r.banka; }) || {}).banka || '—';
+    var cerpano = pr.reduce(function(s,r){ return s + (r.obrat ? parseFloat(r.obrat) : 0); }, 0);
+    var zbyva   = BANKA_LIMIT - cerpano;
+    var over    = zbyva < 0;
+    var active  = jm === BANKA_SELECTED;
+
+    var tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.style.transition = 'background 0.15s';
+    if (active) tr.style.background = 'rgba(232,132,10,0.10)';
+    tr.onmouseenter = function(){ if(!active) tr.style.background = 'rgba(38,166,154,0.06)'; };
+    tr.onmouseleave = function(){ tr.style.background = active ? 'rgba(232,132,10,0.10)' : ''; };
+    tr.onclick = function(){
+      BANKA_SELECTED = jm;
+      buildBankaSwitch(BANKA_PEOPLE);
+      refreshBankaYearSwitch();
+      renderBankaMonths();
+      var wrap = document.getElementById('banka-limit-wrap');
+      if (wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+
+    // Jméno
+    tr.appendChild(mkTd(jm, 'left', active ? '#E8840A' : 'var(--text)', false, true));
+    // Banka
+    tr.appendChild(mkTd(banka, 'left', 'var(--muted)', true, false));
+    // Rok
+    tr.appendChild(mkTd(rok + '', 'center', 'var(--muted)', true, false));
+    // Čerpáno
+    tr.appendChild(mkTd(fmt(cerpano), 'right', '#E8840A', true, true));
+    // Limit
+    tr.appendChild(mkTd(fmt(BANKA_LIMIT), 'right', 'var(--muted)', true, false));
+    // Zbývá
+    tr.appendChild(mkTd(over ? ('−' + fmt(Math.abs(zbyva))) : fmt(zbyva), 'right', over ? 'var(--neg)' : 'var(--pos)', true, true));
+
+    tbody.appendChild(tr);
+  });
+
+  if (shown === 0) {
+    var tr = document.createElement('tr');
+    var td = document.createElement('td');
+    td.colSpan = 6;
+    td.style.cssText = 'text-align:center;color:var(--muted);padding:20px;';
+    td.textContent = 'Žádná data pro rok ' + rok;
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  }
 }
 
 // ── Vykreslení měsíčního přehledu pro vybranou osobu ──
@@ -5783,6 +6023,9 @@ function renderBankaMonths() {
   if (titleName) titleName.textContent = BANKA_SELECTED;
   if (titleBank) titleBank.textContent = bankName ? ('Banka: ' + bankName) : '';
   rokBadge.textContent = rok + '';
+
+  // ── ČÁST 1: rychlý přehled všech osob za tento rok ──
+  renderBankaSummary(rok);
 
   {
     var byMesic = {};
@@ -5879,7 +6122,7 @@ function renderBankaMonths() {
     var ss = document.createElement('div'); ss.style.cssText = 'flex:1;text-align:right;padding-right:14px;';
     var _remain = BANKA_LIMIT - total; var _over = _remain < 0;
     var ssNote = document.createElement('span');
-    ssNote.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:10px;color:' + (_over ? 'var(--neg)' : 'var(--muted)');
+    ssNote.style.cssText = 'font-family:\'Inter\',sans-serif;font-size:10px;color:' + (_over ? 'var(--neg)' : 'var(--muted)');
     ssNote.textContent = 'součet · limit ' + fmt(BANKA_LIMIT) + ' · ' + (_over ? ('překročeno o ' + fmt(Math.abs(_remain))) : ('zbývá ' + fmt(_remain)));
     ss.appendChild(ssNote);
     var sv = document.createElement('div'); sv.style.cssText = 'width:160px;text-align:right;flex-shrink:0';
