@@ -145,7 +145,7 @@ function show(id) {
   // CF vždy znovu fetchuje při kliknutí
   if (id === 'cf' && window._appReady) { setTimeout(renderCF, 350); return; }
   if (id === 'analyza' && window._appReady) { setTimeout(renderAnalyza, 350); return; }
-  if (id === 'formular' && window._appReady) { setTimeout(fmRender, 350); return; }
+  if (id === 'formular' && window._appReady) { setTimeout(fmEnterTab, 350); return; }
   if (id === 'report' && window._appReady) { setTimeout(() => { renderReport(); setTimeout(setupScrollReveal, 200); }, 350); return; }
   if (window._appReady && window.init && window.init[id] && !window._rendered[id]) {
     setTimeout(() => { window.init[id](); window._rendered[id] = true; setTimeout(setupScrollReveal, 200); }, 350);
@@ -2256,77 +2256,69 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 .fm-tbl tbody tr.fm-paid:hover{background:rgba(93,184,122,0.24);}
 .fm-tbl tbody tr.fm-paid .fm-name{color:#2F7F4E;}
 .fm-tbl tbody tr.fm-paid .fm-name::before{content:'✓ ';color:#3E9E63;font-weight:700;}
+.fm-newbtn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+  margin-bottom:18px;padding:18px 24px;border:none;border-radius:14px;cursor:pointer;
+  background:linear-gradient(135deg,#C9A84C 0%,#B08F3A 100%);
+  color:#1a1508;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:3px;
+  box-shadow:0 4px 16px rgba(201,168,76,0.32);transition:transform .18s,box-shadow .18s,filter .18s;
+}
+.fm-newbtn:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(201,168,76,0.45);filter:brightness(1.06);}
+.fm-newbtn:active{transform:translateY(0);}
+.fm-newbtn-plus{
+  display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
+  border-radius:50%;background:rgba(0,0,0,0.16);font-family:'Inter',sans-serif;
+  font-size:20px;font-weight:600;line-height:1;padding-bottom:2px;
+}
 .fm-progress{
   display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:13px 16px;
   border:1px solid var(--border2);border-radius:11px;background:var(--bg3);font-size:12px;
 }
 .fm-progress-bar{flex:1;min-width:120px;height:7px;border-radius:5px;background:var(--border);overflow:hidden;}
 .fm-progress-fill{height:100%;background:#5DB87A;border-radius:5px;transition:width .3s;}
-.fm-opt{
-  display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border-radius:10px;
-  border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:all .18s;
-}
-.fm-opt:hover{border-color:rgba(155,111,212,0.45);}
-.fm-opt.on{border-color:#9B6FD4;background:rgba(155,111,212,0.10);}
-.fm-opt-dot{
-  width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);
-  flex-shrink:0;margin-top:2px;position:relative;transition:all .18s;
-}
-.fm-opt.on .fm-opt-dot{border-color:#9B6FD4;}
-.fm-opt.on .fm-opt-dot::after{
-  content:'';position:absolute;inset:3px;border-radius:50%;background:#9B6FD4;
-}
-.fm-opt-t{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.4;}
-.fm-opt.on .fm-opt-t{color:#9B6FD4;}
-.fm-opt-d{font-size:11px;color:var(--muted);line-height:1.5;margin-top:3px;}
 </style>
 
 <div class="view" id="view-formular" data-tab="formular">
 
-<div id="fm-form-view">
-
-  <!-- ── Návrat na Výplaty ── -->
-  <div id="fm-back-bar" style="margin-bottom:14px;">
+<div id="fm-back-bar" style="margin-bottom:14px;">
     <button onclick="fmBackToVyplaty()" style="display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.borderColor='var(--border2)'">
       ← Zpět na Výplaty
     </button>
   </div>
 
-  <!-- ── Filtr období ── -->
-  <div class="zalohy-filter" style="margin-bottom:20px;">
-    <div class="zf-field" style="max-width:300px;">
-      <label class="zf-label">📅 Měsíc &amp; Rok</label>
-      <div style="display:flex;gap:8px;">
-        <select class="zf-select" id="fm-month" onchange="fmRender()">
-          <option value="" selected>— měsíc —</option>
-          <option value="Leden">Leden</option>
-          <option value="Únor">Únor</option>
-          <option value="Březen">Březen</option>
-          <option value="Duben">Duben</option>
-          <option value="Květen">Květen</option>
-          <option value="Červen">Červen</option>
-          <option value="Červenec">Červenec</option>
-          <option value="Srpen">Srpen</option>
-          <option value="Září">Září</option>
-          <option value="Říjen">Říjen</option>
-          <option value="Listopad">Listopad</option>
-          <option value="Prosinec">Prosinec</option>
-        </select>
-        <select class="zf-select" id="fm-rok" onchange="fmRender()" style="min-width:90px;">
-          <option value="">— rok —</option>
-          <option value="2025">2025</option>
-          <option value="2026">2026</option>
-          <option value="2027">2027</option>
-          <option value="2028">2028</option>
-        </select>
-      </div>
+<div id="fm-form-view">
+
+  <!-- ── Návrat na Výplaty ── -->
+  
+
+  <!-- ── Skryté nosiče období (čte je fmRender) ── -->
+  <div style="display:none">
+    <select id="fm-month"><option value="" selected></option>
+      <option value="Leden">Leden</option><option value="Únor">Únor</option>
+      <option value="Březen">Březen</option><option value="Duben">Duben</option>
+      <option value="Květen">Květen</option><option value="Červen">Červen</option>
+      <option value="Červenec">Červenec</option><option value="Srpen">Srpen</option>
+      <option value="Září">Září</option><option value="Říjen">Říjen</option>
+      <option value="Listopad">Listopad</option><option value="Prosinec">Prosinec</option>
+    </select>
+    <select id="fm-rok"><option value=""></option>
+      <option value="2025">2025</option><option value="2026">2026</option>
+      <option value="2027">2027</option><option value="2028">2028</option>
+      <option value="2029">2029</option><option value="2030">2030</option>
+    </select>
+    <div id="fm-hist-badge"></div>
+  </div>
+
+  <!-- ── Hlavička otevřeného formuláře ── -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
+    <div>
+      <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Formulář výplaty</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:var(--text)" id="fm-period-title">—</div>
+      <div id="fm-period-badge" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);margin-top:3px"></div>
     </div>
-    <button class="zf-reset" onclick="fmReset()">✕ Reset</button>
-    <button onclick="fmShowHistory()" style="display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;border:1px solid rgba(217,107,90,0.4);background:rgba(217,107,90,0.10);color:#D96B5A;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;transition:all 0.2s" onmouseover="this.style.background='rgba(217,107,90,0.18)'" onmouseout="this.style.background='rgba(217,107,90,0.10)'">
-      🕘 Zobrazit historii
+    <button onclick="fmShowList()" style="display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='rgba(217,107,90,0.5)'" onmouseout="this.style.borderColor='var(--border2)'">
+      ← Seznam formulářů
     </button>
-    <div id="fm-hist-badge" style="margin-left:auto;font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:6px 16px;display:none;"></div>
-    <div id="fm-period-badge" style="font-family:'Inter',sans-serif;font-size:11px;color:#D96B5A;background:rgba(217,107,90,0.1);border:1px solid rgba(217,107,90,0.25);border-radius:20px;padding:6px 16px;display:none;"></div>
   </div>
 
   <!-- ── Tabulka ── -->
@@ -2340,27 +2332,10 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
       💾 ULOŽIT
       </button>
     </div>
-    <div id="fm-editbar" style="display:none;margin-bottom:16px;padding:14px 16px;border:1px solid rgba(155,111,212,0.35);background:rgba(155,111,212,0.06);border-radius:12px;">
-      <div style="font-size:12px;color:#9B6FD4;font-weight:700;margin-bottom:3px">
-        ✏️ Načtena verze <span id="fm-edit-verze">—</span><span id="fm-edit-info" style="color:var(--muted);font-weight:400"></span>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Vyber, co se má stát při uložení:</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">
-        <div class="fm-opt on" id="fm-opt-update" onclick="fmEditMode('update')">
-          <div class="fm-opt-dot"></div>
-          <div>
-            <div class="fm-opt-t">Aktualizovat tento formulář</div>
-            <div class="fm-opt-d">Změny se zapíšou do načtené verze. Nová verze nevznikne.</div>
-          </div>
-        </div>
-        <div class="fm-opt" id="fm-opt-new" onclick="fmEditMode('new')">
-          <div class="fm-opt-dot"></div>
-          <div>
-            <div class="fm-opt-t">Uložit jako nový formulář</div>
-            <div class="fm-opt-d">Vznikne nová verze, historická zůstane zachovaná.</div>
-          </div>
-        </div>
-      </div>
+    <div id="fm-editbar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;border:1px solid rgba(155,111,212,0.35);background:rgba(155,111,212,0.07);border-radius:11px;">
+      <span style="font-size:12px;color:#9B6FD4;font-weight:700">✏️ Načtena verze <span id="fm-edit-verze">—</span></span>
+      <span id="fm-edit-info" style="font-size:12px;color:var(--muted)"></span>
+      <span style="font-size:11px;color:var(--muted);margin-left:auto">Uložením se tato verze aktualizuje</span>
     </div>
     <div class="tbl-wrap" id="fm-table-wrap">
       <div class="fm-empty">
@@ -2384,29 +2359,66 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
 </div><!-- /#fm-form-view -->
 
-<!-- ── Historie: celostránkový pohled ── -->
-<div id="fm-history-view" style="display:none;">
+<!-- ── Seznam formulářů (vstupní obrazovka) ── -->
+<div id="fm-list-view">
 
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;">
     <div>
       <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Formulář výplaty</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">HISTORIE <span style="color:#D96B5A">VERZÍ</span></div>
-      <div id="fm-hv-count" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);margin-top:3px"></div>
-      <div id="fm-hv-adminhint" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--muted2);margin-top:2px;display:none">🗑 Mazání verzí máš jako admin</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--text)">FORMULÁŘE <span style="color:#D96B5A">VÝPLAT</span></div>
+      <div id="fm-lv-count" style="font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);margin-top:3px"></div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button onclick="fmLoadObdobi(true).then(fmRenderHistory)" style="padding:9px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">↻ Obnovit</button>
-      <button onclick="fmBackToForm()" style="padding:9px 18px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">← Zpět na formulář</button>
+      <button onclick="fmLoadObdobi(true).then(fmRenderPeriods)" style="padding:10px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">↻ Obnovit</button>
     </div>
   </div>
 
-  <div id="fm-hv-list">
-    <div style="padding:56px;text-align:center;color:var(--muted);font-size:13px">Načítám historii…</div>
+  <button onclick="fmNewOpen()" class="fm-newbtn">
+    <span class="fm-newbtn-plus">+</span>
+    <span>ZALOŽIT NOVÝ MĚSÍC</span>
+  </button>
+
+  <div id="fm-periods">
+    <div style="padding:56px;text-align:center;color:var(--muted);font-size:13px">Načítám formuláře…</div>
   </div>
 
 </div>
 
+<!-- ── Okénko pro založení nového měsíce ── -->
+<div id="fm-newmodal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;max-width:450px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--text);margin-bottom:4px">NOVÝ MĚSÍC</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Vyber období, pro které chceš vyplnit formulář.</div>
+
+    <div style="display:flex;gap:9px;margin-bottom:16px">
+      <select class="zf-select" id="fm-new-month" onchange="fmNewCheck()" style="flex:1">
+        <option value="">— měsíc —</option>
+        <option value="Leden">Leden</option><option value="Únor">Únor</option>
+        <option value="Březen">Březen</option><option value="Duben">Duben</option>
+        <option value="Květen">Květen</option><option value="Červen">Červen</option>
+        <option value="Červenec">Červenec</option><option value="Srpen">Srpen</option>
+        <option value="Září">Září</option><option value="Říjen">Říjen</option>
+        <option value="Listopad">Listopad</option><option value="Prosinec">Prosinec</option>
+      </select>
+      <select class="zf-select" id="fm-new-rok" onchange="fmNewCheck()" style="min-width:100px">
+        <option value="">— rok —</option>
+        <option value="2025">2025</option><option value="2026">2026</option>
+        <option value="2027">2027</option><option value="2028">2028</option>
+        <option value="2029">2029</option><option value="2030">2030</option>
+      </select>
+    </div>
+
+    <div id="fm-new-warn" style="display:none;padding:13px 15px;border-radius:10px;border:1px solid rgba(232,168,48,0.4);background:rgba(232,168,48,0.10);font-size:12px;color:#E8A830;line-height:1.6;margin-bottom:16px"></div>
+
+    <div style="display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap">
+      <button onclick="fmNewClose()" style="padding:10px 18px;border-radius:9px;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer">Zrušit</button>
+      <button id="fm-new-load" onclick="fmNewGo('load')" style="display:none;padding:10px 18px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer">↥ Načíst nejnovější</button>
+      <button id="fm-new-go" onclick="fmNewGo('new')" disabled style="padding:10px 20px;border-radius:9px;border:1px solid rgba(217,107,90,0.45);background:rgba(217,107,90,0.14);color:#D96B5A;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;opacity:0.45">Vytvořit</button>
+    </div>
+  </div>
 </div>
+
+</div><!-- /#view-formular -->
 
 </main>
 
@@ -6394,10 +6406,9 @@ let FM_DRAFT = {};   // rozpracované hodnoty: 'Rok_Měsíc|jméno' -> {korekce,
 let FM_LAST  = null; // poslední uložená verze za vybrané období
 let FM_FONT_B64 = null;
 let FM_FORCE_ID = null;  // ID verze, kterou chceme načíst místo nejnovější
-let FM_RETURN_TO = null; // odkud jsme do formuláře přišli
-let FM_EDIT_HDR  = null;      // načtená verze (null = formulář otevřený normálně)
-let FM_EDIT_MODE = 'update';  // 'update' = aktualizovat načtenou, 'new' = založit novou
+let FM_EDIT_HDR = null;   // načtená verze (null = zakládá se nová)
 let FM_HIST = null;      // seznam všech uložených verzí (hlavičky)
+let FM_SKIP_PREFILL = false;  // zakládáme čistý formulář, nepředvyplňovat
 
 function fmNorm(n){ return normName(String(n||'')).toLowerCase().replace(/\s+/g,' ').trim(); }
 function fmF(v){ return Math.round(v||0).toLocaleString('cs-CZ') + ' Kč'; }
@@ -6420,11 +6431,7 @@ function fmZalohaSum(jmeno, mesic, rok){
   return sum;
 }
 
-function fmReset(){
-  document.getElementById('fm-month').value = '';
-  document.getElementById('fm-rok').value   = '';
-  fmRender();
-}
+function fmReset(){ fmShowList(); }
 
 function fmDraftKey(rok, mesic, jmeno){ return rok + '_' + mesic + '|' + jmeno; }
 function fmGetDraft(rok, mesic, jmeno){
@@ -6444,13 +6451,16 @@ function fmRender(){
   if (!wrap) return;
 
   var hide = function(){
-    badge.style.display = 'none';
+    if (badge) badge.textContent = '';
     note.style.display  = 'none';
     saveBt.style.display = 'none';
     var pg = document.getElementById('fm-progress');
     if (pg) pg.style.display = 'none';
     fmSetEdit(null);
   };
+
+  var t0 = document.getElementById('fm-period-title');
+  if (t0) t0.textContent = (mesic && rok) ? (mesic + ' ' + rok).toUpperCase() : '—';
 
   if (!mesic || !rok){
     FM_ROWS = [];
@@ -6568,8 +6578,10 @@ function fmRender(){
   wrap.innerHTML = html;
   FM_ROWS.forEach(function(r, i){ fmPaintRow(i); });
 
-  badge.textContent   = mesic + ' ' + rok;
-  badge.style.display = 'block';
+  var title = document.getElementById('fm-period-title');
+  if (title) title.textContent = (mesic + ' ' + rok).toUpperCase();
+  if (badge) badge.textContent = FM_ROWS.length + ' barberů' +
+             (nxt ? ' · zálohy z ' + nxt.mesic + ' ' + nxt.rok : '');
   note.style.display  = 'block';
   saveBt.style.display = 'flex';
   document.getElementById('fm-note-zaloha').textContent = zalLabel;
@@ -6579,7 +6591,12 @@ function fmRender(){
   fmRecalcAll();
   fmStatus('');
   if (!FM_FORCE_ID) fmSetEdit(null);
-  fmPrefill(mesic, rok);
+  if (FM_SKIP_PREFILL){
+    FM_SKIP_PREFILL = false;
+    fmStatus('Nový formulář pro <strong>' + mesic + ' ' + rok + '</strong>. Uložením vznikne nová verze.', 'ok');
+  } else {
+    fmPrefill(mesic, rok);
+  }
 }
 
 // Předvyplní formulář z uložené verze (poslední, nebo konkrétní přes FM_FORCE_ID)
@@ -6631,7 +6648,7 @@ async function fmPrefill(mesic, rok){
   if (force){
     fmSetEdit(hdr);
     fmStatus('Načtena <strong>verze ' + hdr.verze + '</strong> z ' + datum +
-             '. Uložením se tahle verze aktualizuje — nebo přepni volbu nahoře na nový formulář.', 'ok');
+             '. Uložením se tahle verze aktualizuje.', 'ok');
   } else {
     fmStatus('Předvyplněno z <strong>verze ' + hdr.verze + '</strong> (uloženo ' + datum +
              '). Změny se uloží jako nová verze.', 'ok');
@@ -6667,33 +6684,20 @@ function fmInput(i, field, el){
   if (field !== 'poznamka') fmRecalcAll();
 }
 
-// ── Režim ukládání po načtení historické verze ──
+// ── Načtená verze se uložením vždy aktualizuje ──
 function fmSetEdit(hdr){
-  FM_EDIT_HDR  = hdr || null;
-  FM_EDIT_MODE = 'update';
+  FM_EDIT_HDR = hdr || null;
   fmPaintEditBar();
-}
-
-function fmEditMode(m){
-  FM_EDIT_MODE = (m === 'new') ? 'new' : 'update';
-  fmPaintEditBar();
-  if (FM_EDIT_MODE === 'new')
-    fmStatus('Uložení vytvoří <strong>novou verzi</strong>. Načtená verze zůstane v historii beze změny.', 'ok');
-  else
-    fmStatus('Uložení <strong>aktualizuje verzi ' + (FM_EDIT_HDR ? FM_EDIT_HDR.verze : '') +
-             '</strong>. Nová verze nevznikne.', 'ok');
 }
 
 // ID verze, která se má aktualizovat (null = zakládá se nová)
 function fmEditTarget(){
-  return (FM_EDIT_HDR && FM_EDIT_MODE === 'update') ? FM_EDIT_HDR.id : null;
+  return FM_EDIT_HDR ? FM_EDIT_HDR.id : null;
 }
 
 function fmPaintEditBar(){
   var bar = document.getElementById('fm-editbar');
   var btn = document.getElementById('fm-save-btn');
-  var upd = document.getElementById('fm-opt-update');
-  var nw  = document.getElementById('fm-opt-new');
 
   if (!FM_EDIT_HDR){
     if (bar) bar.style.display = 'none';
@@ -6706,30 +6710,18 @@ function fmPaintEditBar(){
     return;
   }
 
+  var h = FM_EDIT_HDR;
   if (bar){
-    bar.style.display = 'block';
-    var h = FM_EDIT_HDR;
+    bar.style.display = 'flex';
     document.getElementById('fm-edit-verze').textContent = h.verze;
     document.getElementById('fm-edit-info').textContent =
-      ' · ' + h.mesic + ' ' + h.rok + ' · uložena ' + new Date(h.created_at).toLocaleDateString('cs-CZ');
+      '· ' + h.mesic + ' ' + h.rok + ' · uložena ' + new Date(h.created_at).toLocaleDateString('cs-CZ');
   }
-
-  var aktual = (FM_EDIT_MODE === 'update');
-  if (upd) upd.classList.toggle('on', aktual);
-  if (nw)  nw.classList.toggle('on', !aktual);
-
   if (btn){
-    if (aktual){
-      btn.innerHTML = '💾 AKTUALIZOVAT A ULOŽIT';
-      btn.style.borderColor = 'rgba(155,111,212,0.45)';
-      btn.style.background  = 'rgba(155,111,212,0.14)';
-      btn.style.color       = '#9B6FD4';
-    } else {
-      btn.innerHTML = '💾 ULOŽIT JAKO NOVÝ';
-      btn.style.borderColor = 'rgba(217,107,90,0.4)';
-      btn.style.background  = 'rgba(217,107,90,0.12)';
-      btn.style.color       = '#D96B5A';
-    }
+    btn.innerHTML = '💾 AKTUALIZOVAT A ULOŽIT';
+    btn.style.borderColor = 'rgba(155,111,212,0.45)';
+    btn.style.background  = 'rgba(155,111,212,0.14)';
+    btn.style.color       = '#9B6FD4';
   }
 }
 
@@ -6811,7 +6803,7 @@ function fmRecalcAll(){
   }
 }
 
-// ═══ PŘECHOD Z VÝPLAT DO FORMULÁŘE A ZPĚT ═══
+// ═══ NAVIGACE: SEZNAM ↔ FORMULÁŘ ═══
 
 // Tlačítko ve Výplatách se ukáže jen tomu, kdo má na formulář právo
 function fmSyncVyplatyButton(){
@@ -6824,46 +6816,38 @@ function fmSyncVyplatyButton(){
 }
 
 function fmOpenFromVyplaty(){
-  FM_RETURN_TO = 'vyplaty';
-
-  // převezmi období z filtru Výplat, pokud je vybrané
-  var m = document.getElementById('vp-month');
-  var r = document.getElementById('vp-rok');
-  if (m && r && m.value && r.value){
-    var fm = document.getElementById('fm-month');
-    var fr = document.getElementById('fm-rok');
-    if (fm && fr){ fm.value = m.value; fr.value = r.value; }
-  }
-
   show('formular');
-  setTimeout(fmSyncBackBar, 60);
 }
 
 function fmBackToVyplaty(){
-  FM_RETURN_TO = null;
-  fmSyncBackBar();
   show('vyplaty');
 }
 
-function fmSyncBackBar(){ /* formulář je dostupný jen z Výplat, zpět je vidět vždy */ }
-
-// ═══ HISTORIE VERZÍ ═══
-
-// Přepnutí mezi formulářem a historií
-function fmShowHistory(){
-  document.getElementById('fm-form-view').style.display = 'none';
-  document.getElementById('fm-history-view').style.display = 'block';
-  var v = document.getElementById('view-formular');
-  if (v) v.scrollIntoView({ behavior:'smooth', block:'start' });
-  fmLoadObdobi(true).then(fmRenderHistory);
+// Vstup do záložky — vždy seznam formulářů
+function fmEnterTab(){
+  fmShowList();
 }
 
-function fmBackToForm(){
-  document.getElementById('fm-history-view').style.display = 'none';
-  document.getElementById('fm-form-view').style.display = 'block';
+function fmShowList(){
+  var l = document.getElementById('fm-list-view');
+  var f = document.getElementById('fm-form-view');
+  if (l) l.style.display = 'block';
+  if (f) f.style.display = 'none';
+  var v = document.getElementById('view-formular');
+  if (v) v.scrollIntoView({ behavior:'smooth', block:'start' });
+  fmLoadObdobi(true).then(fmRenderPeriods);
+}
+
+function fmShowForm(){
+  var l = document.getElementById('fm-list-view');
+  var f = document.getElementById('fm-form-view');
+  if (l) l.style.display = 'none';
+  if (f) f.style.display = 'block';
   var v = document.getElementById('view-formular');
   if (v) v.scrollIntoView({ behavior:'smooth', block:'start' });
 }
+
+// ═══ SEZNAM OBDOBÍ ═══
 
 // Načte hlavičky všech uložených formulářů
 async function fmLoadObdobi(force){
@@ -6881,105 +6865,219 @@ async function fmLoadObdobi(force){
   return FM_HIST;
 }
 
-// Seznam všech verzí seřazený podle data
-function fmRenderHistory(){
-  var list = document.getElementById('fm-hv-list');
-  var cnt  = document.getElementById('fm-hv-count');
-  if (!list) return;
+// Seskupí verze podle období, nejnovější období nahoře
+function fmGroupPeriods(){
+  if (!FM_HIST || !FM_HIST.length) return [];
+  var grp = {};
+  FM_HIST.forEach(function(f){
+    var k = f.rok + '_' + f.mesic;
+    if (!grp[k]) grp[k] = { key:k, rok:f.rok, mesic:f.mesic, verze:[] };
+    grp[k].verze.push(f);
+  });
+  var out = Object.keys(grp).map(function(k){
+    var g = grp[k];
+    g.verze.sort(function(a,b){ return b.verze - a.verze; });
+    g.posledni = g.verze[0];
+    return g;
+  });
+  out.sort(function(a,b){
+    if (a.rok !== b.rok) return b.rok - a.rok;
+    return FM_MESICE.indexOf(b.mesic) - FM_MESICE.indexOf(a.mesic);
+  });
+  return out;
+}
+
+function fmRenderPeriods(){
+  var box = document.getElementById('fm-periods');
+  var cnt = document.getElementById('fm-lv-count');
+  if (!box) return;
 
   if (FM_HIST === null){
     if (cnt) cnt.textContent = '';
-    list.innerHTML = '<div class="card"><div style="padding:40px;text-align:center;color:var(--muted);font-size:13px">' +
-      '<div style="font-size:28px;margin-bottom:10px">⚠️</div>Historii se nepodařilo načíst.' +
+    box.innerHTML = '<div class="card"><div style="padding:40px;text-align:center;color:var(--muted);font-size:13px">' +
+      '<div style="font-size:28px;margin-bottom:10px">⚠️</div>Formuláře se nepodařilo načíst.' +
       '<div style="font-size:12px;margin-top:6px;color:var(--muted2)">Pokud tabulky ještě nejsou v databázi, spusť SQL skript.</div></div></div>';
     return;
   }
 
-  if (!FM_HIST.length){
+  var obdobi = fmGroupPeriods();
+  if (!obdobi.length){
     if (cnt) cnt.textContent = '';
-    list.innerHTML = '<div class="card"><div style="padding:48px;text-align:center;color:var(--muted);font-size:13px">' +
-      '<div style="font-size:32px;margin-bottom:12px">🗂</div>Zatím nebyl uložen žádný formulář' +
-      '<div style="font-size:12px;margin-top:6px;color:var(--muted2)">Vyplň formulář a ulož ho — objeví se tady</div></div></div>';
+    box.innerHTML = '<div class="card"><div style="padding:52px;text-align:center;color:var(--muted);font-size:13px">' +
+      '<div style="font-size:34px;margin-bottom:12px">🗂</div>' +
+      '<div style="font-family:\'Syne\',sans-serif;font-size:15px;color:var(--text)">Zatím tu není žádný formulář</div>' +
+      '<div style="font-size:12px;margin-top:7px">Začni tlačítkem <strong style="color:#D96B5A">+ Nový měsíc</strong> nahoře</div></div></div>';
     return;
   }
 
-  // nejnovější verze v rámci každého období (kvůli štítku)
-  var maxVerze = {};
-  FM_HIST.forEach(function(f){
-    var k = f.rok + '_' + f.mesic;
-    if (!maxVerze[k] || f.verze > maxVerze[k]) maxVerze[k] = f.verze;
-  });
+  var verziCelkem = FM_HIST.length;
+  if (cnt) cnt.textContent = obdobi.length + (obdobi.length === 1 ? ' období' : ' období') +
+                             ' · ' + verziCelkem + ' verzí celkem';
 
-  var razeno = FM_HIST.slice().sort(function(a, b){
-    return new Date(b.created_at) - new Date(a.created_at);
-  });
-
-  if (cnt) cnt.textContent = razeno.length + ' uložených verzí · seřazeno od nejnovější';
-  var hint = document.getElementById('fm-hv-adminhint');
-  if (hint) hint.style.display = (USER_ROLE === 'admin') ? 'block' : 'none';
-
-  var html = '<div class="card" style="border-top:3px solid #D96B5A;padding-top:22px;">';
-  var lastDay = null;
-
-  razeno.forEach(function(f){
-    var d   = new Date(f.created_at);
-    var day = d.toLocaleDateString('cs-CZ', { day:'numeric', month:'long', year:'numeric' });
-
-    if (day !== lastDay){
-      lastDay = day;
-      html += '<div style="display:flex;align-items:center;gap:12px;margin:22px 0 12px;">' +
-        '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2.5px;color:var(--muted)">' +
-        day.toUpperCase() + '</span>' +
-        '<span style="flex:1;height:1px;background:var(--border2)"></span></div>';
-    }
-
-    var nej = (f.verze === maxVerze[f.rok + '_' + f.mesic]);
-
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;border:1px solid ' +
-        (nej ? 'rgba(217,107,90,0.35)' : 'var(--border)') + ';border-radius:12px;margin-bottom:9px;background:' +
-        (nej ? 'rgba(217,107,90,0.04)' : 'transparent') + ';flex-wrap:wrap;transition:border-color 0.2s">' +
-
-      '<div style="min-width:0;flex:1">' +
-        '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">' +
-          '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:19px;letter-spacing:1.5px;color:var(--text)">' +
-            f.mesic.toUpperCase() + ' ' + f.rok + '</span>' +
-          '<span style="font-size:12px;font-weight:700;color:#D96B5A">verze ' + f.verze + '</span>' +
-          (nej ? '<span style="font-size:9px;letter-spacing:1.5px;color:#D96B5A;border:1px solid rgba(217,107,90,0.4);border-radius:20px;padding:2px 9px">NEJNOVĚJŠÍ</span>' : '') +
-          (f.odeslano_at ? '<span style="font-size:9px;letter-spacing:1.5px;color:var(--pos);border:1px solid var(--border2);border-radius:20px;padding:2px 9px">✉ ODESLÁNO</span>' : '') +
-          (function(){
-            var np = f.pocet_vyplaceno || 0, ce = f.pocet_radku || 0;
-            if (!ce) return '';
-            var hotovo = (np === ce);
-            return '<span style="font-size:9px;letter-spacing:1.5px;padding:2px 9px;border-radius:20px;border:1px solid ' +
-              (hotovo ? 'rgba(93,184,122,0.45);color:#5DB87A' : 'var(--border2);color:var(--muted)') + '">' +
-              (hotovo ? '✓ VŠE VYPLACENO' : np + '/' + ce + ' VYPLACENO') + '</span>';
-          })() +
-        '</div>' +
-        '<div style="font-size:11px;color:var(--muted);margin-top:5px">' +
-          d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}) +
-          (f.vytvoril ? ' · ' + f.vytvoril : '') +
-          ' · ' + (f.pocet_radku || 0) + ' barberů' +
-          (f.upraveno_at ? ' · ✏️ upraveno ' + new Date(f.upraveno_at).toLocaleDateString('cs-CZ') +
-            (f.upravil ? ' (' + f.upravil + ')' : '') : '') + '</div>' +
-      '</div>' +
-
-      '<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">' +
-        '<div style="text-align:right">' +
-          '<div style="font-size:9px;letter-spacing:2px;color:var(--muted)">VYPLATIT</div>' +
-          '<div style="font-family:\'Inter\',sans-serif;font-weight:700;font-size:16px;color:var(--gold)">' + fmF(f.celkem_vyplatit) + '</div>' +
-        '</div>' +
-        '<button onclick="fmHistLoad(' + f.id + ')" style="padding:10px 20px;border-radius:9px;border:1px solid rgba(217,107,90,0.45);background:rgba(217,107,90,0.14);color:#D96B5A;font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;transition:all 0.2s" onmouseover="this.style.background=\'rgba(217,107,90,0.25)\'" onmouseout="this.style.background=\'rgba(217,107,90,0.14)\'">↥ Načíst</button>' +
-        (USER_ROLE === 'admin'
-          ? '<button onclick="fmHistDelete(' + f.id + ')" title="Smazat verzi" style="padding:10px 13px;border-radius:9px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap;transition:all 0.2s" onmouseover="this.style.color=\'var(--neg)\';this.style.borderColor=\'var(--neg)\'" onmouseout="this.style.color=\'var(--muted)\';this.style.borderColor=\'var(--border2)\'">🗑</button>'
-          : '') +
-      '</div></div>';
-  });
-
-  html += '</div>';
-  list.innerHTML = html;
+  box.innerHTML = '<div class="card" style="border-top:3px solid #D96B5A;padding-top:20px">' +
+    obdobi.map(fmPeriodHtml).join('') + '</div>';
 }
 
-// Načte konkrétní verzi do formuláře a přepne zpátky
+function fmPeriodHtml(g){
+  var p = g.posledni;
+  var d = new Date(p.created_at);
+  var np = p.pocet_vyplaceno || 0, ce = p.pocet_radku || 0;
+  var hotovo = (ce > 0 && np === ce);
+  var vic = g.verze.length > 1;
+
+  var stav = !ce ? '' :
+    '<span style="font-size:9px;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;border:1px solid ' +
+    (hotovo ? 'rgba(93,184,122,0.5);color:#3E9E63;background:rgba(93,184,122,0.10)'
+            : 'rgba(217,107,90,0.4);color:#D96B5A') + '">' +
+    (hotovo ? '✓ VŠE VYPLACENO' : np + '/' + ce + ' VYPLACENO') + '</span>';
+
+  return '<div style="border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">' +
+
+    // hlavička období
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;flex-wrap:wrap">' +
+      '<div style="min-width:0;flex:1">' +
+        '<div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap">' +
+          '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;letter-spacing:2px;color:var(--text)">' +
+            g.mesic.toUpperCase() + ' ' + g.rok + '</span>' + stav +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:5px">' +
+          'Poslední verze ' + p.verze + ' · ' + d.toLocaleDateString('cs-CZ') + ' ' +
+          d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}) +
+          (p.vytvoril ? ' · ' + p.vytvoril : '') + ' · ' + ce + ' barberů' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">' +
+        '<div style="text-align:right">' +
+          '<div style="font-size:9px;letter-spacing:2px;color:var(--muted)">VYPLATIT</div>' +
+          '<div style="font-family:\'Inter\',sans-serif;font-weight:700;font-size:16px;color:var(--gold)">' + fmF(p.celkem_vyplatit) + '</div>' +
+        '</div>' +
+        '<button onclick="fmHistLoad(' + p.id + ')" style="padding:10px 20px;border-radius:9px;border:1px solid rgba(217,107,90,0.45);background:rgba(217,107,90,0.14);color:#D96B5A;font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s" onmouseover="this.style.background=\'rgba(217,107,90,0.25)\'" onmouseout="this.style.background=\'rgba(217,107,90,0.14)\'">↥ Otevřít</button>' +
+        (vic
+          ? '<button onclick="fmTogglePeriod(\'' + g.key + '\')" id="fm-pv-btn-' + g.key + '" style="padding:10px 14px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:\'Syne\',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">' +
+            g.verze.length + ' verzí ▾</button>'
+          : '') +
+        (USER_ROLE === 'admin'
+          ? '<button onclick="fmDeletePeriod(\'' + g.key + '\')" title="Smazat celé období" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;transition:all 0.2s;flex-shrink:0" onmouseover="this.style.color=\'var(--neg)\';this.style.borderColor=\'var(--neg)\';this.style.background=\'rgba(217,107,90,0.10)\'" onmouseout="this.style.color=\'var(--muted)\';this.style.borderColor=\'var(--border2)\';this.style.background=\'transparent\'">✕</button>'
+          : '') +
+      '</div>' +
+    '</div>' +
+
+    // rozbalené verze
+    '<div id="fm-pv-' + g.key + '" style="display:none;border-top:1px solid var(--border);background:rgba(0,0,0,0.03);padding:12px 18px">' +
+      g.verze.map(function(f, i){
+        var fd = new Date(f.created_at);
+        var fnp = f.pocet_vyplaceno || 0, fce = f.pocet_radku || 0;
+        return '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;' +
+            (i ? 'border-top:1px solid var(--border);' : '') + 'flex-wrap:wrap">' +
+          '<div style="font-size:12px;color:var(--text)">' +
+            '<strong>Verze ' + f.verze + '</strong>' +
+            (i === 0 ? ' <span style="font-size:9px;letter-spacing:1.5px;color:#D96B5A">· NEJNOVĚJŠÍ</span>' : '') +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
+              fd.toLocaleDateString('cs-CZ') + ' ' + fd.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}) +
+              (f.vytvoril ? ' · ' + f.vytvoril : '') + ' · ' + fnp + '/' + fce + ' vyplaceno' +
+              (f.upraveno_at ? ' · ✏️ upraveno ' + new Date(f.upraveno_at).toLocaleDateString('cs-CZ') : '') +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:12px">' +
+            '<span style="font-weight:700;font-size:13px;color:var(--gold)">' + fmF(f.celkem_vyplatit) + '</span>' +
+            '<button onclick="fmHistLoad(' + f.id + ')" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">↥ Načíst</button>' +
+            (USER_ROLE === 'admin'
+              ? '<button onclick="fmHistDelete(' + f.id + ')" title="Smazat verzi" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;cursor:pointer" onmouseover="this.style.color=\'var(--neg)\';this.style.borderColor=\'var(--neg)\'" onmouseout="this.style.color=\'var(--muted)\';this.style.borderColor=\'var(--border2)\'">🗑</button>'
+              : '') +
+          '</div></div>';
+      }).join('') +
+    '</div>' +
+  '</div>';
+}
+
+function fmTogglePeriod(key){
+  var el = document.getElementById('fm-pv-' + key);
+  var bt = document.getElementById('fm-pv-btn-' + key);
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (bt) bt.innerHTML = bt.innerHTML.replace(open ? '▴' : '▾', open ? '▾' : '▴');
+}
+
+// ═══ NOVÝ MĚSÍC ═══
+
+function fmNewOpen(){
+  var m = document.getElementById('fm-newmodal');
+  if (!m) return;
+  document.getElementById('fm-new-month').value = '';
+  document.getElementById('fm-new-rok').value   = String(new Date().getFullYear());
+  fmNewCheck();
+  m.style.display = 'flex';
+  m.onclick = function(e){ if (e.target === m) fmNewClose(); };
+}
+
+function fmNewClose(){
+  var m = document.getElementById('fm-newmodal');
+  if (m) m.style.display = 'none';
+}
+
+// Reaguje hned při výběru — na potvrzení se nečeká
+function fmNewCheck(){
+  var mesic = document.getElementById('fm-new-month').value;
+  var rok   = parseInt(document.getElementById('fm-new-rok').value, 10);
+  var warn  = document.getElementById('fm-new-warn');
+  var go    = document.getElementById('fm-new-go');
+  var load  = document.getElementById('fm-new-load');
+
+  if (!mesic || !rok){
+    warn.style.display = 'none';
+    load.style.display = 'none';
+    go.disabled = true;
+    go.style.opacity = '0.45';
+    go.textContent = 'Vytvořit';
+    return;
+  }
+
+  go.disabled = false;
+  go.style.opacity = '1';
+
+  var existujici = (FM_HIST || []).filter(function(f){ return f.rok === rok && f.mesic === mesic; });
+  if (!existujici.length){
+    warn.style.display = 'none';
+    load.style.display = 'none';
+    go.textContent = 'Vytvořit';
+    return;
+  }
+
+  existujici.sort(function(a,b){ return b.verze - a.verze; });
+  var p = existujici[0];
+  warn.innerHTML = '⚠️ <strong>' + mesic + ' ' + rok + '</strong> už má ' + existujici.length +
+    (existujici.length === 1 ? ' verzi' : (existujici.length < 5 ? ' verze' : ' verzí')) +
+    '. Nejnovější je verze ' + p.verze + ' z ' + new Date(p.created_at).toLocaleDateString('cs-CZ') +
+    '.<br>Můžeš ji načíst a upravit, nebo založit další verzi vedle ní.';
+  warn.style.display = 'block';
+  load.style.display = 'block';
+  load.dataset.id = p.id;
+  go.textContent = 'Založit další verzi';
+}
+
+function fmNewGo(mode){
+  var mesic = document.getElementById('fm-new-month').value;
+  var rok   = parseInt(document.getElementById('fm-new-rok').value, 10);
+  if (!mesic || !rok) return;
+  fmNewClose();
+
+  if (mode === 'load'){
+    var id = parseInt(document.getElementById('fm-new-load').dataset.id, 10);
+    if (id) { fmHistLoad(id); return; }
+  }
+
+  // čistý formulář pro dané období
+  document.getElementById('fm-month').value = mesic;
+  document.getElementById('fm-rok').value   = String(rok);
+  FM_FORCE_ID = null;
+  FM_SKIP_PREFILL = true;
+  fmShowForm();
+  fmRender();
+}
+
+// ═══ NAČTENÍ KONKRÉTNÍ VERZE ═══
+
 function fmHistLoad(id){
   if (!FM_HIST) return;
   var f = FM_HIST.find(function(x){ return x.id === id; });
@@ -6988,12 +7086,28 @@ function fmHistLoad(id){
   document.getElementById('fm-month').value = f.mesic;
   document.getElementById('fm-rok').value   = String(f.rok);
   FM_FORCE_ID = id;
-  fmBackToForm();
+  fmShowForm();
   fmRender();
 }
 
+// Načte jednu konkrétní verzi včetně řádků
+async function fmFetchVerze(id){
+  try {
+    var token = await getAuthToken();
+    var h = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token };
+    var res = await fetch(SUPA_URL + '/rest/v1/formular_vyplaty?id=eq.' + id, { headers: h });
+    if (!res.ok) return null;
+    var rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) return null;
+    var hdr = rows[0];
+    var rres = await fetch(SUPA_URL + '/rest/v1/formular_vyplaty_radky?formular_id=eq.' + id + '&order=poradi.asc', { headers: h });
+    hdr.radky = rres.ok ? await rres.json() : [];
+    return hdr;
+  } catch(e){ console.warn('[FORMULÁŘ] verze:', e); return null; }
+}
 
-// Smazání verze — potvrzení, pak DELETE (RLS pustí jen admina)
+// ═══ MAZÁNÍ VERZE ═══
+
 function fmHistDelete(id){
   if (!FM_HIST) return;
   var f = FM_HIST.find(function(x){ return x.id === id; });
@@ -7020,10 +7134,49 @@ function fmHistDelete(id){
           throw new Error('Databáze mazání odmítla — chybí oprávnění. Spustil jsi skript formular_delete.sql?');
 
         FM_HIST = FM_HIST.filter(function(x){ return x.id !== id; });
-        fmRenderHistory();
+        fmRenderPeriods();
         fmToast('Verze smazána: ' + popis, true);
       } catch(e){
         console.error('[FORMULÁŘ] mazání:', e);
+        fmToast('Smazání selhalo: ' + (e.message || e), false);
+      }
+    }
+  );
+}
+
+// Smazání celého období včetně všech jeho verzí
+function fmDeletePeriod(key){
+  if (!FM_HIST) return;
+  var verze = FM_HIST.filter(function(f){ return (f.rok + '_' + f.mesic) === key; });
+  if (!verze.length) return;
+
+  var g = verze[0];
+  var pocet = verze.length;
+  var slovo = pocet === 1 ? 'verze' : (pocet < 5 ? 'verze' : 'verzí');
+
+  fmConfirm(
+    'Smazat celé období?',
+    '<strong>' + g.mesic + ' ' + g.rok + '</strong><br><br>Smaže se ' +
+    (pocet === 1 ? 'jediná uložená verze' : '<strong>všech ' + pocet + ' ' + slovo + '</strong>') +
+    ' i se všemi řádky barberů. Období zmizí ze seznamu a nejde to vzít zpět.',
+    async function(){
+      try {
+        var token = await getAuthToken();
+        var ids = verze.map(function(f){ return f.id; }).join(',');
+        var res = await fetch(SUPA_URL + '/rest/v1/formular_vyplaty?id=in.(' + ids + ')', {
+          method: 'DELETE',
+          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation' }
+        });
+        if (!res.ok) throw new Error(await res.text());
+        var smazano = await res.json().catch(function(){ return []; });
+        if (Array.isArray(smazano) && smazano.length === 0)
+          throw new Error('Databáze mazání odmítla — chybí oprávnění. Spustil jsi skript formular_delete.sql?');
+
+        FM_HIST = FM_HIST.filter(function(f){ return (f.rok + '_' + f.mesic) !== key; });
+        fmRenderPeriods();
+        fmToast('Smazáno: ' + g.mesic + ' ' + g.rok + ' (' + pocet + ' ' + slovo + ')', true);
+      } catch(e){
+        console.error('[FORMULÁŘ] mazání období:', e);
         fmToast('Smazání selhalo: ' + (e.message || e), false);
       }
     }
@@ -7037,7 +7190,7 @@ function fmConfirm(nadpis, text, onOk){
 
   var ov = document.createElement('div');
   ov.id = 'fm-confirm';
-  ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);' +
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);' +
                      'display:flex;align-items:center;justify-content:center;padding:24px;';
   ov.innerHTML =
     '<div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;max-width:440px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">' +
@@ -7058,29 +7211,13 @@ function fmConfirm(nadpis, text, onOk){
 // Krátká hláška v rohu
 function fmToast(msg, ok){
   var t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:10000;' +
+  t.style.cssText = 'position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:10002;' +
     'padding:13px 22px;border-radius:11px;font-size:13px;font-family:\'Inter\',sans-serif;max-width:90vw;' +
     'box-shadow:0 10px 34px rgba(0,0,0,0.3);transition:opacity 0.3s;' +
     (ok ? 'background:rgba(93,184,122,0.95);color:#07240f;' : 'background:rgba(217,107,90,0.95);color:#fff;');
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function(){ t.style.opacity = '0'; setTimeout(function(){ t.remove(); }, 320); }, 3400);
-}
-
-// Načte jednu konkrétní verzi včetně řádků
-async function fmFetchVerze(id){
-  try {
-    var token = await getAuthToken();
-    var h = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token };
-    var res = await fetch(SUPA_URL + '/rest/v1/formular_vyplaty?id=eq.' + id, { headers: h });
-    if (!res.ok) return null;
-    var rows = await res.json();
-    if (!Array.isArray(rows) || !rows.length) return null;
-    var hdr = rows[0];
-    var rres = await fetch(SUPA_URL + '/rest/v1/formular_vyplaty_radky?formular_id=eq.' + id + '&order=poradi.asc', { headers: h });
-    hdr.radky = rres.ok ? await rres.json() : [];
-    return hdr;
-  } catch(e){ console.warn('[FORMULÁŘ] verze:', e); return null; }
 }
 
 // ═══ UKLÁDÁNÍ + ODESLÁNÍ ═══
@@ -7101,8 +7238,6 @@ function fmStatus(msg, kind){
 
 // Načte poslední uloženou verzi za období — pro badge i předvyplnění
 async function fmLoadHistory(mesic, rok){
-  var badge = document.getElementById('fm-hist-badge');
-  if (badge) badge.style.display = 'none';
   FM_LAST = null;
   try {
     var token = await getAuthToken();
@@ -7120,14 +7255,6 @@ async function fmLoadHistory(mesic, rok){
     hdr.radky = rres.ok ? await rres.json() : [];
     FM_LAST = hdr;
 
-    if (badge){
-      var d = new Date(hdr.created_at);
-      badge.innerHTML = 'Verze ' + hdr.verze + ' · ' +
-        d.toLocaleDateString('cs-CZ') + ' ' + d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}) +
-        (hdr.vytvoril ? ' · ' + hdr.vytvoril : '') +
-        (hdr.odeslano_at ? ' · ✉ odesláno' : '');
-      badge.style.display = 'block';
-    }
     return hdr;
   } catch(e){ console.warn('[FORMULÁŘ] historie:', e); return null; }
 }
@@ -7274,6 +7401,7 @@ async function fmSave(){
                ' barberů · celkem k vyplacení <strong>' + fmF(totV) + '</strong>.', 'ok');
       FM_HIST = null;
       await fmLoadHistory(mesic, rok);
+      fmLoadObdobi(true);
       return;   // úklid tlačítka řeší finally
     }
 
@@ -7332,6 +7460,7 @@ async function fmSave(){
     await fmLoadHistory(mesic, rok);
     FM_HIST = null;   // historie se načte znovu při dalším otevření
     fmSetEdit(hdr);   // další uložení už aktualizuje tuhle novou verzi
+    fmLoadObdobi(true);
 
   } catch(err){
     console.error('[FORMULÁŘ] uložení selhalo:', err);
