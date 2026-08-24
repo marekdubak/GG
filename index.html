@@ -2250,17 +2250,35 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 .fm-chk-lbl{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;font-weight:600;}
 .fm-chk-txt{letter-spacing:0.5px;transition:color .18s;}
-.fm-paid .fm-chk-txt{color:#5DB87A;}
-.fm-unpaid .fm-chk-txt{color:var(--muted);}
-.fm-tbl tbody tr.fm-paid{background:rgba(93,184,122,0.06);}
-.fm-tbl tbody tr.fm-paid:hover{background:rgba(93,184,122,0.11);}
-.fm-tbl tbody tr.fm-paid .fm-name::before{content:'✓ ';color:#5DB87A;font-weight:700;}
+.fm-paid .fm-chk-txt{color:#3E9E63;font-weight:700;}
+.fm-unpaid .fm-chk-txt{color:#D96B5A;font-weight:600;}
+.fm-tbl tbody tr.fm-paid{background:rgba(93,184,122,0.16);box-shadow:inset 3px 0 0 #5DB87A;}
+.fm-tbl tbody tr.fm-paid:hover{background:rgba(93,184,122,0.24);}
+.fm-tbl tbody tr.fm-paid .fm-name{color:#2F7F4E;}
+.fm-tbl tbody tr.fm-paid .fm-name::before{content:'✓ ';color:#3E9E63;font-weight:700;}
 .fm-progress{
   display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:13px 16px;
   border:1px solid var(--border2);border-radius:11px;background:var(--bg3);font-size:12px;
 }
 .fm-progress-bar{flex:1;min-width:120px;height:7px;border-radius:5px;background:var(--border);overflow:hidden;}
 .fm-progress-fill{height:100%;background:#5DB87A;border-radius:5px;transition:width .3s;}
+.fm-opt{
+  display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border-radius:10px;
+  border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:all .18s;
+}
+.fm-opt:hover{border-color:rgba(155,111,212,0.45);}
+.fm-opt.on{border-color:#9B6FD4;background:rgba(155,111,212,0.10);}
+.fm-opt-dot{
+  width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);
+  flex-shrink:0;margin-top:2px;position:relative;transition:all .18s;
+}
+.fm-opt.on .fm-opt-dot{border-color:#9B6FD4;}
+.fm-opt.on .fm-opt-dot::after{
+  content:'';position:absolute;inset:3px;border-radius:50%;background:#9B6FD4;
+}
+.fm-opt-t{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.4;}
+.fm-opt.on .fm-opt-t{color:#9B6FD4;}
+.fm-opt-d{font-size:11px;color:var(--muted);line-height:1.5;margin-top:3px;}
 </style>
 
 <div class="view" id="view-formular" data-tab="formular">
@@ -2321,6 +2339,28 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
       <button id="fm-save-btn" onclick="fmSave()" style="display:none;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;border:1px solid rgba(217,107,90,0.4);background:rgba(217,107,90,0.12);color:#D96B5A;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;">
       💾 ULOŽIT
       </button>
+    </div>
+    <div id="fm-editbar" style="display:none;margin-bottom:16px;padding:14px 16px;border:1px solid rgba(155,111,212,0.35);background:rgba(155,111,212,0.06);border-radius:12px;">
+      <div style="font-size:12px;color:#9B6FD4;font-weight:700;margin-bottom:3px">
+        ✏️ Načtena verze <span id="fm-edit-verze">—</span><span id="fm-edit-info" style="color:var(--muted);font-weight:400"></span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Vyber, co se má stát při uložení:</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">
+        <div class="fm-opt on" id="fm-opt-update" onclick="fmEditMode('update')">
+          <div class="fm-opt-dot"></div>
+          <div>
+            <div class="fm-opt-t">Aktualizovat tento formulář</div>
+            <div class="fm-opt-d">Změny se zapíšou do načtené verze. Nová verze nevznikne.</div>
+          </div>
+        </div>
+        <div class="fm-opt" id="fm-opt-new" onclick="fmEditMode('new')">
+          <div class="fm-opt-dot"></div>
+          <div>
+            <div class="fm-opt-t">Uložit jako nový formulář</div>
+            <div class="fm-opt-d">Vznikne nová verze, historická zůstane zachovaná.</div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="tbl-wrap" id="fm-table-wrap">
       <div class="fm-empty">
@@ -6355,6 +6395,8 @@ let FM_LAST  = null; // poslední uložená verze za vybrané období
 let FM_FONT_B64 = null;
 let FM_FORCE_ID = null;  // ID verze, kterou chceme načíst místo nejnovější
 let FM_RETURN_TO = null; // odkud jsme do formuláře přišli
+let FM_EDIT_HDR  = null;      // načtená verze (null = formulář otevřený normálně)
+let FM_EDIT_MODE = 'update';  // 'update' = aktualizovat načtenou, 'new' = založit novou
 let FM_HIST = null;      // seznam všech uložených verzí (hlavičky)
 
 function fmNorm(n){ return normName(String(n||'')).toLowerCase().replace(/\s+/g,' ').trim(); }
@@ -6407,6 +6449,7 @@ function fmRender(){
     saveBt.style.display = 'none';
     var pg = document.getElementById('fm-progress');
     if (pg) pg.style.display = 'none';
+    fmSetEdit(null);
   };
 
   if (!mesic || !rok){
@@ -6535,6 +6578,7 @@ function fmRender(){
 
   fmRecalcAll();
   fmStatus('');
+  if (!FM_FORCE_ID) fmSetEdit(null);
   fmPrefill(mesic, rok);
 }
 
@@ -6585,8 +6629,9 @@ async function fmPrefill(mesic, rok){
 
   var datum = new Date(hdr.created_at).toLocaleDateString('cs-CZ');
   if (force){
+    fmSetEdit(hdr);
     fmStatus('Načtena <strong>verze ' + hdr.verze + '</strong> z ' + datum +
-             '. Můžeš ji upravit — uložením vznikne nová verze, tahle zůstane v historii.', 'ok');
+             '. Uložením se tahle verze aktualizuje — nebo přepni volbu nahoře na nový formulář.', 'ok');
   } else {
     fmStatus('Předvyplněno z <strong>verze ' + hdr.verze + '</strong> (uloženo ' + datum +
              '). Změny se uloží jako nová verze.', 'ok');
@@ -6620,6 +6665,72 @@ function fmInput(i, field, el){
   FM_DRAFT[key][field] = el.value;
 
   if (field !== 'poznamka') fmRecalcAll();
+}
+
+// ── Režim ukládání po načtení historické verze ──
+function fmSetEdit(hdr){
+  FM_EDIT_HDR  = hdr || null;
+  FM_EDIT_MODE = 'update';
+  fmPaintEditBar();
+}
+
+function fmEditMode(m){
+  FM_EDIT_MODE = (m === 'new') ? 'new' : 'update';
+  fmPaintEditBar();
+  if (FM_EDIT_MODE === 'new')
+    fmStatus('Uložení vytvoří <strong>novou verzi</strong>. Načtená verze zůstane v historii beze změny.', 'ok');
+  else
+    fmStatus('Uložení <strong>aktualizuje verzi ' + (FM_EDIT_HDR ? FM_EDIT_HDR.verze : '') +
+             '</strong>. Nová verze nevznikne.', 'ok');
+}
+
+// ID verze, která se má aktualizovat (null = zakládá se nová)
+function fmEditTarget(){
+  return (FM_EDIT_HDR && FM_EDIT_MODE === 'update') ? FM_EDIT_HDR.id : null;
+}
+
+function fmPaintEditBar(){
+  var bar = document.getElementById('fm-editbar');
+  var btn = document.getElementById('fm-save-btn');
+  var upd = document.getElementById('fm-opt-update');
+  var nw  = document.getElementById('fm-opt-new');
+
+  if (!FM_EDIT_HDR){
+    if (bar) bar.style.display = 'none';
+    if (btn){
+      btn.innerHTML = '💾 ULOŽIT';
+      btn.style.borderColor = 'rgba(217,107,90,0.4)';
+      btn.style.background  = 'rgba(217,107,90,0.12)';
+      btn.style.color       = '#D96B5A';
+    }
+    return;
+  }
+
+  if (bar){
+    bar.style.display = 'block';
+    var h = FM_EDIT_HDR;
+    document.getElementById('fm-edit-verze').textContent = h.verze;
+    document.getElementById('fm-edit-info').textContent =
+      ' · ' + h.mesic + ' ' + h.rok + ' · uložena ' + new Date(h.created_at).toLocaleDateString('cs-CZ');
+  }
+
+  var aktual = (FM_EDIT_MODE === 'update');
+  if (upd) upd.classList.toggle('on', aktual);
+  if (nw)  nw.classList.toggle('on', !aktual);
+
+  if (btn){
+    if (aktual){
+      btn.innerHTML = '💾 AKTUALIZOVAT A ULOŽIT';
+      btn.style.borderColor = 'rgba(155,111,212,0.45)';
+      btn.style.background  = 'rgba(155,111,212,0.14)';
+      btn.style.color       = '#9B6FD4';
+    } else {
+      btn.innerHTML = '💾 ULOŽIT JAKO NOVÝ';
+      btn.style.borderColor = 'rgba(217,107,90,0.4)';
+      btn.style.background  = 'rgba(217,107,90,0.12)';
+      btn.style.color       = '#D96B5A';
+    }
+  }
 }
 
 // ── Zaškrtnutí "vyplaceno" ──
@@ -6847,7 +6958,9 @@ function fmRenderHistory(){
         '<div style="font-size:11px;color:var(--muted);margin-top:5px">' +
           d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}) +
           (f.vytvoril ? ' · ' + f.vytvoril : '') +
-          ' · ' + (f.pocet_radku || 0) + ' barberů</div>' +
+          ' · ' + (f.pocet_radku || 0) + ' barberů' +
+          (f.upraveno_at ? ' · ✏️ upraveno ' + new Date(f.upraveno_at).toLocaleDateString('cs-CZ') +
+            (f.upravil ? ' (' + f.upravil + ')' : '') : '') + '</div>' +
       '</div>' +
 
       '<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">' +
@@ -7100,8 +7213,9 @@ async function fmSave(){
   if (!mesic || !rok || !FM_ROWS.length) return;
 
   var orig = btn.innerHTML;
+  var editId = fmEditTarget();
   btn.disabled = true;
-  btn.innerHTML = '⏳ Ukládám…';
+  btn.innerHTML = editId ? '⏳ Aktualizuji…' : '⏳ Ukládám…';
   fmStatus('');
 
   try {
@@ -7132,7 +7246,38 @@ async function fmSave(){
       };
     });
 
-    // 1) hlavička — verzi dopočítá databáze
+    // ── A) Přepsání existující verze ──
+    if (editId){
+      var pres = await fetch(SUPA_URL + '/rest/v1/rpc/formular_prepsat', {
+        method: 'POST', headers: hdrs,
+        body: JSON.stringify({
+          p_id: editId,
+          p_pocet_radku: radky.length,
+          p_celkem_k_vyplate: Math.round(totK),
+          p_celkem_vyplatit: Math.round(totV),
+          p_pocet_vyplaceno: nPaid,
+          p_suma_vyplaceno: Math.round(sPaid),
+          p_radky: radky
+        })
+      });
+      if (!pres.ok){
+        var perr = await pres.text();
+        if (/formular_prepsat|PGRST202|does not exist/i.test(perr))
+          throw new Error('Funkce pro aktualizaci není v databázi — spusť skript formular_prepsani.sql.');
+        throw new Error(perr);
+      }
+      var upraveno = await pres.json().catch(function(){ return null; });
+      var vz = (upraveno && upraveno.verze) ? upraveno.verze : '';
+
+      btn.innerHTML = '✓ AKTUALIZOVÁNO';
+      fmStatus('<strong>Verze ' + vz + '</strong> aktualizována · ' + radky.length +
+               ' barberů · celkem k vyplacení <strong>' + fmF(totV) + '</strong>.', 'ok');
+      FM_HIST = null;
+      await fmLoadHistory(mesic, rok);
+      return;   // úklid tlačítka řeší finally
+    }
+
+    // ── B) Nová verze ──
     var hres = await fetch(SUPA_URL + '/rest/v1/formular_vyplaty', {
       method: 'POST', headers: hdrs,
       body: JSON.stringify([{
@@ -7186,13 +7331,14 @@ async function fmSave(){
 
     await fmLoadHistory(mesic, rok);
     FM_HIST = null;   // historie se načte znovu při dalším otevření
+    fmSetEdit(hdr);   // další uložení už aktualizuje tuhle novou verzi
 
   } catch(err){
     console.error('[FORMULÁŘ] uložení selhalo:', err);
     var msg = String(err.message || err);
     if (/relation .* does not exist|PGRST20\d/.test(msg))
       msg = 'Tabulky formuláře ještě nejsou v databázi — spusť SQL skript formular_setup.sql.';
-    fmStatus('Uložení selhalo: ' + msg, 'err');
+    fmStatus((editId ? 'Aktualizace selhala: ' : 'Uložení selhalo: ') + msg, 'err');
     btn.innerHTML = orig;
   } finally {
     btn.disabled = false;
