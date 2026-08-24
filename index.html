@@ -2236,6 +2236,31 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 }
 .fm-tbl tbody tr.fm-total-row:hover{background:transparent;}
 .fm-empty{padding:56px 24px;text-align:center;color:var(--muted);}
+.fm-chk-cell{text-align:center;white-space:nowrap;}
+.fm-chk{
+  appearance:none;-webkit-appearance:none;width:22px;height:22px;border-radius:6px;
+  border:1.5px solid var(--border2);background:var(--bg);cursor:pointer;position:relative;
+  transition:all .18s;vertical-align:middle;flex-shrink:0;
+}
+.fm-chk:hover{border-color:rgba(93,184,122,0.6);}
+.fm-chk:checked{background:#5DB87A;border-color:#5DB87A;}
+.fm-chk:checked::after{
+  content:'';position:absolute;left:7px;top:3px;width:5px;height:10px;
+  border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg);
+}
+.fm-chk-lbl{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;font-weight:600;}
+.fm-chk-txt{letter-spacing:0.5px;transition:color .18s;}
+.fm-paid .fm-chk-txt{color:#5DB87A;}
+.fm-unpaid .fm-chk-txt{color:var(--muted);}
+.fm-tbl tbody tr.fm-paid{background:rgba(93,184,122,0.06);}
+.fm-tbl tbody tr.fm-paid:hover{background:rgba(93,184,122,0.11);}
+.fm-tbl tbody tr.fm-paid .fm-name::before{content:'✓ ';color:#5DB87A;font-weight:700;}
+.fm-progress{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:13px 16px;
+  border:1px solid var(--border2);border-radius:11px;background:var(--bg3);font-size:12px;
+}
+.fm-progress-bar{flex:1;min-width:120px;height:7px;border-radius:5px;background:var(--border);overflow:hidden;}
+.fm-progress-fill{height:100%;background:#5DB87A;border-radius:5px;transition:width .3s;}
 </style>
 
 <div class="view" id="view-formular" data-tab="formular">
@@ -2303,11 +2328,17 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
         <div style="font-family:'Syne',sans-serif;font-size:15px">Vyber měsíc a rok v poli nahoře</div>
       </div>
     </div>
+    <div id="fm-progress" class="fm-progress" style="display:none;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--text);white-space:nowrap" id="fm-prog-label">—</div>
+      <div class="fm-progress-bar"><div class="fm-progress-fill" id="fm-prog-fill" style="width:0%"></div></div>
+      <div style="color:var(--muted);white-space:nowrap" id="fm-prog-sums">—</div>
+    </div>
     <div id="fm-status" style="display:none;margin-top:14px;padding:12px 16px;border-radius:10px;font-size:12px;line-height:1.6;"></div>
     <div id="fm-note" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.7;display:none;">
       ℹ️ <strong>K výplatě</strong> se bere ze záložky Výplaty (neměnné) &nbsp;·&nbsp;
       <strong id="fm-note-zaloha">Záloha</strong> je součet záloh následujícího měsíce (neměnné) &nbsp;·&nbsp;
-      <strong>Vyplatit</strong> = K výplatě − Korekce + Prémie
+      <strong>Vyplatit</strong> = K výplatě − Korekce + Prémie &nbsp;·&nbsp;
+      <strong>Vyplaceno</strong> zaškrtni, jakmile barberovi pošleš peníze — uloží se s formulářem
     </div>
   </div>
 
@@ -6355,7 +6386,7 @@ function fmReset(){
 
 function fmDraftKey(rok, mesic, jmeno){ return rok + '_' + mesic + '|' + jmeno; }
 function fmGetDraft(rok, mesic, jmeno){
-  return FM_DRAFT[fmDraftKey(rok, mesic, jmeno)] || { korekce:'', premie:'', poznamka:'' };
+  return FM_DRAFT[fmDraftKey(rok, mesic, jmeno)] || { korekce:'', premie:'', poznamka:'', vyplaceno:false };
 }
 
 // ── Hlavní render ──
@@ -6374,6 +6405,8 @@ function fmRender(){
     badge.style.display = 'none';
     note.style.display  = 'none';
     saveBt.style.display = 'none';
+    var pg = document.getElementById('fm-progress');
+    if (pg) pg.style.display = 'none';
   };
 
   if (!mesic || !rok){
@@ -6428,7 +6461,8 @@ function fmRender(){
       pobLabel: pobList.length > 1 ? pobList.join(' + ') : '',
       kvyplate: m.kvyplate,
       zaloha: nxt ? fmZalohaSum(m.jmeno, nxt.mesic, nxt.rok) : 0,
-      korekce: d.korekce, premie: d.premie, poznamka: d.poznamka
+      korekce: d.korekce, premie: d.premie, poznamka: d.poznamka,
+      vyplaceno: !!d.vyplaceno
     };
   }).sort(function(a,b){
     var oa = FM_POB_ORDER[a.pobPrimary] || 99, ob = FM_POB_ORDER[b.pobPrimary] || 99;
@@ -6445,6 +6479,7 @@ function fmRender(){
     '<th style="text-align:right">Prémie</th>' +
     '<th style="text-align:right">Vyplatit</th>' +
     '<th style="text-align:left;min-width:180px">Poznámky</th>' +
+    '<th style="text-align:center;min-width:120px">Vyplaceno</th>' +
     '</tr></thead><tbody>';
 
   var lastPob = null;
@@ -6452,7 +6487,7 @@ function fmRender(){
     if (r.pobPrimary !== lastPob){
       lastPob = r.pobPrimary;
       var col = FM_POB_COLOR[lastPob] || 'var(--muted)';
-      html += '<tr class="fm-pob-row"><td colspan="7" style="color:' + col + '">' +
+      html += '<tr class="fm-pob-row"><td colspan="8" style="color:' + col + '">' +
               '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + col + ';margin-right:9px;vertical-align:middle"></span>' +
               lastPob.toUpperCase() + '</td></tr>';
     }
@@ -6468,6 +6503,11 @@ function fmRender(){
       '<td class="fm-out" id="fm-out-' + i + '">' + fmF(r.kvyplate) + '</td>' +
       '<td><input class="fm-inp fm-inp-txt" type="text" placeholder="—" value="' + String(r.poznamka).replace(/"/g,'&quot;') + '" ' +
         'oninput="fmInput(' + i + ',\'poznamka\',this)"></td>' +
+      '<td class="fm-chk-cell"><label class="fm-chk-lbl">' +
+        '<input class="fm-chk" type="checkbox" id="fm-chk-' + i + '" ' + (r.vyplaceno ? 'checked ' : '') +
+        'onchange="fmToggle(' + i + ',this)">' +
+        '<span class="fm-chk-txt" id="fm-chk-txt-' + i + '">' + (r.vyplaceno ? 'Vyplaceno' : 'Nevyplaceno') + '</span>' +
+      '</label></td>' +
     '</tr>';
   });
 
@@ -6478,10 +6518,12 @@ function fmRender(){
     '<td class="fm-num" id="fm-tot-korekce">—</td>' +
     '<td class="fm-num" id="fm-tot-premie">—</td>' +
     '<td class="fm-out" id="fm-tot-vyplatit" style="font-size:15px">—</td>' +
-    '<td></td></tr>';
+    '<td></td>' +
+    '<td class="fm-chk-cell" id="fm-tot-vyplaceno" style="font-size:12px;color:var(--muted)">—</td></tr>';
 
   html += '</tbody></table>';
   wrap.innerHTML = html;
+  FM_ROWS.forEach(function(r, i){ fmPaintRow(i); });
 
   badge.textContent   = mesic + ' ' + rok;
   badge.style.display = 'block';
@@ -6522,16 +6564,17 @@ async function fmPrefill(mesic, rok){
     // při ručním načtení verze se rozpracované hodnoty přepíšou, jinak mají přednost
     if (!force){
       var d = fmGetDraft(rok, mesic, r.jmeno);
-      if (d.korekce !== '' || d.premie !== '' || d.poznamka !== '') return;
+      if (d.korekce !== '' || d.premie !== '' || d.poznamka !== '' || d.vyplaceno) return;
     }
     var saved = byName[fmNorm(r.jmeno)];
     if (!saved) return;
     r.korekce  = (saved.korekce_zalohy != null && Number(saved.korekce_zalohy) !== 0) ? String(saved.korekce_zalohy) : '';
     r.premie   = (saved.premie != null && Number(saved.premie) !== 0) ? String(saved.premie) : '';
-    r.poznamka = saved.poznamka || '';
+    r.poznamka  = saved.poznamka || '';
+    r.vyplaceno = !!saved.vyplaceno;
     if (force){
       var k = fmDraftKey(rok, mesic, r.jmeno);
-      FM_DRAFT[k] = { korekce: r.korekce, premie: r.premie, poznamka: r.poznamka };
+      FM_DRAFT[k] = { korekce: r.korekce, premie: r.premie, poznamka: r.poznamka, vyplaceno: r.vyplaceno };
     }
     zmena = true;
   });
@@ -6561,6 +6604,7 @@ function fmRepaintInputs(){
     if (kor) kor.value = r.korekce;
     if (pre) pre.value = r.premie;
     if (poz) poz.value = r.poznamka;
+    fmPaintRow(i);
   });
 }
 
@@ -6578,9 +6622,40 @@ function fmInput(i, field, el){
   if (field !== 'poznamka') fmRecalcAll();
 }
 
+// ── Zaškrtnutí "vyplaceno" ──
+function fmToggle(i, el){
+  if (!FM_ROWS[i]) return;
+  FM_ROWS[i].vyplaceno = !!el.checked;
+
+  var mesic = document.getElementById('fm-month').value;
+  var rok   = parseInt(document.getElementById('fm-rok').value, 10);
+  var key   = fmDraftKey(rok, mesic, FM_ROWS[i].jmeno);
+  if (!FM_DRAFT[key]) FM_DRAFT[key] = { korekce:'', premie:'', poznamka:'', vyplaceno:false };
+  FM_DRAFT[key].vyplaceno = !!el.checked;
+
+  fmPaintRow(i);
+  fmRecalcAll();
+}
+
+// Obarví řádek podle stavu
+function fmPaintRow(i){
+  var r = FM_ROWS[i];
+  if (!r) return;
+  var chk = document.getElementById('fm-chk-' + i);
+  var txt = document.getElementById('fm-chk-txt-' + i);
+  if (chk) chk.checked = !!r.vyplaceno;
+  if (txt) txt.textContent = r.vyplaceno ? 'Vyplaceno' : 'Nevyplaceno';
+  var tr = chk ? chk.closest('tr') : null;
+  if (tr){
+    tr.classList.toggle('fm-paid',  !!r.vyplaceno);
+    tr.classList.toggle('fm-unpaid', !r.vyplaceno);
+  }
+}
+
 // ── Vzorec: Vyplatit = K výplatě − Korekce + Prémie ──
 function fmRecalcAll(){
   var tK = 0, tZ = 0, tKor = 0, tPre = 0, tVyp = 0;
+  var nPaid = 0, sPaid = 0, sOpen = 0;
   FM_ROWS.forEach(function(r, i){
     var kor = parseFloat(String(r.korekce).replace(',','.')); if (!isFinite(kor)) kor = 0;
     var pre = parseFloat(String(r.premie ).replace(',','.')); if (!isFinite(pre)) pre = 0;
@@ -6591,6 +6666,7 @@ function fmRecalcAll(){
       cell.style.color = vyp < 0 ? 'var(--neg)' : 'var(--gold)';
     }
     tK += r.kvyplate; tZ += r.zaloha; tKor += kor; tPre += pre; tVyp += vyp;
+    if (r.vyplaceno){ nPaid++; sPaid += vyp; } else { sOpen += vyp; }
   });
   var set = function(id, val){ var e = document.getElementById(id); if (e) e.textContent = fmF(val); };
   set('fm-tot-kvyplate', tK);
@@ -6598,6 +6674,30 @@ function fmRecalcAll(){
   set('fm-tot-korekce',  tKor);
   set('fm-tot-premie',   tPre);
   set('fm-tot-vyplatit', tVyp);
+
+  // stav vyplácení
+  var celkem = FM_ROWS.length;
+  var tot = document.getElementById('fm-tot-vyplaceno');
+  if (tot){
+    tot.textContent = nPaid + ' / ' + celkem;
+    tot.style.color = (celkem && nPaid === celkem) ? '#5DB87A' : 'var(--muted)';
+  }
+
+  var prog = document.getElementById('fm-progress');
+  if (prog){
+    if (!celkem){ prog.style.display = 'none'; return; }
+    prog.style.display = 'flex';
+    var pct = Math.round(nPaid / celkem * 100);
+    var lbl = document.getElementById('fm-prog-label');
+    var fil = document.getElementById('fm-prog-fill');
+    var sum = document.getElementById('fm-prog-sums');
+    if (lbl) lbl.innerHTML = (nPaid === celkem)
+      ? '✓ Všichni vyplaceni'
+      : nPaid + ' z ' + celkem + ' vyplaceno';
+    if (fil) fil.style.width = pct + '%';
+    if (sum) sum.innerHTML = 'Vyplaceno <strong style="color:#5DB87A">' + fmF(sPaid) +
+      '</strong> &nbsp;·&nbsp; zbývá <strong style="color:var(--text)">' + fmF(sOpen) + '</strong>';
+  }
 }
 
 // ═══ PŘECHOD Z VÝPLAT DO FORMULÁŘE A ZPĚT ═══
@@ -6735,6 +6835,14 @@ function fmRenderHistory(){
           '<span style="font-size:12px;font-weight:700;color:#D96B5A">verze ' + f.verze + '</span>' +
           (nej ? '<span style="font-size:9px;letter-spacing:1.5px;color:#D96B5A;border:1px solid rgba(217,107,90,0.4);border-radius:20px;padding:2px 9px">NEJNOVĚJŠÍ</span>' : '') +
           (f.odeslano_at ? '<span style="font-size:9px;letter-spacing:1.5px;color:var(--pos);border:1px solid var(--border2);border-radius:20px;padding:2px 9px">✉ ODESLÁNO</span>' : '') +
+          (function(){
+            var np = f.pocet_vyplaceno || 0, ce = f.pocet_radku || 0;
+            if (!ce) return '';
+            var hotovo = (np === ce);
+            return '<span style="font-size:9px;letter-spacing:1.5px;padding:2px 9px;border-radius:20px;border:1px solid ' +
+              (hotovo ? 'rgba(93,184,122,0.45);color:#5DB87A' : 'var(--border2);color:var(--muted)') + '">' +
+              (hotovo ? '✓ VŠE VYPLACENO' : np + '/' + ce + ' VYPLACENO') + '</span>';
+          })() +
         '</div>' +
         '<div style="font-size:11px;color:var(--muted);margin-top:5px">' +
           d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}) +
@@ -6937,19 +7045,26 @@ async function fmBuildPDF(mesic, rok, verze){
     return [
       fmAscii(r.jmeno), fmAscii(r.pobPrimary),
       fmPdfNum(r.kvyplate), fmPdfNum(r.zaloha), fmPdfNum(kor), fmPdfNum(pre),
-      fmPdfNum(r.kvyplate - kor + pre), fmAscii(r.poznamka || '')
+      fmPdfNum(r.kvyplate - kor + pre), fmAscii(r.poznamka || ''),
+      r.vyplaceno ? 'ANO' : 'NE'
     ];
   });
 
   doc.autoTable({
     startY: 28,
-    head: [['Barber','Pobocka','K vyplate','Zaloha','Korekce','Premie','VYPLATIT','Poznamka']],
+    head: [['Barber','Pobocka','K vyplate','Zaloha','Korekce','Premie','VYPLATIT','Poznamka','Vyplaceno']],
     body: body,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [201,168,76], textColor: 20, fontStyle: 'bold' },
     columnStyles: {
       2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'},
-      5:{halign:'right'}, 6:{halign:'right', fontStyle:'bold'}
+      5:{halign:'right'}, 6:{halign:'right', fontStyle:'bold'}, 8:{halign:'center'}
+    },
+    didParseCell: function(d){
+      if (d.section === 'body' && d.column.index === 8){
+        d.cell.styles.fontStyle = 'bold';
+        d.cell.styles.textColor = (d.cell.raw === 'ANO') ? [60,150,90] : [170,170,170];
+      }
     },
     foot: [[
       'CELKEM (' + FM_ROWS.length + ')', '',
@@ -6960,7 +7075,8 @@ async function fmBuildPDF(mesic, rok, verze){
         var k = parseFloat(String(r.korekce).replace(',','.')); if(!isFinite(k)) k = 0;
         var p = parseFloat(String(r.premie ).replace(',','.')); if(!isFinite(p)) p = 0;
         return a + (r.kvyplate - k + p);
-      }, 0)), ''
+      }, 0)), '',
+      FM_ROWS.filter(function(r){ return r.vyplaceno; }).length + ' / ' + FM_ROWS.length
     ]],
     footStyles: { fillColor: [240,240,240], textColor: 20, fontStyle: 'bold' }
   });
@@ -7000,17 +7116,19 @@ async function fmSave(){
     };
 
     // souhrny
-    var totK = 0, totV = 0;
+    var totK = 0, totV = 0, nPaid = 0, sPaid = 0;
     var radky = FM_ROWS.map(function(r, i){
       var kor = parseFloat(String(r.korekce).replace(',','.')); if(!isFinite(kor)) kor = 0;
       var pre = parseFloat(String(r.premie ).replace(',','.')); if(!isFinite(pre)) pre = 0;
       var vyp = r.kvyplate - kor + pre;
       totK += r.kvyplate; totV += vyp;
+      if (r.vyplaceno){ nPaid++; sPaid += vyp; }
       return {
         poradi: i, jmeno: r.jmeno, pobocka: r.pobPrimary,
         k_vyplate: Math.round(r.kvyplate), zaloha: Math.round(r.zaloha),
         korekce_zalohy: kor, premie: pre, vyplatit: Math.round(vyp),
-        poznamka: (r.poznamka || '').trim() || null
+        poznamka: (r.poznamka || '').trim() || null,
+        vyplaceno: !!r.vyplaceno
       };
     });
 
@@ -7021,7 +7139,9 @@ async function fmSave(){
         rok: rok, mesic: mesic, vytvoril: email,
         pocet_radku: radky.length,
         celkem_k_vyplate: Math.round(totK),
-        celkem_vyplatit: Math.round(totV)
+        celkem_vyplatit: Math.round(totV),
+        pocet_vyplaceno: nPaid,
+        suma_vyplaceno: Math.round(sPaid)
       }])
     });
     if (!hres.ok) throw new Error(await hres.text());
