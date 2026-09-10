@@ -2135,8 +2135,11 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     <div id="banka-rok-badge" style="font-family:'Inter',sans-serif;font-size:11px;color:#E8840A;background:rgba(38,166,154,0.1);border:1px solid rgba(38,166,154,0.25);border-radius:20px;padding:6px 16px"></div>
   </div>
 
-  <!-- Přepínač podle jména (naplní se z databáze) -->
-  <div id="banka-switch" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+  <!-- Přepínač podle jména (naplní se z databáze) + tlačítko Nezaplacené platby -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div id="banka-switch" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    <button id="btn-nezaplaceno" onclick="openNezaplacenoPage()" style="font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:8px 16px;border-radius:99px;cursor:pointer;transition:all 0.2s;border:1px solid rgba(214,69,69,0.5);background:rgba(214,69,69,0.10);color:#e05c5c;">&#x26A0; Nezaplacené platby</button>
+  </div>
 
   <!-- Přepínač podle roku (naplní se z databáze) -->
   <div id="banka-year-switch" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:24px"></div>
@@ -3145,15 +3148,15 @@ async function loadAndApplyTabRights(userEmail) {
     } else {
       // No rights record found — admin gets all, reader gets defaults
       if (ADMIN_EMAILS.includes(userEmail)) {
-        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:true, tab_barberi:true, tab_cf:true, tab_banka:true, tab_formular:true };
+        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:true, tab_barberi:true, tab_cf:true, tab_banka:true, tab_formular:true, nezaplaceno_edit:false };
       } else {
-        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false, tab_banka:true, tab_formular:false };
+        USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false, tab_banka:true, tab_formular:false, nezaplaceno_edit:false };
       }
     }
   } catch(e) {
     console.warn('[RIGHTS] Failed to load tab rights:', e);
     // Fallback — show basic tabs
-    USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false, tab_banka:true, tab_formular:false };
+    USER_TAB_RIGHTS = { tab_report:true, tab_zalohy:true, tab_vyplaty:true, tab_mara:false, tab_barberi:true, tab_cf:false, tab_banka:true, tab_formular:false, nezaplaceno_edit:false };
   }
   applyTabRights();
 }
@@ -6098,6 +6101,153 @@ async function renderBanka() {
   }
 }
 
+// ── NEZAPLACENÉ PLATBY — samostatná stránka (list Nezaplaceno → tabulka nezaplaceno) ──
+var NEZAPLACENO_ROWS = [];      // aktuální data ze Supabase
+var NEZAPLACENO_DIRTY = {};     // id → nová hodnota ('ANO'/'NE') pro uložení
+
+function nezaplacenoCanEdit() {
+  // Právo se řídí VÝHRADNĚ zaškrtnutím "Nezaplaceno ✎" v adminu (user_tab_rights.nezaplaceno_edit)
+  return !!(USER_TAB_RIGHTS && USER_TAB_RIGHTS.nezaplaceno_edit === true);
+}
+
+function openNezaplacenoPage() {
+  var page = document.getElementById('nezaplaceno-page');
+  if (!page) return;
+  page.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  NEZAPLACENO_DIRTY = {};
+  renderNezaplaceno();
+}
+
+function closeNezaplacenoPage() {
+  var page = document.getElementById('nezaplaceno-page');
+  if (!page) return;
+  var dirtyCount = Object.keys(NEZAPLACENO_DIRTY).length;
+  if (dirtyCount > 0 && !confirm('Máš neuložené změny (' + dirtyCount + '). Opravdu odejít bez uložení?')) return;
+  page.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function renderNezaplaceno() {
+  var tbody = document.getElementById('nezaplaceno-tbody');
+  var totalEl = document.getElementById('nezaplaceno-total');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Načítám data…</td></tr>';
+  try {
+    var rows = await supaFetch('nezaplaceno', 'order=splatnost.asc');
+    if (!Array.isArray(rows) || rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Žádné nezaplacené platby — nahráj Excel přes admin panel.</td></tr>';
+      if (totalEl) totalEl.textContent = '—';
+      updateNezaplacenoSaveBtn();
+      return;
+    }
+    NEZAPLACENO_ROWS = rows;
+    drawNezaplacenoRows();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--neg);font-size:13px">Chyba: ' + e.message + '</td></tr>';
+    console.error('[NEZAPLACENO]', e);
+  }
+}
+
+function drawNezaplacenoRows() {
+  var tbody = document.getElementById('nezaplaceno-tbody');
+  var totalEl = document.getElementById('nezaplaceno-total');
+  if (!tbody) return;
+  var canEdit = nezaplacenoCanEdit();
+  var today = new Date(); today.setHours(0,0,0,0);
+  var sum = 0;
+  var html = NEZAPLACENO_ROWS.map(function(r){
+    var val = NEZAPLACENO_DIRTY.hasOwnProperty(r.id) ? NEZAPLACENO_DIRTY[r.id] : ((r.zaplaceno || 'NE').toUpperCase());
+    var zapl = val === 'ANO';
+    var overdue = false;
+    var splStr = '—';
+    if (r.splatnost) {
+      var d = new Date(r.splatnost + 'T00:00:00');
+      splStr = d.getDate() + '. ' + (d.getMonth()+1) + '. ' + d.getFullYear();
+      overdue = !zapl && d < today;
+    }
+    if (!zapl && r.castka) sum += r.castka;
+    var rowStyle = zapl ? 'background:rgba(62,207,142,0.10);transition:background 0.4s'
+                 : (overdue ? 'background:rgba(214,69,69,0.07);transition:background 0.4s' : 'transition:background 0.4s');
+    var splColor = zapl ? 'var(--muted)' : (overdue ? '#e05c5c' : 'var(--text)');
+    var selStyle = 'font-family:\'Inter\',sans-serif;font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;cursor:' + (canEdit ? 'pointer' : 'not-allowed') + ';'
+      + 'border:1px solid ' + (zapl ? 'rgba(62,207,142,0.5)' : 'rgba(214,69,69,0.5)') + ';'
+      + 'background:' + (zapl ? 'rgba(62,207,142,0.14)' : 'rgba(214,69,69,0.10)') + ';'
+      + 'color:' + (zapl ? '#3ecf8e' : '#e05c5c') + ';';
+    var zaplCell;
+    if (canEdit) {
+      zaplCell = '<select onchange="nezaplacenoChange(' + r.id + ', this.value)" style="' + selStyle + '">'
+        + '<option value="NE"' + (!zapl ? ' selected' : '') + '>NE</option>'
+        + '<option value="ANO"' + (zapl ? ' selected' : '') + '>ANO</option>'
+        + '</select>';
+    } else {
+      zaplCell = zapl
+        ? '<span style="color:#3ecf8e;font-weight:700">ANO</span>'
+        : '<span style="color:#e05c5c;font-weight:700">NE</span>';
+    }
+    return '<tr style="' + rowStyle + '">'
+      + '<td style="text-align:left;color:' + splColor + ';font-weight:' + (overdue ? '700' : '400') + '">' + splStr + (overdue ? ' &#x26A0;' : '') + '</td>'
+      + '<td style="text-align:left">' + (r.popis || '—') + '</td>'
+      + '<td style="text-align:left;color:var(--muted)">' + (r.dodavatel || '—') + '</td>'
+      + '<td style="text-align:left;font-family:monospace;font-size:12px">' + (r.cislo_uctu || '—') + '</td>'
+      + '<td style="text-align:left;font-family:monospace;font-size:12px">' + (r.variabilni_symbol || '—') + '</td>'
+      + '<td style="text-align:left;color:var(--muted)">' + (r.za_mesic || '—') + '</td>'
+      + '<td style="font-weight:600">' + (r.castka != null ? fmt(r.castka) : '—') + '</td>'
+      + '<td style="text-align:center">' + zaplCell + '</td>'
+      + '</tr>';
+  }).join('');
+  tbody.innerHTML = html;
+  if (totalEl) totalEl.textContent = fmt(sum);
+  updateNezaplacenoSaveBtn();
+}
+
+function nezaplacenoChange(id, val) {
+  if (!nezaplacenoCanEdit()) { drawNezaplacenoRows(); return; }
+  var row = NEZAPLACENO_ROWS.find(function(r){ return r.id === id; });
+  var original = row ? (row.zaplaceno || 'NE').toUpperCase() : 'NE';
+  if (val === original) delete NEZAPLACENO_DIRTY[id];
+  else NEZAPLACENO_DIRTY[id] = val;
+  drawNezaplacenoRows();
+}
+
+function updateNezaplacenoSaveBtn() {
+  var btn = document.getElementById('nezaplaceno-save-btn');
+  if (!btn) return;
+  var dirtyCount = Object.keys(NEZAPLACENO_DIRTY).length;
+  btn.style.display = (nezaplacenoCanEdit() && dirtyCount > 0) ? 'inline-block' : 'none';
+  btn.textContent = '\uD83D\uDCBE Uložit' + (dirtyCount > 0 ? ' (' + dirtyCount + ')' : '');
+}
+
+async function saveNezaplaceno() {
+  if (!nezaplacenoCanEdit()) { alert('Nemáš právo měnit stav zaplacení.'); return; }
+  var btn = document.getElementById('nezaplaceno-save-btn');
+  var ids = Object.keys(NEZAPLACENO_DIRTY);
+  if (!ids.length) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Ukládám…'; }
+  try {
+    var token = await getAuthToken();
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      var res = await fetch(SUPA_URL + '/rest/v1/nezaplaceno?id=eq.' + id, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ zaplaceno: NEZAPLACENO_DIRTY[id] })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      // promítnout do lokálních dat
+      var row = NEZAPLACENO_ROWS.find(function(r){ return String(r.id) === String(id); });
+      if (row) row.zaplaceno = NEZAPLACENO_DIRTY[id];
+    }
+    NEZAPLACENO_DIRTY = {};
+    drawNezaplacenoRows();
+    if (btn) { btn.disabled = false; }
+  } catch(e) {
+    alert('Chyba při ukládání: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '\uD83D\uDCBE Uložit'; }
+    console.error('[NEZAPLACENO SAVE]', e);
+  }
+}
+
 // ── Přepínač osob ──
 function buildBankaSwitch(people) {
   var wrap = document.getElementById('banka-switch');
@@ -7476,5 +7626,57 @@ async function fmSave(){
 }
 
 </script>
+<!-- ════════════════════════════════════
+     STRÁNKA NEZAPLACENÉ PLATBY (fullscreen)
+════════════════════════════════════ -->
+<div id="nezaplaceno-page" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--bg);overflow-y:auto;">
+  <div style="max-width:1400px;margin:0 auto;padding:32px 24px 64px;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <button onclick="closeNezaplacenoPage()" style="font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 18px;border-radius:99px;cursor:pointer;border:1px solid var(--border2);background:var(--bg2);color:var(--muted);transition:all 0.2s;">&#x2190; Zpět</button>
+        <div>
+          <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Přehled</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:var(--text)">&#x26A0; NEZAPLACENÉ <span style="color:#e05c5c">PLATBY</span></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="text-align:right">
+          <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Nezaplaceno celkem</div>
+          <div id="nezaplaceno-total" style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;color:#e05c5c">—</div>
+        </div>
+        <button id="nezaplaceno-save-btn" onclick="saveNezaplaceno()" style="display:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:11px 26px;border-radius:99px;cursor:pointer;border:none;background:#3ecf8e;color:#0e0e0f;transition:all 0.2s;">&#x1F4BE; Uložit</button>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid #d64545;">
+      <div class="card-head">
+        <div>
+          <div class="card-sub" id="nezaplaceno-sub">Data z listu Nezaplaceno &middot; červeně = po splatnosti &middot; zeleně = zaplaceno</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left">Splatnost</th>
+              <th style="text-align:left">O co jde</th>
+              <th style="text-align:left">Dodavatel</th>
+              <th style="text-align:left">Číslo účtu</th>
+              <th style="text-align:left">VS</th>
+              <th style="text-align:left">Za měsíc</th>
+              <th>Částka</th>
+              <th style="text-align:center">Zaplaceno</th>
+            </tr>
+          </thead>
+          <tbody id="nezaplaceno-tbody">
+            <tr><td colspan="8" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Načítám data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
 </body>
 </html>
