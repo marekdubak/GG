@@ -2233,6 +2233,11 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 .fm-inp::-webkit-outer-spin-button,.fm-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .fm-inp[type=number]{-moz-appearance:textfield;}
 .fm-out{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;}
+.fm-sub-row td{
+  border-top:1px dashed var(--border2);border-bottom:1px solid var(--border2);
+  padding:10px;font-weight:700;font-size:13px;background:var(--bg3);
+}
+.fm-tbl tbody tr.fm-sub-row:hover{background:var(--bg3);}
 .fm-total-row td{
   border-top:2px solid var(--border2);border-bottom:none;padding:14px 10px;
   font-weight:700;font-size:14px;
@@ -6552,6 +6557,7 @@ const FM_POB_ORDER = { 'Záběhlice':1, 'Vršovice':2, 'Veleslavín':3 };
 const FM_POB_COLOR = { 'Záběhlice':'#C9A84C', 'Vršovice':'#5DB87A', 'Veleslavín':'#D96B5A' };
 
 let FM_ROWS  = [];   // aktuálně vykreslené řádky
+let FM_POB_GROUPS = []; // skupiny řádků podle pobočky (pro mezisoučty)
 let FM_DRAFT = {};   // rozpracované hodnoty: 'Rok_Měsíc|jméno' -> {korekce, premie, poznamka}
 let FM_LAST  = null; // poslední uložená verze za vybrané období
 let FM_FONT_B64 = null;
@@ -6686,14 +6692,31 @@ function fmRender(){
     '</tr></thead><tbody>';
 
   var lastPob = null;
+  FM_POB_GROUPS = [];
+  var fmSubRowHtml = function(g){
+    var gr = FM_POB_GROUPS[g];
+    var col = FM_POB_COLOR[gr.pob] || 'var(--muted)';
+    return '<tr class="fm-sub-row">' +
+      '<td style="font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:2px;color:' + col + '">CELKEM ' + gr.pob.toUpperCase() + ' (' + gr.indices.length + ')</td>' +
+      '<td class="fm-num" id="fm-sub-' + g + '-kvyplate">—</td>' +
+      '<td class="fm-num" id="fm-sub-' + g + '-zaloha" style="color:var(--muted)">—</td>' +
+      '<td class="fm-num" id="fm-sub-' + g + '-korekce">—</td>' +
+      '<td class="fm-num" id="fm-sub-' + g + '-premie">—</td>' +
+      '<td class="fm-out" id="fm-sub-' + g + '-vyplatit">—</td>' +
+      '<td></td>' +
+      '<td class="fm-chk-cell" id="fm-sub-' + g + '-vyplaceno" style="font-size:11px;color:var(--muted)">—</td></tr>';
+  };
   FM_ROWS.forEach(function(r, i){
     if (r.pobPrimary !== lastPob){
+      if (FM_POB_GROUPS.length) html += fmSubRowHtml(FM_POB_GROUPS.length - 1);
       lastPob = r.pobPrimary;
+      FM_POB_GROUPS.push({ pob: lastPob, indices: [] });
       var col = FM_POB_COLOR[lastPob] || 'var(--muted)';
       html += '<tr class="fm-pob-row"><td colspan="8" style="color:' + col + '">' +
               '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + col + ';margin-right:9px;vertical-align:middle"></span>' +
               lastPob.toUpperCase() + '</td></tr>';
     }
+    FM_POB_GROUPS[FM_POB_GROUPS.length - 1].indices.push(i);
     html += '<tr>' +
       '<td><span class="fm-name">' + r.jmeno + '</span>' +
         (r.pobLabel ? '<div class="fm-sub">' + r.pobLabel + '</div>' : '') + '</td>' +
@@ -6713,6 +6736,8 @@ function fmRender(){
       '</label></td>' +
     '</tr>';
   });
+
+  if (FM_POB_GROUPS.length) html += fmSubRowHtml(FM_POB_GROUPS.length - 1);
 
   html += '<tr class="fm-total-row">' +
     '<td style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:2px">CELKEM (' + FM_ROWS.length + ')</td>' +
@@ -6922,6 +6947,32 @@ function fmRecalcAll(){
     if (r.vyplaceno){ nPaid++; sPaid += vyp; } else { sOpen += vyp; }
   });
   var set = function(id, val){ var e = document.getElementById(id); if (e) e.textContent = fmF(val); };
+
+  // ── Mezisoučty podle pobočky ──
+  if (Array.isArray(FM_POB_GROUPS)){
+    FM_POB_GROUPS.forEach(function(gr, g){
+      var sK = 0, sZ = 0, sKor = 0, sPre = 0, sVyp = 0, sPaidN = 0;
+      gr.indices.forEach(function(i){
+        var r = FM_ROWS[i]; if (!r) return;
+        var kor = parseFloat(String(r.korekce).replace(',','.')); if (!isFinite(kor)) kor = 0;
+        var pre = parseFloat(String(r.premie ).replace(',','.')); if (!isFinite(pre)) pre = 0;
+        var vyp = r.kvyplate - kor + pre;
+        sK += r.kvyplate; sZ += r.zaloha; sKor += kor; sPre += pre; sVyp += vyp;
+        if (r.vyplaceno) sPaidN++;
+      });
+      set('fm-sub-' + g + '-kvyplate', sK);
+      set('fm-sub-' + g + '-zaloha',   sZ);
+      set('fm-sub-' + g + '-korekce',  sKor);
+      set('fm-sub-' + g + '-premie',   sPre);
+      set('fm-sub-' + g + '-vyplatit', sVyp);
+      var pc = document.getElementById('fm-sub-' + g + '-vyplaceno');
+      if (pc){
+        pc.textContent = sPaidN + ' / ' + gr.indices.length;
+        pc.style.color = (gr.indices.length && sPaidN === gr.indices.length) ? '#5DB87A' : 'var(--muted)';
+      }
+    });
+  }
+
   set('fm-tot-kvyplate', tK);
   set('fm-tot-zaloha',   tZ);
   set('fm-tot-korekce',  tKor);
