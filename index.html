@@ -2613,6 +2613,7 @@ async function loadAllData() {
 
   document.getElementById('app').style.opacity = '1';
   window._appReady = true;
+  await loadCfStatus();   // stav měsíců (Vyplněno) — potřebný pro výchozí období
   reportInitSelects(null);
   cfInitSelects(null);
   analyzaInitSelects(null);
@@ -3695,6 +3696,22 @@ function splitYearChange(prefix, applyFn, allowEmpty){ splitRefreshMonths(prefix
 // Cache dat aby se nefetchovalo opakovaně
 let RPT_RAW_CACHE = null;
 
+/* ═══ Výchozí období = posledních 6 měsíců se stavem "Vyplněno" ═══
+   Čte CF_STATUS_CACHE (tabulka cf_mesic_status). Jakmile přibude další
+   vyplněný měsíc, okno se při příštím načtení samo posune o měsíc dál. */
+function rptDefaultFilledRange(availableRM) {
+  const status = (typeof CF_STATUS_CACHE !== 'undefined' && CF_STATUS_CACHE) ? CF_STATUS_CACHE : {};
+  const filled = RPT_ALL_MESICE.filter(([m, r, mn]) => {
+    const rm = `${r}_${mn}`;
+    if (status[rm] !== true) return false;
+    return !availableRM || availableRM.has(rm) || r === 2026;
+  });
+  if (!filled.length) return null;
+  const last6 = filled.slice(-6);
+  const a = last6[0], b = last6[last6.length - 1];
+  return { from: rptKey(a[0], a[1]), to: rptKey(b[0], b[1]) };
+}
+
 // Inicializuj selecty po načtení dat (zavolá se z loadAllData)
 function reportInitSelects(availableRM) {
   const selFrom = document.getElementById('rpt-from');
@@ -3718,14 +3735,21 @@ function reportInitSelects(availableRM) {
     }
   }
 
-  // Předvolené období: Leden 2026 → Květen 2026 (pokud jsou data k dispozici)
-  const rptAvail = k => {
-    const e = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === k);
-    if (!e) return false;
-    return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
-  };
-  selFrom.value = rptAvail('Leden_2026')  ? 'Leden_2026'  : '';
-  selTo.value   = rptAvail('Červen_2026') ? 'Červen_2026' : (rptAvail('Květen_2026') ? 'Květen_2026' : '');
+  // Předvolené období: posledních 6 měsíců se stavem "Vyplněno" (auto-posun)
+  const defRange = rptDefaultFilledRange(availableRM);
+  if (defRange) {
+    selFrom.value = defRange.from;
+    selTo.value   = defRange.to;
+  } else {
+    // Fallback, když status měsíců není k dispozici
+    const rptAvail = k => {
+      const e = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === k);
+      if (!e) return false;
+      return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
+    };
+    selFrom.value = rptAvail('Leden_2026')  ? 'Leden_2026'  : '';
+    selTo.value   = rptAvail('Červen_2026') ? 'Červen_2026' : (rptAvail('Květen_2026') ? 'Květen_2026' : '');
+  }
 
   splitBuild('rpt-from', true); splitBuild('rpt-to', true);
   reportUpdateLabel();
@@ -3814,6 +3838,7 @@ async function renderReport() {
       RPT_RAW_CACHE = raw;
       // Inicializuj selecty s dostupnými měsíci
       const availRM = new Set(raw.map(r => r.rok_mesic).filter(Boolean));
+      await loadCfStatus();
       reportInitSelects(availRM);
       analyzaInitSelects(availRM);
     } catch(e) {
@@ -4530,14 +4555,22 @@ function cfInitSelects(availableRM) {
       lastAvail = key;
     }
   }
-  // Předvolené období: Leden 2026 → Květen 2026 (s fallbacky, pokud data nejsou)
-  const cfAvail = k => {
-    const e = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === k);
-    if (!e) return false;
-    return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
-  };
-  const defFrom = cfAvail('Leden_2026')  ? 'Leden_2026'  : (firstAvail);
-  const defTo   = cfAvail('Červen_2026') ? 'Červen_2026' : (cfAvail('Květen_2026') ? 'Květen_2026' : (lastAvail || defFrom));
+  // Předvolené období: posledních 6 měsíců se stavem "Vyplněno" (auto-posun)
+  const defRange = rptDefaultFilledRange(availableRM);
+  let defFrom, defTo;
+  if (defRange) {
+    defFrom = defRange.from;
+    defTo   = defRange.to;
+  } else {
+    // Fallback, když status měsíců není k dispozici
+    const cfAvail = k => {
+      const e = RPT_ALL_MESICE.find(([m,r]) => rptKey(m,r) === k);
+      if (!e) return false;
+      return !availableRM || availableRM.has(`${e[1]}_${e[2]}`);
+    };
+    defFrom = cfAvail('Leden_2026')  ? 'Leden_2026'  : (firstAvail);
+    defTo   = cfAvail('Červen_2026') ? 'Červen_2026' : (cfAvail('Květen_2026') ? 'Květen_2026' : (lastAvail || defFrom));
+  }
   if (defFrom) selFrom.value = defFrom;
   if (defTo)   selTo.value   = defTo;
   splitBuild('cf-from', false); splitBuild('cf-to', false);
@@ -4602,6 +4635,7 @@ async function renderCF() {
       }
       RPT_RAW_CACHE = raw;
       const availRM = new Set(raw.map(r => r.rok_mesic).filter(Boolean));
+      await loadCfStatus();
       cfInitSelects(availRM);
       reportInitSelects(availRM);
       analyzaInitSelects(availRM);
