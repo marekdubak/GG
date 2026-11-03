@@ -2629,6 +2629,18 @@ async function loadAllData() {
   window._rendered.banka = true;
   // CF si fetchuje data sama při otevření záložky
 
+  // Vykresli záložku, která je právě aktivní — např. uživatel s právem jen na CF
+  // (applyTabRights ji zobrazí ještě před načtením dat, kdy _appReady = false)
+  const _activeView = document.querySelector('.view.active');
+  const _activeId = _activeView ? _activeView.id.replace('view-', '') : null;
+  if (_activeId === 'cf') renderCF();
+  else if (_activeId === 'analyza') renderAnalyza();
+  else if (_activeId === 'formular') fmEnterTab();
+  else if (_activeId && window.init && window.init[_activeId] && !window._rendered[_activeId]) {
+    window.init[_activeId]();
+    window._rendered[_activeId] = true;
+  }
+
   // ── Poslední aktualizace dat ──
   try {
     const _tok2 = await getAuthToken();
