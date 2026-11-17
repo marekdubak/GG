@@ -49,6 +49,17 @@ function setupScrollReveal() {
     });
   }, { threshold: 0.08, rootMargin: '0px 0px -50px 0px' });
 
+  // Předem označit prvky ve VŠECH záložkách (i skrytých), aby se při prvním
+  // otevření záložky neukázaly a vzápětí neschovaly (= probliknutí).
+  document.querySelectorAll('.view:not(.active)').forEach(v => {
+    v.querySelectorAll(selectors.join(',')).forEach(el => {
+      if (!el.classList.contains('scroll-reveal')) {
+        el.classList.add('scroll-reveal');
+        el.classList.remove('in-view');
+      }
+    });
+  });
+
   // Find and tag all matching elements in active view
   const activeView = document.querySelector('.view.active');
   if (!activeView) return;
@@ -56,12 +67,11 @@ function setupScrollReveal() {
   activeView.querySelectorAll(selectors.join(',')).forEach(el => {
     if (!el.classList.contains('scroll-reveal')) {
       el.classList.add('scroll-reveal');
-      // Remove in-view so it can animate fresh
-      el.classList.remove('in-view');
-    } else {
-      // Re-animate: remove in-view, wait a frame, then re-observe
       el.classList.remove('in-view');
     }
+    // Už zobrazené prvky znovu neanimujeme (jinak obsah bliká při opakovaném spuštění).
+    // Nový průchod animace po přepnutí záložky zajišťuje show(), které .in-view odebere samo.
+    if (el.classList.contains('in-view')) return;
     _srObserver.observe(el);
   });
 
@@ -1007,6 +1017,41 @@ tr:hover td{background:rgba(201,168,76,0.025);}
 .zf-reset:hover{border-color:rgba(217,107,90,0.4);color:var(--neg);background:rgba(217,107,90,0.06);}
 .zf-select:disabled{opacity:0.45;cursor:not-allowed;}
 
+/* ── MÁRA — výběr roku v přehledu splátek ── */
+.mara-kpi-row{grid-template-columns:1.4fr 1fr 1fr;}
+.mara-months{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;}
+.mara-months .mm{display:inline-block;padding:4px 9px;border-radius:7px;background:rgba(217,107,90,0.12);color:var(--neg);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;}
+.mara-months .mm.ok{background:rgba(93,184,122,0.14);color:var(--pos);}
+.mara-last{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);}
+.mara-last b{color:var(--text);font-weight:600;}
+#view-mara .chart-grid-21{align-items:stretch;}
+.mara-vyp-card{display:flex;flex-direction:column;height:0;min-height:100%;box-sizing:border-box;}
+.mara-vyp-total{text-align:right;}
+.mara-vyp-total span{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.mara-vyp-total strong{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;color:var(--gold2);}
+.mara-vyp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;}
+@media(max-width:900px){.mara-vyp-card{height:auto;min-height:0;}.mara-vyp-scroll{max-height:420px;}}
+#view-mara .chart-grid-21 > .card:first-child{align-self:start;}
+.mara-vyp-scroll thead th{position:sticky;top:0;background:var(--bg2);z-index:1;}
+.mara-kontrola{margin-top:14px;padding:12px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Inter',sans-serif;font-size:12px;}
+.mara-kontrola.ok{background:rgba(93,184,122,0.10);color:var(--pos);}
+.mara-kontrola.bad{background:rgba(217,107,90,0.10);color:var(--neg);}
+.mara-kontrola b{font-family:'Syne',sans-serif;font-weight:600;}
+.mara-kontrola small{color:var(--muted);font-size:11px;}
+.mara-kpi-dluh .kpi-val{font-size:44px;}
+#view-mara tr.mara-row-open td{background:rgba(217,107,90,0.045);}
+#view-mara tr.mara-row-part td{background:rgba(232,168,48,0.06);}
+#view-mara .mara-pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-family:'Syne',sans-serif;font-weight:600;letter-spacing:0.3px;}
+#view-mara .mara-pill.ok{background:rgba(93,184,122,0.14);color:var(--pos);}
+#view-mara .mara-pill.part{background:rgba(232,168,48,0.16);color:#B8800F;}
+#view-mara .mara-pill.open{background:rgba(217,107,90,0.14);color:var(--neg);}
+#view-mara.mara-year-mode .mara-col-rok{display:none;}
+@media(max-width:900px){.mara-kpi-row{grid-template-columns:1fr !important;}.mara-kpi-dluh .kpi-val{font-size:36px;}}
+.mara-yr-seg{display:inline-flex;align-items:center;gap:2px;padding:3px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;flex-shrink:0;}
+.mara-yr-btn{padding:6px 14px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.5px;cursor:pointer;transition:all 0.18s;}
+.mara-yr-btn:hover{color:var(--text);}
+.mara-yr-btn.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.08),0 0 0 1px rgba(201,168,76,0.35);}
+
 /* login inputs light mode */
 .login-input{
   background:var(--bg3) !important;border:1px solid var(--border2) !important;
@@ -1817,8 +1862,8 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 ════════════════════════════════════ -->
 <div class="view" id="view-mara" data-tab="mara">
 
-  <!-- Filtr období -->
-  <div class="zalohy-filter" style="margin-bottom:16px;">
+  <!-- Filtr období — skryto (nahrazeno výběrem roku v Přehledu splátek) -->
+  <div class="zalohy-filter" style="margin-bottom:16px;display:none;">
     <span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap">📅 Období</span>
     <div class="zf-field" style="max-width:150px;">
       <label class="zf-label">Od — rok</label>
@@ -1850,26 +1895,37 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
   <!-- KPI summary -->
   <div class="sec">Marek — Přehled dluhu</div>
-  <div class="kpi-row kpi-row-3" style="margin-bottom:12px;">
-    <div class="kpi" style="--kpi-accent:#E8A830;">
+  <div class="kpi-row kpi-row-3 mara-kpi-row" style="margin-bottom:12px;">
+    <!-- skryto: Celková částka ke splácení -->
+    <div class="kpi" style="--kpi-accent:#E8A830;display:none;">
       <div class="kpi-label">Celková částka ke splácení</div>
       <div class="kpi-val sm" style="color:var(--gold2)" id="mara-celkem">—</div>
-      <div class="kpi-footer"><span class="kpi-sub">Součet všech splátek</span></div>
     </div>
-    <div class="kpi" style="--kpi-accent:var(--pos);">
+    <!-- skryto: Celkem zaplaceno -->
+    <div class="kpi" style="--kpi-accent:var(--pos);display:none;">
       <div class="kpi-label">Celkem zaplaceno</div>
       <div class="kpi-val sm" style="color:var(--pos)" id="mara-zaplaceno">—</div>
-      <div class="kpi-footer"><span class="badge up">✓ Uhrazeno</span></div>
     </div>
-    <div class="kpi" style="--kpi-accent:var(--neg);">
+
+    <div class="kpi mara-kpi-dluh" style="--kpi-accent:var(--neg);">
       <div class="kpi-label">⚠️ Aktuální dluh</div>
-      <div class="kpi-val sm" style="color:var(--neg)" id="mara-dluh">—</div>
+      <div class="kpi-val" style="color:var(--neg)" id="mara-dluh">—</div>
       <div class="kpi-footer"><span class="badge down">Zbývá uhradit</span></div>
+    </div>
+    <div class="kpi" style="--kpi-accent:#E8A830;">
+      <div class="kpi-label">📅 Neuhrazené splátky</div>
+      <div class="kpi-val sm" style="color:var(--gold2)" id="mara-kpi-neuhrazeno">—</div>
+      <div class="kpi-footer mara-months" id="mara-kpi-neuhrazeno-sub">—</div>
+    </div>
+    <div class="kpi" style="--kpi-accent:var(--pos);">
+      <div class="kpi-label">💰 Poslední výplata</div>
+      <div class="kpi-val sm" style="color:var(--pos)" id="mara-kpi-posledni">—</div>
+      <div class="kpi-footer mara-last" id="mara-kpi-posledni-sub">—</div>
     </div>
   </div>
 
-  <!-- Progress bar -->
-  <div class="card" style="margin-bottom:12px;padding:20px 24px;">
+  <!-- Progress bar — skryto -->
+  <div class="card" style="margin-bottom:12px;padding:20px 24px;display:none;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
       <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);">Průběh splácení</div>
       <div id="mara-pct-label" style="font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:var(--gold2);">—</div>
@@ -1888,16 +1944,20 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
 
     <!-- Tabulka splátek -->
     <div class="card">
-      <div class="card-head"><div><div class="card-title">📋 Přehled splátek</div><div class="card-sub">Měsíční splátky dluhu</div></div></div>
+      <div class="card-head" style="gap:12px;flex-wrap:wrap;">
+        <div><div class="card-title">📋 Přehled splátek</div><div class="card-sub" id="mara-yr-sub">Měsíční splátky dluhu</div></div>
+        <div class="mara-yr-seg" id="mara-yr-seg" role="tablist" aria-label="Rok"></div>
+      </div>
       <div class="tbl-wrap">
         <table>
           <thead>
             <tr>
-              <th style="text-align:left">Rok</th>
+              <th style="text-align:left" class="mara-col-rok">Rok</th>
               <th style="text-align:left">Období</th>
               <th>Částka</th>
               <th>Zaplaceno</th>
               <th>Zbývající dluh</th>
+              <th style="text-align:center">Stav</th>
             </tr>
           </thead>
           <tbody id="mara-splatky-tbody"></tbody>
@@ -1907,31 +1967,25 @@ footer{border-top:1px solid var(--border2);padding:20px 40px;display:flex;justif
     </div>
 
     <!-- Výplaty + Kontrola -->
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <div class="card">
-        <div class="card-head"><div><div class="card-title">💰 Výplaty</div><div class="card-sub">Přijaté platby</div></div></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="text-align:left">Datum</th>
-                <th>Částka</th>
-              </tr>
-            </thead>
-            <tbody id="mara-vyplaty-tbody"></tbody>
-          </table>
-        </div>
+    <div class="card mara-vyp-card">
+      <div class="card-head">
+        <div><div class="card-title">💰 Výplaty</div><div class="card-sub">Přijaté platby</div></div>
+        <div class="mara-vyp-total"><span>Celkem</span><strong id="mara-vyp-total">—</strong></div>
       </div>
-
-      <!-- Kontrola -->
-      <div class="card">
-        <div class="card-head"><div><div class="card-title">✅ Kontrola</div><div class="card-sub">Párování splátek a výplat</div></div></div>
-        <div class="tbl-wrap">
-          <table>
-            <tbody id="mara-kontrola-tbody"></tbody>
-          </table>
-        </div>
+      <div class="tbl-wrap mara-vyp-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left">Datum</th>
+              <th>Částka</th>
+            </tr>
+          </thead>
+          <tbody id="mara-vyplaty-tbody"></tbody>
+        </table>
       </div>
+      <!-- Kontrola — kompaktní lišta -->
+      <div class="mara-kontrola" id="mara-kontrola"></div>
+      <table style="display:none"><tbody id="mara-kontrola-tbody"></tbody></table>
     </div>
 
   </div>
@@ -4417,6 +4471,34 @@ function maraInitFilters() {
     sel.innerHTML = '<option value="">vše</option>' + mesice.map(m => `<option value="${m}">${m}</option>`).join('');
     sel.value = cur;
   });
+
+  maraMfInit(roky);
+}
+
+// ── Výběr roku pro tabulku "Přehled splátek" (výchozí 2026 = všech 12 měsíců roku) ──
+const MARA_MF_DEFAULT_ROK = 2026;
+let MARA_MF_ROK = MARA_MF_DEFAULT_ROK;   // null = všechny roky
+
+function maraMfInit(roky) {
+  const seg = document.getElementById('mara-yr-seg');
+  if (!seg) return;
+  const allRoky = [...new Set([...roky.map(Number), MARA_MF_DEFAULT_ROK])].filter(n => !isNaN(n)).sort((x,y) => x-y);
+  const btn = (val, label) => {
+    const on = (val === null ? MARA_MF_ROK === null : MARA_MF_ROK === val);
+    return `<button type="button" class="mara-yr-btn${on ? ' active' : ''}" onclick="maraMfSetRok(${val === null ? 'null' : val})">${label}</button>`;
+  };
+  seg.innerHTML = allRoky.map(r => btn(r, r)).join('') + btn(null, 'Vše');
+  const sub = document.getElementById('mara-yr-sub');
+  if (sub) sub.textContent = MARA_MF_ROK === null ? 'Měsíční splátky dluhu · všechny roky' : `Měsíční splátky dluhu · ${MARA_MF_ROK}`;
+}
+
+function maraMfSetRok(rok) {
+  MARA_MF_ROK = rok;
+  renderMara();
+}
+
+function maraMfGet() {
+  return { rok: MARA_MF_ROK };
 }
 
 function renderMara() {
@@ -4469,8 +4551,23 @@ function renderMara() {
   if(el('mara-prog-zaplaceno')) el('mara-prog-zaplaceno').textContent = '✓ Zaplaceno: ' + totalZaplaceno.toLocaleString('cs-CZ') + ' Kč';
   if(el('mara-prog-zbyva'))     el('mara-prog-zbyva').textContent = '⚠ Zbývá: ' + totalDluh.toLocaleString('cs-CZ') + ' Kč';
 
-  // Splátky rows
-  const splatkyRows = splatkyActive.map(r => {
+  const formatDatumCZ = (d) => {
+    if (!d) return '—';
+    const parts = d.split('-');
+    if (parts.length !== 3) return d;
+    return `${parseInt(parts[2])}. ${parseInt(parts[1])}. ${parts[0]}`;
+  };
+
+  // Splátky rows — jen zvolený rok (všech 12 měsíců)
+  const mf = maraMfGet();
+  const splatkyTable = splatkyActive.filter(r =>
+    (mf.rok === null || Number(r.rok) === mf.rok)
+  );
+  const tblCastka    = splatkyTable.reduce((s,r) => s + (r.castka || 0), 0);
+  const tblZaplaceno = splatkyTable.reduce((s,r) => s + (r.zaplaceno || 0), 0);
+  const tblDluh      = splatkyTable.reduce((s,r) => s + (r.zbyvajici_dluh ?? (r.castka - (r.zaplaceno || 0))), 0);
+
+  const splatkyRows = splatkyTable.length ? splatkyTable.map(r => {
     const zap = r.zaplaceno ?? 0;
     const zbyvaji = r.zbyvajici_dluh ?? (r.castka - zap);
     const zapStr = r.zaplaceno === null || r.zaplaceno === undefined
@@ -4479,44 +4576,55 @@ function renderMara() {
     const dluhStr = zbyvaji === 0
       ? `<span style="color:var(--pos)">0 Kč ✓</span>`
       : `<span style="color:var(--neg)">${zbyvaji.toLocaleString('cs-CZ')} Kč</span>`;
-    return `<tr>
-      <td style="color:var(--muted2)">${r.rok}</td>
-      <td style="text-align:left;color:var(--text)">${r.obdobi}</td>
+    const stav = zbyvaji === 0 ? 'ok' : (zap > 0 ? 'part' : 'open');
+    const stavLbl = {ok:'Uhrazeno', part:'Částečně', open:'Neuhrazeno'}[stav];
+    return `<tr class="${stav === 'open' ? 'mara-row-open' : stav === 'part' ? 'mara-row-part' : ''}">
+      <td style="color:var(--muted2)" class="mara-col-rok">${r.rok}</td>
+      <td style="text-align:left;color:var(--text);font-weight:500">${r.obdobi}</td>
       <td>${r.castka.toLocaleString('cs-CZ')} Kč</td>
       <td>${zapStr}</td>
       <td>${dluhStr}</td>
+      <td style="text-align:center"><span class="mara-pill ${stav}">${stavLbl}</span></td>
     </tr>`;
-  }).join('');
+  }).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:18px 14px;">Pro zvolený rok nejsou žádné splátky</td></tr>`;
   el('mara-splatky-tbody').innerHTML = splatkyRows;
 
   // Splátky tfoot
   el('mara-splatky-tfoot').innerHTML = `<tr style="border-top:1px solid var(--border);">
-    <td colspan="2" style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--text);padding:10px 14px;text-align:left;">CELKEM</td>
-    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--gold2);text-align:right;padding:10px 14px;">${totalCastka.toLocaleString('cs-CZ')} Kč</td>
-    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--pos);text-align:right;padding:10px 14px;">${totalZaplaceno.toLocaleString('cs-CZ')} Kč</td>
-    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--neg);text-align:right;padding:10px 14px;">${totalDluh.toLocaleString('cs-CZ')} Kč</td>
+    <td class="mara-col-rok"></td>
+    <td style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:13px;color:var(--text);padding:10px 14px;text-align:left;">CELKEM</td>
+    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--gold2);text-align:right;padding:10px 14px;">${tblCastka.toLocaleString('cs-CZ')} Kč</td>
+    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--pos);text-align:right;padding:10px 14px;">${tblZaplaceno.toLocaleString('cs-CZ')} Kč</td>
+    <td style="font-family:'Inter',sans-serif;font-size:12px;color:var(--neg);text-align:right;padding:10px 14px;">${tblDluh.toLocaleString('cs-CZ')} Kč</td>
+    <td></td>
   </tr>`;
+  const viewMara = document.getElementById('view-mara');
+  if (viewMara) viewMara.classList.toggle('mara-year-mode', mf.rok !== null);
+
+  // KPI: neuhrazené splátky + poslední výplata
+  const openRows = splatkyActive.filter(r => (r.zbyvajici_dluh ?? (r.castka - (r.zaplaceno || 0))) > 0);
+  if (el('mara-kpi-neuhrazeno')) el('mara-kpi-neuhrazeno').textContent = openRows.length + (openRows.length === 1 ? ' měsíc' : openRows.length < 5 ? ' měsíce' : ' měsíců');
+  if (el('mara-kpi-neuhrazeno-sub')) el('mara-kpi-neuhrazeno-sub').innerHTML = openRows.length
+    ? openRows.map(r => `<span class="mm">${r.obdobi} ${String(r.rok).slice(-2)}</span>`).join('')
+    : '<span class="mm ok">Vše uhrazeno ✓</span>';
+  const lastVyp = [...filteredVyplaty].filter(r => r.datum).sort((a,b) => a.datum < b.datum ? 1 : -1)[0];
+  if (el('mara-kpi-posledni')) el('mara-kpi-posledni').textContent = lastVyp ? formatDatumCZ(lastVyp.datum) : '—';
+  if (el('mara-kpi-posledni-sub')) el('mara-kpi-posledni-sub').innerHTML = lastVyp
+    ? `<b>${(lastVyp.castka || 0).toLocaleString('cs-CZ')} Kč</b> · celkem ${filteredVyplaty.length} plateb`
+    : 'Zatím žádná platba';
 
   // --- tabulka výplat ---
   const totalVyplaceno = filteredVyplaty.reduce((s,r) => s + (r.castka || 0), 0);
 
-  const formatDatumCZ = (d) => {
-    if (!d) return '—';
-    const parts = d.split('-');
-    if (parts.length !== 3) return d;
-    return `${parseInt(parts[2])}. ${parseInt(parts[1])}. ${parts[0]}`;
-  };
 
   const vyplatyRows = filteredVyplaty.map(r => {
     return `<tr>
       <td>${formatDatumCZ(r.datum)}</td>
       <td style="color:var(--pos)">${(r.castka || 0).toLocaleString('cs-CZ')} Kč</td>
     </tr>`;
-  }).join('') + `<tr style="border-top:1px solid var(--border);">
-    <td style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:12px;color:var(--text);">CELKEM VYPLACENO</td>
-    <td style="font-family:'Inter',sans-serif;font-size:13px;color:var(--gold2);font-weight:700;">${totalVyplaceno.toLocaleString('cs-CZ')} Kč</td>
-  </tr>`;
+  }).join('') || `<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:18px 14px;">Zatím žádné výplaty</td></tr>`;
   el('mara-vyplaty-tbody').innerHTML = vyplatyRows;
+  if (el('mara-vyp-total')) el('mara-vyp-total').textContent = totalVyplaceno.toLocaleString('cs-CZ') + ' Kč';
 
   // --- kontrola ---
   const rozdil = totalZaplaceno - totalVyplaceno;
@@ -4524,6 +4632,13 @@ function renderMara() {
     ? '<span style="background:rgba(93,184,122,0.15);color:var(--pos);padding:6px 16px;border-radius:8px;font-size:12px;font-family:\'Syne\',sans-serif;font-weight:600;">✅ Vše sedí — částky se shodují</span>'
     : '<span style="background:rgba(245,101,101,0.15);color:var(--neg);padding:6px 16px;border-radius:8px;font-size:12px;font-family:\'Syne\',sans-serif;font-weight:600;">⚠️ Nesedí — rozdíl ' + Math.abs(rozdil).toLocaleString('cs-CZ') + ' Kč</span>';
 
+  if (el('mara-kontrola')) {
+    const k = el('mara-kontrola');
+    k.className = 'mara-kontrola ' + (rozdil === 0 ? 'ok' : 'bad');
+    k.innerHTML = rozdil === 0
+      ? `<b>✅ Kontrola sedí</b><small>splátky ${totalZaplaceno.toLocaleString('cs-CZ')} Kč = výplaty ${totalVyplaceno.toLocaleString('cs-CZ')} Kč</small>`
+      : `<b>⚠️ Rozdíl ${Math.abs(rozdil).toLocaleString('cs-CZ')} Kč</b><small>splátky ${totalZaplaceno.toLocaleString('cs-CZ')} Kč · výplaty ${totalVyplaceno.toLocaleString('cs-CZ')} Kč</small>`;
+  }
   el('mara-kontrola-tbody').innerHTML = `
     <tr>
       <td style="color:var(--muted2)">Zaplaceno (tabulka splátek)</td>
